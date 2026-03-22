@@ -1,0 +1,2260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GreenLab</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & base ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+input[type=number]{-moz-appearance:textfield}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+html,body{height:100%}
+body{font-family:'Inter',sans-serif;background:#f0f2f5;color:#1a2218;font-size:14px}
+#root{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:#c8d4c0;border-radius:10px}
+/* ── Design tokens ── */
+:root{
+  --sb-w:220px;
+  --sb-bg:linear-gradient(170deg,#163026 0%,#1e4035 60%,#22503f 100%);
+  --sb-act:#2d6a54;--sb-act-text:#6ee7b7;
+  --fo:#163026;--fo2:#1e4035;--fo3:#3a7358;
+  --lf:#22c55e;--lf2:#86efac;--lf3:#dcfce7;
+  --acc:#34d399;
+  --bg:#f0f2f5;--bg2:#e8eaed;--bg3:#fff;
+  --card:#ffffff;--card-border:#e5e7eb;
+  --sh:0 1px 3px rgba(0,0,0,.07),0 4px 16px rgba(0,0,0,.06);
+  --sh2:0 2px 8px rgba(0,0,0,.10),0 8px 32px rgba(0,0,0,.08);
+  --shg:0 12px 40px rgba(22,48,38,.22);
+  --r:8px;--r2:12px;--r3:16px;--r4:20px;
+  --to:#dc2626;--td:#fef2f2;
+  --am:#d97706;--ad:#fffbeb;
+  --bo:#e5e7eb;--b2:#d1d5db;
+  --i1:#111827;--i2:#1f2937;--i3:#374151;--i4:#6b7280;--i5:#9ca3af;
+  --ll:#f0fdf4;--ld:#86efac;
+  --cr:#f9fafb;--cr2:#f3f4f6;--pp:#ffffff;--cv:#e8eaed;
+}
+/* ── Scrollbar in sidebar ── */
+.sb ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15)}
+
+/* ═══════════════════════════════════
+   SIDEBAR — dark green gradient, full height
+═══════════════════════════════════ */
+.hdr{display:none}/* header replaced by sidebar */
+.app{display:flex;flex:1;min-height:0;overflow:hidden;height:100vh}
+.sb{
+  width:var(--sb-w);flex-shrink:0;
+  background:var(--sb-bg);
+  display:flex;flex-direction:column;
+  min-height:0;overflow:hidden;
+  box-shadow:4px 0 24px rgba(0,0,0,.12);
+  z-index:100;
+}
+/* Sidebar logo area */
+.sb-logo{
+  padding:24px 20px 20px;
+  display:flex;align-items:center;gap:10px;
+  flex-shrink:0;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  margin-bottom:8px;
+}
+.sb-logo-ic{
+  width:36px;height:36px;background:var(--lf);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+  box-shadow:0 2px 8px rgba(34,197,94,.35);flex-shrink:0;
+}
+.sb-logo-txt{font-family:'Lora',serif;font-size:17px;color:#fff;font-weight:500}
+.sb-logo-sub{font-size:9px;color:rgba(255,255,255,.4);font-family:'DM Mono',monospace;margin-top:1px}
+/* Sidebar lab chip */
+.sb-lab{
+  margin:0 12px 16px;padding:8px 11px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);
+  border-radius:var(--r2);display:flex;align-items:center;gap:8px;cursor:pointer;
+  transition:background .15s;
+}
+.sb-lab:hover{background:rgba(255,255,255,.12)}
+.sb-lab-dot{width:6px;height:6px;border-radius:50%;background:var(--lf);flex-shrink:0;box-shadow:0 0 6px var(--lf)}
+.sb-lab-name{font-size:11px;font-weight:600;color:rgba(255,255,255,.85);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-lab-arrow{font-size:9px;color:rgba(255,255,255,.35)}
+/* Sidebar nav section */
+.sb-nav{flex:1;overflow-y:auto;padding:0 10px}
+.sb-section-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);padding:0 10px;margin:16px 0 6px}
+/* Nav buttons */
+.nav-btn{
+  display:flex;align-items:center;gap:10px;
+  width:100%;padding:9px 12px;
+  border-radius:var(--r2);border:none;background:none;
+  font-family:'Inter',sans-serif;font-size:12px;font-weight:500;
+  color:rgba(255,255,255,.55);cursor:pointer;
+  transition:all .15s;text-align:left;margin-bottom:2px;
+}
+.nav-btn:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.85)}
+.nav-btn.on{
+  background:var(--sb-act);color:#fff;
+  box-shadow:0 2px 8px rgba(0,0,0,.2);
+}
+.nav-btn.on .nav-icon{color:var(--sb-act-text)}
+.nav-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.nav-label{flex:1}
+/* Sidebar greenhouse list */
+.sb-top{padding:0 12px 6px;flex-shrink:0}
+.sb-sc{flex:1;min-height:0;overflow-y:auto;padding:0 10px 16px}
+.slbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:6px;padding:0 2px}
+.ghi{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--r);cursor:pointer;border:1px solid transparent;transition:all .13s;margin-bottom:2px}
+.ghi:hover{background:rgba(255,255,255,.08)}
+.ghi.on{background:var(--sb-act);border-color:rgba(255,255,255,.12)}
+.ghi.on .ghnm{color:#fff}
+.ghi.on .ghmeta{color:rgba(255,255,255,.5)}
+.ghi.spray .ghdot{background:#f87171;box-shadow:0 0 0 3px rgba(248,113,113,.25);animation:pw 2s infinite}
+.ghdot{width:6px;height:6px;border-radius:50%;background:var(--lf);flex-shrink:0}
+.ghi.on .ghdot{background:var(--lf2);box-shadow:0 0 6px var(--lf)}
+.ghinfo{flex:1;min-width:0}
+.ghnm{font-size:12px;font-weight:500;color:rgba(255,255,255,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ghmeta{font-size:9px;color:rgba(255,255,255,.35);margin-top:1px;font-family:'DM Mono',monospace}
+.ghdel{opacity:0;background:none;border:none;cursor:pointer;color:rgba(255,100,100,.6);font-size:12px;padding:2px 4px;border-radius:4px}
+.ghi:hover .ghdel{opacity:1}
+/* Sidebar bottom section */
+.sb-bottom{flex-shrink:0;padding:12px;border-top:1px solid rgba(255,255,255,.08)}
+.sb-user{display:flex;align-items:center;gap:9px;padding:8px;border-radius:var(--r);cursor:pointer;transition:background .13s}
+.sb-user:hover{background:rgba(255,255,255,.08)}
+.sb-user-name{font-size:12px;font-weight:500;color:rgba(255,255,255,.75);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-user-role{font-size:9px;color:rgba(255,255,255,.35);margin-top:1px}
+.uav{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;cursor:pointer;overflow:hidden;border:2px solid rgba(255,255,255,.2);flex-shrink:0}
+.uav img{width:100%;height:100%;object-fit:cover}
+/* Sidebar properties panel (greenhouse/table settings) */
+.pg{margin-bottom:16px}
+.pgt{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:8px}
+.pr{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.pla{font-size:11px;color:rgba(255,255,255,.5);width:48px;flex-shrink:0}
+.pi{flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:var(--r);color:#fff;font-family:'DM Mono',monospace;font-size:11px;padding:5px 8px;outline:none;width:100%}
+.pi:focus{border-color:var(--lf);background:rgba(255,255,255,.12);box-shadow:0 0 0 2px rgba(34,197,94,.2)}
+.piu{display:flex;align-items:center;flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:var(--r);overflow:hidden}
+.piu input{flex:1;background:none;border:none;color:#fff;font-family:'DM Mono',monospace;font-size:11px;padding:5px 8px;outline:none;width:100%}
+.piu:focus-within{border-color:var(--lf);box-shadow:0 0 0 2px rgba(34,197,94,.2)}
+.pu{font-size:9px;color:rgba(255,255,255,.35);padding-right:7px;font-family:'DM Mono',monospace}
+.pta{width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:var(--r);color:rgba(255,255,255,.85);font-family:'Inter',sans-serif;font-size:11px;padding:6px 8px;outline:none;resize:vertical;line-height:1.5}
+.pta:focus{border-color:var(--lf);box-shadow:0 0 0 2px rgba(34,197,94,.2)}
+.sc{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}
+.scard{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:var(--r);padding:8px 10px}
+.sv{font-size:20px;font-weight:700;color:#fff;line-height:1}
+.sk{font-size:9px;color:rgba(255,255,255,.4);margin-top:2px}
+.tli{display:flex;align-items:center;padding:7px 9px;border-radius:var(--r);cursor:pointer;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.05);font-size:11px;margin-bottom:3px;color:rgba(255,255,255,.65)}
+.tli:hover,.tli.on{border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff}
+.eli{display:flex;align-items:center;gap:6px;padding:6px 9px;border-radius:var(--r);border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.05);font-size:11px;margin-bottom:3px;transition:border-color .12s;color:rgba(255,255,255,.65)}
+.eli:hover{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.1)}
+.eli-acts{display:none;gap:3px;flex-shrink:0}
+.eli:hover .eli-acts{display:flex}
+.eli-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.7);border-radius:4px;padding:2px 6px;font-size:10px;cursor:pointer;font-family:'Inter',sans-serif}
+.eli-btn:hover{background:rgba(255,255,255,.2);color:#fff}
+.eli-btn.del{color:#fca5a5;border-color:rgba(252,165,165,.3)}
+.eli-btn.del:hover{background:rgba(220,38,38,.2)}
+
+/* ═══════════════════════════════════
+   SPRAY WARNING BAR
+═══════════════════════════════════ */
+.swarn{flex-shrink:0;background:linear-gradient(90deg,#7c1d1d,#991b1b);padding:8px 20px;display:flex;align-items:center;gap:10px;animation:pw 2.5s ease-in-out infinite}
+@keyframes pw{0%,100%{opacity:1}50%{opacity:.88}}
+
+/* ═══════════════════════════════════
+   MAIN CONTENT AREA
+═══════════════════════════════════ */
+.main{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+/* Top toolbar */
+.toolbar{
+  flex-shrink:0;display:flex;align-items:center;gap:8px;
+  padding:10px 20px;border-bottom:1px solid var(--bo);
+  background:#fff;min-height:52px;flex-wrap:wrap;
+  box-shadow:0 1px 0 var(--bo);
+}
+.tsep{width:1px;height:20px;background:var(--bo);flex-shrink:0}
+/* Top-bar right side (sync chip, share, lock, user) */
+.hdr-r{display:flex;align-items:center;gap:8px;margin-left:auto}
+.hbadge{font-family:'DM Mono',monospace;font-size:10px;padding:3px 10px;border-radius:20px;border:1px solid var(--bo);color:var(--i4);background:var(--cr2)}
+.lkbtn{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--i3);padding:5px 12px;border-radius:20px;border:1px solid var(--bo);cursor:pointer;background:#fff;font-family:'Inter',sans-serif;transition:all .13s}
+.lkbtn:hover{background:var(--cr2);border-color:var(--b2)}
+.lkbtn.edit{color:var(--am);border-color:#fcd34d;background:#fffbeb}
+/* Lab chip in toolbar */
+.lab-chip{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:var(--ll);font-size:11px;color:var(--fo2);font-weight:600;cursor:pointer;border:1px solid var(--ld);transition:all .13s}
+.lab-chip:hover{background:#dcfce7;border-color:var(--lf)}
+.lab-chip-dot{width:6px;height:6px;border-radius:50%;background:var(--lf);flex-shrink:0;box-shadow:0 0 5px var(--lf)}
+.enote{font-size:11px;font-weight:600;color:var(--am);padding:5px 11px;background:#fffbeb;border:1px solid #fcd34d;border-radius:20px}
+.tenote{font-size:11px;font-weight:600;color:#1d4ed8;padding:5px 11px;background:#eff6ff;border:1px solid #93c5fd;border-radius:20px}
+.tmeta{font-size:10px;color:var(--i4);font-family:'DM Mono',monospace;margin-left:auto}
+.zbtn{width:28px;height:28px;border-radius:var(--r);border:1px solid var(--bo);background:#fff;color:var(--i3);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .12s}
+.zbtn:hover{background:var(--cr2)}
+.zval{font-family:'DM Mono',monospace;font-size:10px;color:var(--i4);min-width:34px;text-align:center}
+.selbtn{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--bo);background:#fff;color:var(--i3);font-family:'Inter',sans-serif;transition:all .13s}
+.selbtn.on{background:var(--ll);border-color:var(--ld);color:var(--fo2);font-weight:600}
+
+/* ═══════════════════════════════════
+   CANVAS / LAYOUT VIEW
+═══════════════════════════════════ */
+.cvp{flex:1;min-height:0;overflow:hidden;background:#e8eaed;background-image:radial-gradient(circle,#c8cdd4 1px,transparent 1px);background-size:20px 20px;position:relative}
+.cvp.panning{cursor:grabbing!important}
+.cvp.space-mode{cursor:grab}
+.cvw{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}
+.ghr{position:absolute;top:0;left:0;background:#fff;border:1.5px solid #d1d5db;border-radius:12px;box-shadow:var(--sh);overflow:visible}
+.rgrid{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(#f3f4f6 1px,transparent 1px),linear-gradient(90deg,#f3f4f6 1px,transparent 1px);background-size:40px 40px;border-radius:12px}
+.rlabel{position:absolute;top:10px;left:14px;font-family:'Lora',serif;font-size:12px;color:var(--i4);pointer-events:none;font-weight:500}
+.cvhint{position:absolute;bottom:14px;right:14px;background:rgba(255,255,255,.92);border:1px solid var(--bo);border-radius:var(--r2);padding:7px 12px;font-size:10px;color:var(--i4);font-family:'DM Mono',monospace;line-height:1.8;pointer-events:none;z-index:10;box-shadow:var(--sh)}
+/* Struct objects */
+.sobj{position:absolute;display:flex;align-items:center;justify-content:center;cursor:grab;user-select:none}
+.sobj:hover{z-index:50}
+.sobj.dragging{cursor:grabbing;z-index:200;opacity:.9}
+.sobj.locked{cursor:default}
+/* Table blocks */
+.tbl{position:absolute;background:rgba(255,255,255,.95);border:1.5px solid #d1fae5;border-radius:10px;display:flex;flex-direction:column;overflow:visible;transition:border-color .15s;box-shadow:var(--sh)}
+.tbl:hover{border-color:#6ee7b7}
+.tbl.sel{border-color:#059669;box-shadow:0 0 0 3px rgba(5,150,105,.14),var(--sh)}
+.tbl.tedit{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.18)}
+.tbl.dragging{box-shadow:var(--sh2);opacity:.93;z-index:200;cursor:grabbing!important}
+.tbl.locked .thd{cursor:default}
+.thd{flex-shrink:0;background:linear-gradient(135deg,#d1fae5,#a7f3d0);padding:5px 10px;display:flex;align-items:center;justify-content:space-between;cursor:grab;user-select:none;border-radius:8px 8px 0 0}
+.tbl.tedit .thd{background:linear-gradient(135deg,#dbeafe,#bfdbfe)}
+.thnm{font-size:9px;font-weight:700;color:#065f46;letter-spacing:.06em;font-family:'DM Mono',monospace}
+.thinfo{font-size:8px;color:#059669;font-family:'DM Mono',monospace}
+.thedit{font-size:10px;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.4);color:#1d4ed8;border-radius:20px;padding:3px 10px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600;white-space:nowrap;transition:all .12s}
+.thedit:hover{background:rgba(59,130,246,.25)}
+.pgrid{flex:1;display:grid;padding:5px;overflow:visible;align-items:center;justify-items:center}
+/* Pot cells */
+.pcw{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:pointer;position:relative;user-select:none}
+.pcw:hover{z-index:10}
+.pcw:hover .psvg{transform:scale(1.1)}
+.pcw.active .psvg{transform:scale(1.06)}
+.pcw.temode{cursor:default}
+.pcw.temode:hover .psvg{transform:none}
+.pcw.temode:hover .pdel{display:flex}
+.pcw.sel-mode{cursor:cell}
+.pcw.pot-sel{outline:2.5px solid #059669;outline-offset:3px;border-radius:6px;background:rgba(5,150,105,.1);z-index:15}
+.pcw.pot-sel .psvg{transform:scale(1.06)}
+.pcw.pot-sel .plbl{background:rgba(167,243,208,.7);color:#065f46}
+.psvg{transition:transform .1s;display:block}
+.plbl{display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-weight:700;color:#111827;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;user-select:none;background:rgba(255,255,255,.92);border-radius:4px;padding:0 4px;box-shadow:0 1px 3px rgba(0,0,0,.08);flex-shrink:0}
+.pslot{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:default}
+.pslot.addmode{cursor:pointer}
+.pdel{display:none;position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--to);color:#fff;border:2px solid #fff;font-size:10px;cursor:pointer;align-items:center;justify-content:center;z-index:30;font-weight:700;line-height:1}
+.eov{position:absolute;inset:0;pointer-events:none;overflow:visible;z-index:5}
+/* Selection banner */
+.ssel{display:flex;align-items:center;gap:10px;padding:8px 20px;background:var(--fo);color:#fff;font-size:12px;flex-shrink:0}
+.ssel strong{color:var(--lf2)}
+/* Status bar */
+.sbar{flex-shrink:0;display:flex;align-items:center;gap:14px;padding:5px 20px;border-top:1px solid var(--bo);background:#fff}
+.si{font-size:10px;color:var(--i4);font-family:'DM Mono',monospace;display:flex;align-items:center;gap:4px}
+.si strong{color:var(--i2)}
+.sidot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+
+/* ═══════════════════════════════════
+   POT POPUP (float panel)
+═══════════════════════════════════ */
+@keyframes pop{from{opacity:0;transform:scale(.95) translateY(6px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.pop{position:fixed;z-index:700;background:#fff;border:1px solid var(--bo);border-radius:var(--r3);box-shadow:var(--sh2);width:316px;animation:pop .15s ease;display:flex;flex-direction:column;max-height:90vh;overflow:hidden}
+.pph{padding:12px 14px 10px;border-bottom:1px solid var(--bo);display:flex;align-items:center;gap:10px;background:#f9fafb;border-radius:var(--r3) var(--r3) 0 0}
+.pppre{width:38px;height:38px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.pptit{font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:var(--i1)}
+.ppsub{font-size:10px;color:var(--i4);font-family:'DM Mono',monospace;margin-top:2px}
+.ppx{margin-left:auto;background:none;border:none;cursor:pointer;color:var(--i4);font-size:18px;padding:0 2px;line-height:1;border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center}
+.ppx:hover{color:var(--i1);background:var(--cr2)}
+.ppb{padding:12px 14px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;flex:1;min-height:0}
+.ppf{padding:10px 14px;border-top:1px solid var(--bo);display:flex;align-items:center;gap:7px;flex-shrink:0;background:#f9fafb}
+.fl{display:block;font-size:11px;font-weight:600;color:var(--i3);margin-bottom:4px}
+.fi{width:100%;background:#fff;border:1.5px solid var(--bo);border-radius:var(--r);color:var(--i1);font-family:'DM Mono',monospace;font-size:13px;padding:7px 10px;outline:none;transition:border-color .12s}
+.fi:focus{border-color:var(--lf);box-shadow:0 0 0 3px rgba(34,197,94,.12)}
+.fi.big{font-size:14px;font-weight:600}
+.fta{width:100%;background:#fff;border:1.5px solid var(--bo);border-radius:var(--r);color:var(--i1);font-family:'Inter',sans-serif;font-size:12px;padding:7px 10px;outline:none;resize:none;line-height:1.5;transition:border-color .12s}
+.fta:focus{border-color:var(--lf);box-shadow:0 0 0 3px rgba(34,197,94,.12)}
+.pills{display:flex;gap:5px;flex-wrap:wrap}
+.pill{padding:5px 11px;border-radius:20px;font-size:11px;cursor:pointer;border:1.5px solid var(--bo);color:var(--i4);font-weight:500;transition:all .12s}
+.pill:hover{border-color:var(--b2);color:var(--i2)}
+.ph{background:#f0fdf4;border-color:#86efac;color:#166534}
+.pw{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.pd{background:#fef2f2;border-color:#fca5a5;color:#991b1b}
+.stylgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.stopt{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 3px;border-radius:var(--r);cursor:pointer;border:1.5px solid var(--bo);background:#fff;transition:all .12s}
+.stopt:hover{border-color:var(--ld)}
+.stopt.on{border-color:#059669;background:#f0fdf4}
+.stopt-lbl{font-size:8px;color:var(--i4);font-family:'DM Mono',monospace;text-align:center}
+.imgup{width:100%;height:76px;background:var(--cr2);border:1.5px dashed var(--b2);border-radius:var(--r);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-direction:column;gap:3px;overflow:hidden;position:relative;transition:all .12s}
+.imgup:hover{border-color:var(--lf);background:#f0fdf4}
+.imgup img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.iuph{font-size:11px;color:var(--i4);text-align:center;line-height:1.4;pointer-events:none}
+.imgrm{position:absolute;top:4px;right:4px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;border:none;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center}
+.exsel{display:flex;flex-direction:column;gap:3px;max-height:96px;overflow-y:auto}
+.exsopt{display:flex;align-items:center;gap:7px;padding:5px 9px;border-radius:var(--r);cursor:pointer;border:1px solid var(--bo);background:#fff;font-size:11px;transition:all .12s}
+.exsopt:hover{border-color:var(--ld)}
+.exsopt.on{border-color:#059669;background:#f0fdf4}
+
+/* ═══════════════════════════════════
+   PLANTS / SEARCH VIEW
+═══════════════════════════════════ */
+.sv2{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.svh{flex-shrink:0;padding:16px 20px 12px;border-bottom:1px solid var(--bo);background:#fff}
+.svtit{font-family:'Lora',serif;font-size:20px;color:var(--i1);margin-bottom:10px;font-weight:500}
+.svbox{flex:1;display:flex;align-items:center;gap:8px;background:var(--cr2);border:1.5px solid var(--bo);border-radius:var(--r2);padding:8px 12px;transition:all .12s}
+.svbox:focus-within{border-color:var(--lf);background:#fff;box-shadow:0 0 0 3px rgba(34,197,94,.1)}
+.svinp{flex:1;background:none;border:none;outline:none;font-family:'Inter',sans-serif;font-size:13px;color:var(--i1)}
+.svinp::placeholder{color:var(--i5)}
+.svcnt{font-family:'DM Mono',monospace;font-size:10px;color:var(--i4);white-space:nowrap}
+.svfil{flex-shrink:0;display:flex;gap:5px;flex-wrap:wrap;padding:8px 20px;border-bottom:1px solid var(--bo);background:#fff}
+.fc{padding:4px 11px;border-radius:20px;font-size:11px;cursor:pointer;border:1px solid var(--bo);color:var(--i3);background:#fff;font-weight:500;transition:all .12s}
+.fc:hover{border-color:#059669;color:#059669}
+.fc.on{background:#f0fdf4;border-color:#86efac;color:#166534;font-weight:600}
+.svlist{flex:1;min-height:0;overflow-y:auto;padding:12px 20px;display:flex;flex-direction:column;gap:6px}
+.rc{display:flex;align-items:center;gap:11px;padding:11px 14px;background:#fff;border:1px solid var(--bo);border-radius:var(--r3);cursor:pointer;transition:all .15s;box-shadow:var(--sh)}
+.rc:hover{border-color:#86efac;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.rcinfo{flex:1;min-width:0}
+.rcgen{font-size:13px;font-weight:600;color:var(--i1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rcpath{font-size:10px;color:var(--i4);font-family:'DM Mono',monospace;margin-top:2px}
+.rcst{font-size:10px;padding:3px 9px;border-radius:20px;font-weight:600;flex-shrink:0}
+.rcst.healthy{background:#f0fdf4;color:#166534}
+.rcst.wilting{background:#fffbeb;color:#92400e}
+.rcst.dead{background:#fef2f2;color:#991b1b}
+.rcst.empty{background:var(--cr2);color:var(--i4)}
+
+/* ═══════════════════════════════════
+   TEAM PAGE
+═══════════════════════════════════ */
+.tpage{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.tphead{flex-shrink:0;padding:16px 20px;border-bottom:1px solid var(--bo);display:flex;align-items:center;justify-content:space-between;background:#fff}
+.tptit{font-family:'Lora',serif;font-size:20px;color:var(--i1);font-weight:500}
+.tlist{flex:1;min-height:0;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:8px}
+.mcard{background:#fff;border:1px solid var(--bo);border-radius:var(--r3);padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:var(--sh);transition:all .13s}
+.mcard:hover{border-color:#86efac;box-shadow:0 4px 12px rgba(0,0,0,.09)}
+.mav{width:44px;height:44px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;overflow:hidden}
+.mav img{width:100%;height:100%;object-fit:cover}
+.minfo{flex:1;min-width:0}
+.mnm{font-size:14px;font-weight:600;color:var(--i1)}
+.mem{font-size:10px;color:var(--i4);font-family:'DM Mono',monospace;margin-top:2px}
+.mpos{font-size:11px;color:#059669;font-weight:600;margin-top:3px}
+.medbtn{background:#fff;border:1.5px solid var(--bo);color:var(--i3);border-radius:20px;padding:5px 14px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500;transition:all .12s}
+.medbtn:hover{background:var(--cr2);border-color:var(--b2)}
+
+/* ═══════════════════════════════════
+   MODAL
+═══════════════════════════════════ */
+@keyframes fi{from{opacity:0}to{opacity:1}}
+@keyframes mi{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
+.mov{position:fixed;inset:0;background:rgba(17,24,39,.45);backdrop-filter:blur(6px);z-index:1000;display:flex;align-items:center;justify-content:center;animation:fi .15s ease}
+.mo{background:#fff;border:1px solid var(--bo);border-radius:var(--r4);padding:24px;width:390px;max-width:93vw;box-shadow:var(--shg);animation:mi .18s ease}
+.mo.wide{width:460px}
+.motit{font-family:'Lora',serif;font-size:18px;margin-bottom:3px;color:var(--i1);font-weight:500}
+.mosub{font-size:12px;color:var(--i4);margin-bottom:18px;line-height:1.5}
+.mof{margin-bottom:12px}
+.mol{display:block;font-size:11px;font-weight:600;color:var(--i3);margin-bottom:4px}
+.moi{width:100%;background:#fff;border:1.5px solid var(--bo);border-radius:var(--r);color:var(--i1);font-family:'DM Mono',monospace;font-size:13px;padding:8px 10px;outline:none;transition:all .12s}
+.moi:focus{border-color:var(--lf);box-shadow:0 0 0 3px rgba(34,197,94,.12)}
+.mota{width:100%;background:#fff;border:1.5px solid var(--bo);border-radius:var(--r);color:var(--i1);font-family:'Inter',sans-serif;font-size:12px;padding:8px 10px;outline:none;resize:none;line-height:1.5;transition:all .12s}
+.mota:focus{border-color:var(--lf);box-shadow:0 0 0 3px rgba(34,197,94,.12)}
+.mosel{width:100%;background:#fff;border:1.5px solid var(--bo);border-radius:var(--r);color:var(--i1);font-family:'Inter',sans-serif;font-size:12px;padding:8px 10px;outline:none;cursor:pointer}
+.morow{display:flex;gap:12px}
+.morow .mof{flex:1}
+.moacts{display:flex;gap:8px;margin-top:18px;justify-content:flex-end}
+.monote{font-size:11px;color:var(--i4);margin-top:4px;line-height:1.5}
+.ulkw{background:#fffbeb;border:1px solid #fcd34d;border-radius:var(--r);padding:10px 12px;font-size:12px;color:#92400e;line-height:1.5;margin-top:4px}
+
+/* ═══════════════════════════════════
+   BUTTONS
+═══════════════════════════════════ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid transparent;padding:7px 16px;white-space:nowrap;font-family:'Inter',sans-serif;transition:all .13s}
+.btnp{background:#059669;color:#fff;border-color:#059669;box-shadow:0 1px 4px rgba(5,150,105,.3)}
+.btnp:hover{background:#047857;border-color:#047857;box-shadow:0 2px 8px rgba(5,150,105,.4)}
+.btns{background:#fff;color:var(--i2);border-color:var(--bo);box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.btns:hover{background:var(--cr2);border-color:var(--b2)}
+.btng{background:transparent;color:var(--i3);border-color:transparent}
+.btng:hover{background:var(--cr2)}
+.btnd{background:transparent;color:var(--to);border-color:#fca5a5}
+.btnd:hover{background:#fef2f2}
+.btnw{width:100%;justify-content:center}
+.bsm{padding:5px 12px;font-size:11px}
+.bxs{padding:3px 9px;font-size:11px}
+.bamb{background:#b45309;color:#fef3c7;border-color:#b45309}
+.bamb:hover{background:#92400e}
+
+/* ═══════════════════════════════════
+   STOCK TAB
+═══════════════════════════════════ */
+.stk{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.stk-head{flex-shrink:0;padding:16px 20px;border-bottom:1px solid var(--bo);display:flex;align-items:center;justify-content:space-between;background:#fff}
+.stk-tit{font-family:'Lora',serif;font-size:20px;color:var(--i1);font-weight:500}
+.stk-list{flex:1;min-height:0;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:8px}
+.stk-item{background:#fff;border:1px solid var(--bo);border-radius:var(--r3);padding:12px 14px;display:flex;align-items:flex-start;gap:14px;box-shadow:var(--sh);transition:all .13s}
+.stk-item:hover{border-color:#86efac;box-shadow:0 4px 12px rgba(0,0,0,.09)}
+.stk-img{width:88px;height:88px;border-radius:var(--r2);object-fit:cover;flex-shrink:0;border:1.5px solid var(--bo);cursor:pointer;display:flex;align-items:center;justify-content:center;background:var(--cr2);font-size:32px;overflow:hidden}
+.stk-img img{width:100%;height:100%;object-fit:cover}
+.stk-nm{font-size:13px;font-weight:600;color:var(--i1);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stk-cat{font-size:10px;color:var(--i4);font-family:'DM Mono',monospace;flex-shrink:0;margin-top:2px}
+.stk-qty{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.stk-qbtn{width:26px;height:26px;border-radius:8px;border:1.5px solid var(--bo);background:#fff;color:var(--i2);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;font-weight:700;transition:all .12s}
+.stk-qbtn:hover{background:#f0fdf4;border-color:#86efac}
+.stk-qval{font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--i1);min-width:30px;text-align:center}
+.stk-del{background:none;border:1.5px solid #fca5a5;color:var(--to);border-radius:20px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600;transition:all .12s}
+.stk-del:hover{background:#fef2f2}
+.stk-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:180px;gap:10px;color:var(--i4)}
+
+/* ═══════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════ */
+.dash-page{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.dash-head{flex-shrink:0;padding:16px 20px;border-bottom:1px solid var(--bo);background:#fff}
+.dash-tit{font-family:'Lora',serif;font-size:20px;color:var(--i1);margin-bottom:0;font-weight:500}
+.dash-body{flex:1;min-height:0;overflow-y:auto;padding:20px;display:flex;flex-wrap:wrap;gap:20px;align-content:flex-start}
+.widget-card{background:#fff;border:1px solid var(--bo);border-radius:var(--r4);padding:22px;display:flex;flex-direction:column;align-items:center;gap:12px;min-width:260px;box-shadow:var(--sh)}
+.widget-card h3{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;color:var(--i3);text-align:center;text-transform:uppercase;letter-spacing:.06em}
+.donut-wrap{position:relative;display:flex;align-items:center;justify-content:center}
+.donut-center{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none}
+.donut-val{font-size:22px;font-weight:700;color:#059669;line-height:1;font-family:'Lora',serif}
+.donut-sub{font-size:10px;color:var(--i4);font-family:'DM Mono',monospace;margin-top:3px}
+.donut-legend{display:flex;flex-direction:column;gap:6px;width:100%}
+.dl-row{display:flex;align-items:center;gap:8px;font-size:11px}
+.dl-dot{width:10px;height:10px;border-radius:4px;flex-shrink:0}
+.dl-label{color:var(--i3);flex:1}
+.dl-val{font-family:'DM Mono',monospace;color:var(--i2);font-weight:600}
+
+/* ═══════════════════════════════════
+   SYNC STATUS
+═══════════════════════════════════ */
+.sync-chip{display:flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;font-size:10px;font-weight:600;font-family:'DM Mono',monospace;cursor:default;transition:all .3s;flex-shrink:0;border:1.5px solid transparent}
+.sync-chip.saving{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.sync-chip.saved{background:#f0fdf4;border-color:#86efac;color:#166534}
+.sync-chip.error{background:#fef2f2;border-color:#fca5a5;color:#991b1b;cursor:pointer}
+.sync-chip.nosync{background:var(--cr2);border-color:var(--bo);color:var(--i4)}
+.sync-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.sync-dot.saving{background:#f59e0b;animation:pulse-dot 1s ease-in-out infinite}
+.sync-dot.saved{background:#22c55e}
+.sync-dot.error{background:#ef4444;animation:pulse-dot .6s ease-in-out infinite}
+.sync-dot.nosync{background:var(--i5)}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ═══════════════════════════════════
+   FIREBASE PANEL
+═══════════════════════════════════ */
+.fb-panel{position:fixed;inset:0;background:rgba(17,24,39,.55);backdrop-filter:blur(8px);z-index:1500;display:flex;align-items:center;justify-content:center}
+.fb-card{background:#fff;border:1px solid var(--bo);border-radius:var(--r4);padding:28px;width:520px;max-width:93vw;max-height:85vh;overflow-y:auto;box-shadow:var(--shg);animation:mi .18s ease}
+.fb-card h2{font-family:'Lora',serif;font-size:19px;color:var(--i1);margin-bottom:4px;font-weight:500}
+.fb-card .sub{font-size:12px;color:var(--i4);margin-bottom:18px;line-height:1.5}
+.fb-section{margin-bottom:18px}
+.fb-section h3{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--i4);margin-bottom:8px}
+.fb-status-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r);margin-bottom:6px}
+.fb-status-row.local{background:#fffbeb;border:1px solid #fcd34d}
+.fb-status-row.firebase{background:#f0fdf4;border:1px solid #86efac}
+.fb-tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;font-family:'DM Mono',monospace;flex-shrink:0}
+.fb-tag.local{background:#fef3c7;color:#92400e}
+.fb-tag.firebase{background:#dcfce7;color:#166534}
+.code-block{background:#0f172a;border-radius:var(--r2);padding:12px 14px;font-family:'DM Mono',monospace;font-size:10px;color:#7dd3a8;line-height:1.7;margin-top:7px;overflow-x:auto;white-space:pre}
+.fb-steps{list-style:none;display:flex;flex-direction:column;gap:8px}
+.fb-steps li{display:flex;gap:10px;font-size:12px;color:var(--i2);line-height:1.5}
+.fb-steps li::before{content:attr(data-n);width:22px;height:22px;border-radius:50%;background:#059669;color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px}
+.activity-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--bo);font-size:11px;color:var(--i3)}
+.activity-row:last-child{border-bottom:none}
+.activity-av{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+
+/* ═══════════════════════════════════
+   LAB SELECTION SCREEN
+═══════════════════════════════════ */
+.lab-screen{position:fixed;inset:0;background:var(--sb-bg);display:flex;align-items:center;justify-content:center;z-index:3000}
+.lab-card{background:#fff;border-radius:var(--r4);padding:36px;width:400px;max-width:93vw;box-shadow:var(--shg);animation:mi .2s ease}
+.lab-tag{display:inline-flex;align-items:center;gap:5px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 10px;border-radius:20px;background:#f0fdf4;color:#166534;border:1px solid #86efac;margin-bottom:12px;font-family:'DM Mono',monospace}
+.lab-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r2);border:1.5px solid var(--bo);background:#fff;cursor:pointer;transition:all .15s;margin-bottom:6px}
+.lab-item:hover{border-color:#86efac;background:#f9fafb;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.lab-item.on{border-color:#059669;background:#f0fdf4}
+.lab-ic{width:40px;height:40px;border-radius:var(--r2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:#059669;box-shadow:0 2px 6px rgba(5,150,105,.3)}
+.lab-nm{font-size:14px;font-weight:600;color:var(--i1)}
+.lab-meta{font-size:10px;color:var(--i4);margin-top:2px;font-family:'DM Mono',monospace}
+.lab-item-wrap{position:relative;margin-bottom:6px}
+.lab-settings-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:1.5px solid var(--bo);color:var(--i4);border-radius:20px;padding:3px 10px;font-size:10px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600;z-index:2;transition:all .12s}
+.lab-settings-btn:hover{background:var(--cr2);border-color:var(--b2);color:var(--i2)}
+.lab-settings-panel{background:var(--cr2);border:1px solid var(--bo);border-radius:var(--r2);padding:16px;margin-bottom:8px}
+.lsp-title{font-size:11px;font-weight:700;color:#059669;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.del-warn{background:#fef2f2;border:1px solid #fca5a5;border-radius:var(--r);padding:11px 13px;font-size:12px;color:#991b1b;line-height:1.5;margin-bottom:14px}
+.pw-err{font-size:11px;color:var(--to);margin-top:4px;font-weight:600}
+.pw-ok{font-size:11px;color:#059669;margin-top:4px;font-weight:600}
+
+/* ═══════════════════════════════════
+   LOGIN SCREEN
+═══════════════════════════════════ */
+.lsc{position:fixed;inset:0;background:var(--sb-bg);display:flex;align-items:center;justify-content:center;z-index:2000}
+.lcard{background:#fff;border-radius:var(--r4);padding:36px;width:360px;box-shadow:var(--shg);animation:mi .2s ease}
+.llogt{font-family:'Lora',serif;font-size:22px;color:var(--i1);margin-bottom:3px;font-weight:500}
+.lsub{font-size:12px;color:var(--i4);margin-bottom:22px;line-height:1.5}
+.lmems{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.lmem{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r2);border:1.5px solid var(--bo);background:#fff;cursor:pointer;transition:all .13s}
+.lmem:hover{border-color:#86efac;background:#f0fdf4;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.lav{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;overflow:hidden}
+.lav img{width:100%;height:100%;object-fit:cover}
+.ldiv{display:flex;align-items:center;gap:10px;margin:10px 0;color:var(--i5);font-size:11px}
+.ldiv::before,.ldiv::after{content:'';flex:1;height:1px;background:var(--bo)}
+
+/* ═══════════════════════════════════
+   MISC
+═══════════════════════════════════ */
+.csw{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .12s}
+.csw:hover{transform:scale(1.15)}
+.csw.on{border-color:#059669;box-shadow:0 0 0 2px rgba(5,150,105,.2)}
+.notif{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:9px 18px;border-radius:24px;font-size:12px;font-weight:500;box-shadow:var(--shg);z-index:2000;animation:fi .18s ease;display:flex;align-items:center;gap:8px;white-space:nowrap;pointer-events:none}
+.ndot{width:6px;height:6px;border-radius:50%;background:var(--lf);flex-shrink:0}
+.empty-st{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--i4);padding:40px}
+.ac-wrap{position:relative;width:100%}
+.ac-drop{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--lf);border-radius:var(--r);z-index:900;box-shadow:var(--sh2);max-height:140px;overflow-y:auto;margin-top:3px}
+.ac-item{padding:8px 10px;font-family:'DM Mono',monospace;font-size:12px;color:var(--i2);cursor:pointer;border-bottom:1px solid var(--bo)}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover,.ac-item.hi{background:#f0fdf4;color:#166534}
+.hbadge{font-family:'DM Mono',monospace;font-size:10px;padding:4px 11px;border-radius:20px;border:1.5px solid var(--bo);color:var(--i4);background:#fff}
+.mm{font-family:'DM Mono',monospace}
+
+/* ── Horizontal tab bar (top of main content) ── */
+.tab-bar{flex-shrink:0;display:flex;align-items:center;gap:2px;padding:0 16px;background:#fff;border-bottom:2px solid var(--bo);height:48px;position:sticky;top:0;z-index:50}
+.tab-btn{padding:0 16px;height:100%;border:none;background:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:var(--i4);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-2px;transition:all .15s;white-space:nowrap}
+.tab-btn:hover{color:var(--i2)}
+.tab-btn.on{color:#059669;border-bottom-color:#059669;font-weight:600}
+.tab-bar-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+
+/* ═══════════════════════════════════════════
+   MOBILE / RESPONSIVE — added via media query
+   No existing rules are overridden globally.
+   Everything inside @media only.
+═══════════════════════════════════════════ */
+
+/* Hamburger button — hidden on desktop */
+.mob-menu-btn{
+  display:none;width:36px;height:36px;border-radius:var(--r);border:none;
+  background:rgba(255,255,255,.12);color:#fff;cursor:pointer;
+  font-size:18px;align-items:center;justify-content:center;flex-shrink:0;
+}
+
+/* Sidebar overlay backdrop — hidden on desktop */
+.sb-overlay{display:none}
+
+@media (max-width:768px){
+
+  /* ── Root layout ── */
+  #root{overflow:auto}
+
+  /* ── Sidebar: off-canvas by default, slides in ── */
+  .sb{
+    position:fixed;top:0;left:0;bottom:0;z-index:300;
+    transform:translateX(-100%);
+    transition:transform .25s cubic-bezier(.4,0,.2,1);
+    box-shadow:none;
+    width:260px;
+  }
+  .sb.open{
+    transform:translateX(0);
+    box-shadow:4px 0 32px rgba(0,0,0,.35);
+  }
+  /* Tap-outside overlay */
+  .sb-overlay{
+    display:block;position:fixed;inset:0;z-index:299;
+    background:rgba(0,0,0,.4);backdrop-filter:blur(2px);
+  }
+
+  /* ── Main takes full width ── */
+  .app{height:100%;min-height:0}
+  .main{width:100%;min-width:0}
+
+  /* ── Tab bar: horizontal scroll, larger touch targets ── */
+  .tab-bar{
+    padding:0 4px;gap:0;
+    overflow-x:auto;overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    height:52px;
+  }
+  .tab-bar::-webkit-scrollbar{display:none}
+  .tab-btn{
+    padding:0 14px;font-size:14px;height:52px;
+    flex-shrink:0;
+  }
+  .tab-bar-r{gap:6px;flex-shrink:0}
+  .hbadge{display:none}/* hide plant count on small screens */
+
+  /* ── Hamburger button visible ── */
+  .mob-menu-btn{display:flex}
+  /* Push it into the tab bar left edge */
+  .tab-bar::before{content:none}
+
+  /* ── Toolbar: allow wrap, larger padding ── */
+  .toolbar{padding:8px 12px;gap:6px;min-height:48px}
+  .zbtn{width:34px;height:34px;font-size:16px}
+  .selbtn{padding:7px 14px;font-size:13px}
+  .btn{padding:8px 16px}
+  .bsm{padding:7px 14px;font-size:12px}
+
+  /* ── Pot popup: full width minus small margin ── */
+  .pop{
+    width:calc(100vw - 16px) !important;
+    max-width:calc(100vw - 16px) !important;
+    left:8px !important;
+    right:8px !important;
+    max-height:88vh;
+  }
+  /* Popup position: always center vertically on mobile */
+  .pop.mobile-center{
+    top:50% !important;
+    transform:translateY(-50%);
+  }
+  .ppb{padding:12px 14px;gap:10px}
+  .ppf{padding:10px 14px}
+  .fi,.moi,.mota,.mosel,.fta{font-size:16px;padding:10px 12px}/* prevent iOS zoom on input focus */
+  .fi.big{font-size:16px}
+
+  /* ── Canvas: touch pan ── */
+  .cvp{touch-action:none}
+
+  /* ── Canvas hint: smaller ── */
+  .cvhint{font-size:9px;padding:4px 8px;line-height:1.6}
+
+  /* ── Modals: full width ── */
+  .mo{width:calc(100vw - 24px);padding:18px;border-radius:var(--r3)}
+  .mo.wide{width:calc(100vw - 24px)}
+  .morow{flex-direction:column;gap:8px}
+
+  /* ── Sidebar content: bigger touch targets ── */
+  .ghi{padding:11px 10px}
+  .nav-btn{padding:12px 14px;font-size:13px}
+  .tli,.eli{padding:10px 11px;font-size:12px}
+  .pg{margin-bottom:18px}
+  .pgt{font-size:10px}
+  .pi,.pta{font-size:14px;padding:8px}
+  .pi:focus,.pta:focus{font-size:14px}
+
+  /* ── Plants/search: full padding ── */
+  .svh{padding:14px 14px 10px}
+  .svfil{padding:8px 14px}
+  .svlist{padding:10px 14px}
+  .rc{padding:12px}
+  .rcgen{font-size:14px}
+
+  /* ── Team page ── */
+  .tphead,.tlist{padding:14px}
+  .mcard{padding:14px}
+  .mav{width:48px;height:48px}
+  .mnm{font-size:15px}
+
+  /* ── Stock tab ── */
+  .stk-head,.stk-list{padding:14px}
+  .stk-item{padding:12px}
+  .stk-qbtn{width:32px;height:32px;font-size:16px}
+  .stk-qval{font-size:15px}
+
+  /* ── Dashboard ── */
+  .dash-head{padding:14px}
+  .dash-body{padding:14px;gap:14px}
+  .widget-card{padding:16px;min-width:0;width:100%}
+
+  /* ── Status bar: compact ── */
+  .sbar{padding:4px 12px;gap:8px}
+  .si{font-size:10px}
+
+  /* ── Spray warning ── */
+  .swarn{padding:8px 12px}
+
+  /* ── Table header edit button: bigger ── */
+  .thedit{padding:5px 12px;font-size:11px}
+
+  /* ── Lab/login screens ── */
+  .lab-card,.lcard{padding:24px;width:calc(100vw - 32px)}
+  .lab-item{padding:14px}
+  .lmem{padding:11px 12px}
+}
+
+@media (max-width:480px){
+  /* Very small phones */
+  .tab-btn{padding:0 10px;font-size:13px}
+  .toolbar{padding:6px 10px}
+  .cvhint{display:none}/* hide hint on tiny screens */
+  .sbar .si:not(:first-child):not(:last-child){display:none}/* keep only zoom + status */
+  .sync-chip span:last-child{display:none}/* hide "· Xs ago" on tiny */
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const { useState, useEffect, useRef, useCallback, useMemo, useLayoutEffect } = React;
+const WS = 3, HDR = 26, MINP = 44, LBH = 16, MINZ = .15, MAXZ = 4;
+const LABS_KEY = 'gl_labs_v1'; // stores array of {id,name,dataKey,created_at}
+const DEL_PW_KEY = 'gl_delpw'; // stores hashed delete password per lab
+const DEFAULT_DEL_PW = 'greenlab2025'; // default password — user can change later
+// Simple deterministic hash — not cryptographic, but fine for localStorage protection
+function hashPw(s) { let h = 5381; for (let i = 0; i < s.length; i++)
+    h = (h * 33 ^ s.charCodeAt(i)) >>> 0; return h.toString(36); }
+function getDelPwHash(labId) { try {
+    const m = JSON.parse(localStorage.getItem(DEL_PW_KEY) || '{}');
+    return m[labId] || hashPw(DEFAULT_DEL_PW);
+}
+catch (_a) {
+    return hashPw(DEFAULT_DEL_PW);
+} }
+function setDelPwHash(labId, pw) { try {
+    const m = JSON.parse(localStorage.getItem(DEL_PW_KEY) || '{}');
+    m[labId] = hashPw(pw);
+    localStorage.setItem(DEL_PW_KEY, JSON.stringify(m));
+}
+catch (_a) { } }
+// Lab storage helpers
+function loadLabs() { try {
+    const r = localStorage.getItem(LABS_KEY);
+    if (r)
+        return JSON.parse(r);
+}
+catch (_a) { } return []; }
+function saveLabs(labs) { try {
+    localStorage.setItem(LABS_KEY, JSON.stringify(labs));
+}
+catch (_a) { } }
+function labDataKey(labId) { return 'gl_data_' + labId; }
+function loadLabData(labId) { try {
+    const r = localStorage.getItem(labDataKey(labId));
+    if (r)
+        return JSON.parse(r);
+}
+catch (_a) { } return { greenhouses: [], tables: [], plants: [], experiments: [], users: [], structs: [], stock: [], locked: true }; }
+function saveLabData(labId, d) { try {
+    localStorage.setItem(labDataKey(labId), JSON.stringify(d));
+}
+catch (_a) { } }
+const EC = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#ef4444', '#06b6d4', '#84cc16'];
+const LPOS = ['PI', 'Postdoc', 'PhD student', 'MSc student', 'Technician', 'Research Assistant', 'Visiting Scientist'];
+const STYPES = [{ id: 'door', lbl: 'Door', col: '#8b6914' }, { id: 'ac', lbl: 'AC', col: '#3b82f6' }, { id: 'entrance', lbl: 'Entry', col: '#6b7280' }, { id: 'hall', lbl: 'Entry Hall', col: '#7c3aed' }];
+const uid = () => Math.random().toString(36).slice(2, 9);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const now = () => new Date().toISOString();
+/* Nursery pot SVG — terracotta plastic, single shape */
+const PS = [
+    { id: 'sm', lbl: 'Small pot' },
+    { id: 'md', lbl: 'Medium pot' },
+    { id: 'lg', lbl: 'Large pot' },
+    { id: 'sq', lbl: 'Square pot' },
+    { id: 'tray', lbl: 'Tray' },
+];
+// Nursery pot palette — terracotta plastic
+const POT_BODY = '#c1622a', POT_RIM = '#a84e1f', POT_RIDGE = '#9a4418', POT_SOIL = '#5a3420', POT_SHINE = 'rgba(255,255,255,.15)';
+function PotSVG({ sid = 'sm', sz = 40, sc = null, hi = false, iu = null }) {
+    const sf = sc === 'wilting' ? '#d97706' : sc === 'dead' ? '#c0392b' : sc === 'healthy' ? '#4e9e72' : null;
+    const isTray = sid === 'tray';
+    if (isTray)
+        return (React.createElement("svg", { viewBox: "0 0 48 26", width: sz, height: sz * .55, className: "psvg", xmlns: "http://www.w3.org/2000/svg" },
+            React.createElement("path", { d: "M4 8 L2 22 Q2 24 4 24 L44 24 Q46 24 46 22 L44 8 Z", fill: POT_BODY }),
+            React.createElement("rect", { x: "2", y: "5", width: "44", height: "5", rx: "2.5", fill: POT_RIM }),
+            React.createElement("path", { d: "M3 11 Q24 11.8 45 11", stroke: POT_RIDGE, strokeWidth: ".7", fill: "none", opacity: ".5" }),
+            [14, 24, 34].map((x, i) => React.createElement("line", { key: i, x1: x, y1: "10", x2: x - .5, y2: "23", stroke: POT_RIDGE, strokeWidth: ".6", opacity: ".3" })),
+            React.createElement("path", { d: "M5 10 Q5 19 5.5 22", stroke: POT_SHINE, strokeWidth: "1.5", fill: "none", strokeLinecap: "round" }),
+            hi && iu ? (React.createElement(React.Fragment, null,
+                React.createElement("defs", null,
+                    React.createElement("clipPath", { id: "ctr2" },
+                        React.createElement("rect", { x: "3", y: "6.5", width: "42", height: "3" }))),
+                React.createElement("image", { href: iu, x: "3", y: "6.5", width: "42", height: "3", clipPath: "url(#ctr2)", preserveAspectRatio: "xMidYMid slice" })))
+                : (React.createElement("rect", { x: "3", y: "6.5", width: "42", height: "3", rx: "1", fill: POT_SOIL, opacity: ".75" })),
+            sf && React.createElement("circle", { cx: "43", cy: "7", r: "2.8", fill: sf, stroke: "#fff", strokeWidth: "1" })));
+    /* Standard round plastic nursery pot — same shape for sm/md/lg/sq.
+       ViewBox 0 0 32 36: slightly tapered cylinder, thick rounded rim,
+       smooth body, faint horizontal ridge below rim, no texture.
+       Proportions: height ≈ top diameter; base noticeably smaller. */
+    return (React.createElement("svg", { viewBox: "0 0 32 36", width: sz, height: sz, className: "psvg", xmlns: "http://www.w3.org/2000/svg" },
+        React.createElement("ellipse", { cx: "16", cy: "34", rx: "10", ry: "2", fill: POT_RIM, opacity: ".5" }),
+        React.createElement("path", { d: "M3 10 L5 33 Q5 35 7 35 L25 35 Q27 35 27 33 L29 10 Z", fill: POT_BODY }),
+        React.createElement("path", { d: "M6 12 Q5.5 25 6 33", stroke: POT_SHINE, strokeWidth: "2", fill: "none", strokeLinecap: "round" }),
+        React.createElement("path", { d: "M4 14 Q16 15 28 14", stroke: POT_RIDGE, strokeWidth: "1", fill: "none", opacity: ".5" }),
+        React.createElement("path", { d: "M2 10 Q16 11.5 30 10", stroke: POT_RIM, strokeWidth: "5", fill: "none", strokeLinecap: "round" }),
+        React.createElement("path", { d: "M2.5 10 Q16 11 29.5 10", stroke: POT_BODY, strokeWidth: "2.5", fill: "none", strokeLinecap: "round", opacity: ".4" }),
+        hi && iu ? (React.createElement(React.Fragment, null,
+            React.createElement("defs", null,
+                React.createElement("clipPath", { id: `cp${sid}` },
+                    React.createElement("ellipse", { cx: "16", cy: "10", rx: "11", ry: "3.5" }))),
+            React.createElement("image", { href: iu, x: "5", y: "6.5", width: "22", height: "7", clipPath: `url(#cp${sid})`, preserveAspectRatio: "xMidYMid slice" })))
+            : (React.createElement("ellipse", { cx: "16", cy: "10", rx: "11", ry: "3.5", fill: POT_SOIL, opacity: ".85" })),
+        sf && React.createElement("circle", { cx: "27", cy: "9", r: "3", fill: sf, stroke: "#fff", strokeWidth: "1.2" })));
+}
+/* PotCell: always shows label below pot icon. Never shifts on delete. */
+function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onDel }) {
+    const filled = !!((plant === null || plant === void 0 ? void 0 : plant.genotype) || (plant === null || plant === void 0 ? void 0 : plant.treatment));
+    const sc = (plant === null || plant === void 0 ? void 0 : plant.status) && plant.status !== 'empty' ? plant.status : null;
+    const lbl = (plant === null || plant === void 0 ? void 0 : plant.genotype) || '';
+    const fs = clamp(Math.round(ppx * .21), 10, 13);
+    const maxC = Math.max(2, Math.floor(ppx / 5));
+    const disp = lbl.length > maxC ? lbl.slice(0, maxC - 1) + '…' : lbl;
+    const svgSz = Math.round(ppx * .70);
+    if (!plant || !filled) {
+        return (React.createElement("div", { className: 'pslot' + (teMode ? ' addmode' : ''), style: { width: ppx, height: ppx + LBH }, onClick: e => { e.stopPropagation(); if (teMode && plant)
+                onPotClick(e, plant); }, title: "Empty slot" },
+            React.createElement("svg", { width: svgSz, height: svgSz, viewBox: "0 0 34 38", style: { pointerEvents: 'none', opacity: .2, display: 'block' } },
+                React.createElement("path", { d: "M8 11 L6.5 33 Q6.5 35.5 8 35.5 L26 35.5 Q27.5 35.5 27.5 33 L26 11 Z", fill: "none", stroke: "#7a9080", strokeWidth: "1.5", strokeDasharray: "3 2" }),
+                React.createElement("path", { d: "M7.5 11 Q17 12.3 26.5 11", stroke: "#7a9080", strokeWidth: "2", fill: "none", strokeLinecap: "round" })),
+            React.createElement("div", { style: { height: LBH, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: fs - 1, color: '#c0ccc4', fontFamily: 'DM Mono,monospace', userSelect: 'none' } }, teMode ? '+' : '')));
+    }
+    return (React.createElement("div", { className: 'pcw' + (isActive ? ' active' : '') + (isSel ? ' pot-sel' : '') + (selMode ? ' sel-mode' : '') + (teMode ? ' temode' : ''), style: { width: ppx, height: ppx + LBH, position: 'relative' }, title: lbl + (plant.treatment ? ' | ' + plant.treatment : ''), onClick: e => { e.stopPropagation(); if (selMode || !teMode)
+            onPotClick(e, plant); } },
+        React.createElement("div", { style: { pointerEvents: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' } },
+            React.createElement(PotSVG, { sid: plant.pot_style || 'sm', sz: svgSz, sc: sc, hi: !!plant.image, iu: plant.image }),
+            React.createElement("span", { className: "plbl", style: { fontSize: fs, width: ppx + 4, marginTop: 1, height: LBH - 1 } }, disp || '—')),
+        teMode && React.createElement("button", { className: "pdel", onClick: e => { e.stopPropagation(); onDel(plant.id); } }, "x"),
+        plant.image && React.createElement("div", { style: { position: 'absolute', top: 1, right: 1, width: 6, height: 6, borderRadius: '50%', background: var_amber, border: '1px solid #fff' } })));
+}
+const var_amber = '#d97706';
+/* Experiment overlay SVG */
+function ExpOverlay({ tables, plants, exps }) {
+    // iH = icon height within cell (cell height minus label row)
+    const rects = useMemo(() => { const out = []; exps.forEach(exp => { const bt = {}; plants.filter(p => p.experiment_id === exp.id).forEach(p => { if (!bt[p.table_id])
+        bt[p.table_id] = []; bt[p.table_id].push(p); }); Object.entries(bt).forEach(([tid, ps]) => { const t = tables.find(x => x.id === tid); if (!t)
+        return; const tx = t.x_position * WS, ty = t.y_position * WS, tw = t.width * WS, th = t.length * WS; const GAP = 5, cW = Math.floor((tw - 10 - GAP * (t.cols - 1)) / t.cols), cH = Math.floor((th - HDR - 10 - GAP * (t.rows - 1)) / t.rows); const iH = cH - LBH; ps.forEach(p => { const cx = tx + 5 + p.col * (cW + GAP), cy = ty + HDR + 5 + p.row * (cH + GAP); out.push({ exp, x: cx, y: cy, w: cW, h: iH }); }); }); }); return out; }, [tables, plants, exps]);
+    const boxes = useMemo(() => {
+        const be = {};
+        rects.forEach(r => { if (!be[r.exp.id])
+            be[r.exp.id] = { exp: r.exp, rs: [] }; be[r.exp.id].rs.push(r); });
+        return Object.values(be).map(({ exp, rs }) => {
+            const P = 3;
+            return { exp,
+                x: Math.min(...rs.map(r => r.x)) - P,
+                y: Math.min(...rs.map(r => r.y)) - P,
+                x2: Math.max(...rs.map(r => r.x + r.w)) + P,
+                y2: Math.max(...rs.map(r => r.y + r.h)) + P,
+            };
+        });
+    }, [rects]);
+    const col = e => EC[e.color_index % 8];
+    return (React.createElement("svg", { className: "eov", xmlns: "http://www.w3.org/2000/svg" },
+        rects.map((r, i) => React.createElement("rect", { key: i, x: r.x + 3, y: r.y + 3, width: r.w - 6, height: r.h - 6, rx: "3", fill: col(r.exp) + '22', stroke: col(r.exp), strokeWidth: "1.5", strokeDasharray: "4 2", opacity: ".9" })),
+        boxes.map((b, i) => React.createElement("g", { key: i },
+            React.createElement("rect", { x: b.x, y: b.y, width: b.x2 - b.x, height: b.y2 - b.y, rx: "4", fill: "none", stroke: col(b.exp), strokeWidth: "2.5", opacity: ".7" }),
+            React.createElement("rect", { x: b.x, y: b.y - 13, width: Math.min(80, b.x2 - b.x), height: "12", rx: "2", fill: col(b.exp), opacity: ".9" }),
+            React.createElement("text", { x: b.x + 3, y: b.y - 4, fontSize: "8", fontFamily: "DM Mono", fontWeight: "600", fill: "#fff" }, b.exp.name.slice(0, 12))))));
+}
+/* Table block */
+function TableBlock({ table, plants, locked, isSel, activePotId, selMode, selPots, editTblId, onSel, onDrag, onPotClick, onPotSel, onDel, onToggleEdit }) {
+    const ref = useRef(), dr = useRef(null);
+    const wx = table.x_position * WS, wy = table.y_position * WS, ww = table.width * WS, wh = table.length * WS;
+    const GAP = 5, avW = ww - 10, avH = wh - HDR - 10;
+    const ppx = Math.max(MINP, Math.min(Math.floor((avW - GAP * (table.cols - 1)) / table.cols), Math.floor((avH - LBH * table.rows - GAP * (table.rows - 1)) / table.rows), 80));
+    const te = editTblId === table.id;
+    const hmd = useCallback(e => {
+        if (locked || e.button !== 0)
+            return;
+        if (e.target.closest('.pcw') || e.target.closest('.pslot'))
+            return;
+        e.stopPropagation();
+        onSel(table.id);
+        const sx = e.clientX, sy = e.clientY, ox = table.x_position, oy = table.y_position;
+        dr.current = { sx, sy, ox, oy };
+        ref.current.classList.add('dragging');
+        const mv = e => { if (!dr.current)
+            return; const nx = Math.max(0, dr.current.ox + (e.clientX - dr.current.sx) / WS), ny = Math.max(0, dr.current.oy + (e.clientY - dr.current.sy) / WS); ref.current.style.left = nx * WS + 'px'; ref.current.style.top = ny * WS + 'px'; dr.current.cx = nx; dr.current.cy = ny; };
+        const up = () => { var _a, _b, _c; if (dr.current) {
+            onDrag(table.id, (_a = dr.current.cx) !== null && _a !== void 0 ? _a : ox, (_b = dr.current.cy) !== null && _b !== void 0 ? _b : oy);
+            dr.current = null;
+        } (_c = ref.current) === null || _c === void 0 ? void 0 : _c.classList.remove('dragging'); window.removeEventListener('mousemove', mv); window.removeEventListener('mouseup', up); };
+        window.addEventListener('mousemove', mv);
+        window.addEventListener('mouseup', up);
+    }, [locked, table, onSel, onDrag]);
+    return (React.createElement("div", { ref: ref, className: `tbl${isSel ? ' sel' : ''}${locked ? ' locked' : ''}${te ? ' tedit' : ''}`, style: { position: 'absolute', left: wx, top: wy, width: ww, height: wh }, onMouseDown: hmd },
+        React.createElement("div", { className: "thd" },
+            React.createElement("span", { className: "thnm" }, table.name),
+            React.createElement("span", { className: "thinfo" },
+                table.rows,
+                "x",
+                table.cols),
+            React.createElement("button", { className: "thedit", onClick: e => { e.stopPropagation(); onToggleEdit(table.id); }, style: { color: te ? '#1e40af' : 'var(--i4)' } }, te ? 'Done' : 'Edit')),
+        React.createElement("div", { className: "pgrid", style: { gridTemplateColumns: `repeat(${table.cols},${ppx}px)`, gridTemplateRows: `repeat(${table.rows},${ppx + LBH}px)`, gap: GAP + 'px', justifyContent: 'center', alignContent: 'center' } }, Array.from({ length: table.rows }, (_, row) => Array.from({ length: table.cols }, (_, col) => {
+            const p = plants.find(x => x.row === row && x.col === col);
+            return (React.createElement(PotCell, { key: `${row}-${col}`, plant: p, ppx: ppx, isActive: p && p.id === activePotId, isSel: p && selPots.includes(p.id), selMode: selMode, teMode: te, onPotClick: (e, pl) => { if (selMode && pl) {
+                    onPotSel(pl.id);
+                    return;
+                } onPotClick(e, table.id, row, col, pl); }, onDel: onDel }));
+        })))));
+}
+/* Struct objects */
+function StructObj({ obj, locked, onDrag, onDel }) {
+    const ref = useRef(), dr = useRef(null);
+    const def = STYPES.find(t => t.id === obj.type) || STYPES[0];
+    const hmd = useCallback(e => {
+        if (locked || e.button !== 0)
+            return;
+        e.stopPropagation();
+        const sx = e.clientX, sy = e.clientY, ox = obj.x, oy = obj.y;
+        dr.current = { sx, sy, ox, oy };
+        ref.current.classList.add('dragging');
+        const mv = e => { if (!dr.current)
+            return; const nx = Math.max(0, dr.current.ox + (e.clientX - dr.current.sx) / WS), ny = Math.max(0, dr.current.oy + (e.clientY - dr.current.sy) / WS); ref.current.style.left = nx * WS + 'px'; ref.current.style.top = ny * WS + 'px'; dr.current.cx = nx; dr.current.cy = ny; };
+        const up = () => { var _a, _b, _c; if (dr.current) {
+            onDrag(obj.id, (_a = dr.current.cx) !== null && _a !== void 0 ? _a : ox, (_b = dr.current.cy) !== null && _b !== void 0 ? _b : oy);
+            dr.current = null;
+        } (_c = ref.current) === null || _c === void 0 ? void 0 : _c.classList.remove('dragging'); window.removeEventListener('mousemove', mv); window.removeEventListener('mouseup', up); };
+        window.addEventListener('mousemove', mv);
+        window.addEventListener('mouseup', up);
+    }, [locked, obj, onDrag]);
+    const w = obj.w * WS, h = obj.h * WS;
+    return (React.createElement("div", { ref: ref, className: `sobj${locked ? ' locked' : ''}`, style: { left: obj.x * WS, top: obj.y * WS, width: w, height: h, border: `2px solid ${def.col}44`, borderRadius: 4, background: `${def.col}11`, flexDirection: 'column', gap: 2 }, onMouseDown: hmd, onContextMenu: e => { if (!locked) {
+            e.preventDefault();
+            if (window.confirm('Delete?'))
+                onDel(obj.id);
+        } } },
+        React.createElement("span", { style: { fontSize: Math.min(w, h) * .4, lineHeight: 1, pointerEvents: 'none' } }, def.id === 'door' ? '🚪' : def.id === 'ac' ? '❄️' : def.id === 'hall' ? '🏠' : '🚶'),
+        React.createElement("span", { style: { fontSize: 9, color: def.col, fontFamily: 'DM Mono', opacity: .8, pointerEvents: 'none' } }, def.lbl)));
+}
+/* Storage */
+/* loadData/saveData now delegate to lab-aware helpers.
+   labId is passed at call time from App state.
+   For backward compat, if no labId given, falls back to legacy key. */
+function loadData(labId) {
+    if (labId)
+        return loadLabData(labId);
+    // Legacy migration: try old key 'gl_v19'
+    try {
+        const r = localStorage.getItem('gl_v19');
+        if (r)
+            return JSON.parse(r);
+    }
+    catch (_a) { }
+    return { greenhouses: [], tables: [], plants: [], experiments: [], users: [], structs: [], stock: [], locked: true };
+}
+function saveData(d, labId) {
+    if (labId)
+        saveLabData(labId, d);
+    else
+        try {
+            localStorage.setItem('gl_v19', JSON.stringify(d));
+        }
+        catch (_a) { }
+}
+function seedIfEmpty(d) {
+    if (d.greenhouses.length > 0)
+        return Object.assign(Object.assign({ structs: [], stock: [] }, d), { users: d.users.map(u => (Object.assign({ position: '', photo: null }, u))), greenhouses: d.greenhouses.map(g => (Object.assign({ notes: '' }, g))) });
+    const g1 = uid(), g2 = uid(), t1 = uid(), t2 = uid(), t3 = uid(), e1 = uid(), e2 = uid();
+    const GN = ['Col-0', 'Col-0', 'wrky33', 'wrky33', 'npr1-1', 'sid2'], TR = ['Control', '+SA', '+JA', 'Mock', 'Control', '+SA'], ST = ['healthy', 'healthy', 'healthy', 'wilting', 'healthy', 'dead'];
+    const plants = [];
+    let i = 0;
+    [[t1, g1, 3, 6], [t2, g1, 2, 5], [t3, g2, 2, 6]].forEach(([tid, gid, rows, cols]) => {
+        for (let r = 0; r < rows; r++)
+            for (let c = 0; c < cols; c++) {
+                const k = i % 6, isE1 = tid === t1 && r === 0 && c < 3, isE2 = tid === t1 && r === 1 && c >= 2 && c < 5;
+                plants.push({ id: uid(), table_id: tid, greenhouse_id: gid, row: r, col: c, genotype: GN[k], treatment: TR[k], planting_date: '2025-03-01', notes: '', status: ST[k], crop: 'Tomato', pot_style: 'sm', image: null, experiment_id: isE1 ? e1 : isE2 ? e2 : null, created_by: 'u1', updated_by: 'u1', updated_at: now() });
+                i++;
+            }
+    });
+    return {
+        locked: true,
+        users: [{ id: 'u1', name: 'Alice Chen', email: 'alice@lab.edu', role: 'admin', position: 'PI', color: '#4e9e72', photo: null }, { id: 'u2', name: 'Ben Levi', email: 'ben@lab.edu', role: 'member', position: 'PhD student', color: '#3b82f6', photo: null }, { id: 'u3', name: 'Sara Park', email: 'sara@lab.edu', role: 'member', position: 'Postdoc', color: '#ec4899', photo: null }],
+        experiments: [{ id: e1, name: 'SA Treatment', owner_name: 'Alice Chen', description: 'SA response', created_at: '2025-03-01', color_index: 0 }, { id: e2, name: 'JA Response', owner_name: 'Ben Levi', description: 'JA pathway', created_at: '2025-03-05', color_index: 1 }],
+        greenhouses: [
+            { id: g1, name: 'Greenhouse A', width: 620, length: 440, notes: 'Main research. 22C day / 18C night.', last_sprayed_at: null, spray_material: '', spray_category: '', spray_notes: '', created_by: 'u1', created_at: now() },
+            { id: g2, name: 'Greenhouse B', width: 500, length: 360, notes: 'Stress experiments. Humidity >60%.', last_sprayed_at: null, spray_material: '', spray_category: '', spray_notes: '', created_by: 'u1', created_at: now() },
+        ],
+        tables: [{ id: t1, greenhouse_id: g1, name: 'Bench-1', width: 230, length: 125, x_position: 35, y_position: 35, rows: 3, cols: 6 }, { id: t2, greenhouse_id: g1, name: 'Bench-2', width: 195, length: 108, x_position: 35, y_position: 188, rows: 2, cols: 5 }, { id: t3, greenhouse_id: g2, name: 'T1', width: 170, length: 112, x_position: 50, y_position: 50, rows: 2, cols: 6 }],
+        structs: [{ id: uid(), greenhouse_id: g1, type: 'door', x: 5, y: 180, w: 20, h: 40 }, { id: uid(), greenhouse_id: g1, type: 'ac', x: 540, y: 10, w: 50, h: 20 }],
+        stock: [],
+        plants,
+    };
+}
+function sprayedRecently(gh) { return (gh === null || gh === void 0 ? void 0 : gh.last_sprayed_at) && (Date.now() - new Date(gh.last_sprayed_at).getTime() < 86400000); }
+function ago(iso) { if (!iso)
+    return ''; const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000); if (s < 60)
+    return s + 's ago'; if (s < 3600)
+    return Math.floor(s / 60) + 'm ago'; if (s < 86400)
+    return Math.floor(s / 3600) + 'h ago'; return Math.floor(s / 86400) + 'd ago'; }
+function Modal({ title, sub, onClose, onConfirm, confirmLabel = 'Create', wide, children }) {
+    useEffect(() => { const fn = e => { if (e.key === 'Escape')
+        onClose(); }; window.addEventListener('keydown', fn); return () => window.removeEventListener('keydown', fn); }, [onClose]);
+    return (React.createElement("div", { className: "mov", onClick: e => e.target === e.currentTarget && onClose() },
+        React.createElement("div", { className: `mo${wide ? ' wide' : ''}` },
+            React.createElement("div", { className: "motit" }, title),
+            sub && React.createElement("div", { className: "mosub" }, sub),
+            children,
+            React.createElement("div", { className: "moacts" },
+                React.createElement("button", { className: "btn btns", onClick: onClose }, "Cancel"),
+                React.createElement("button", { className: "btn btnp", onClick: onConfirm }, confirmLabel)))));
+}
+/* Autocomplete input — shows suggestions from existing values */
+function Autocomplete({ value, onChange, onKeyDown, suggestions, placeholder, className, inputRef, big }) {
+    const [open, setOpen] = useState(false);
+    const [hi, setHi] = useState(-1);
+    const wrap = useRef();
+    const filtered = useMemo(() => { if (!value.trim())
+        return []; const lv = value.toLowerCase(); return suggestions.filter(s => s.toLowerCase().includes(lv) && s.toLowerCase() !== lv).slice(0, 8); }, [value, suggestions]);
+    useEffect(() => { setHi(-1); }, [filtered.length]);
+    useEffect(() => { const fn = e => { if (wrap.current && !wrap.current.contains(e.target))
+        setOpen(false); }; document.addEventListener('mousedown', fn); return () => document.removeEventListener('mousedown', fn); }, []);
+    const pick = v => { onChange(v); setOpen(false); setHi(-1); };
+    const hKey = e => {
+        if (!open || !filtered.length) {
+            if (onKeyDown)
+                onKeyDown(e);
+            return;
+        }
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setHi(h => Math.min(h + 1, filtered.length - 1));
+        }
+        else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setHi(h => Math.max(h - 1, -1));
+        }
+        else if (e.key === 'Enter' && hi >= 0) {
+            e.preventDefault();
+            pick(filtered[hi]);
+        }
+        else if (e.key === 'Escape') {
+            setOpen(false);
+        }
+        else if (onKeyDown) {
+            onKeyDown(e);
+        }
+    };
+    return (React.createElement("div", { className: "ac-wrap", ref: wrap },
+        React.createElement("input", { ref: inputRef, className: className || (big ? 'fi big' : 'fi'), value: value, onChange: e => { onChange(e.target.value); setOpen(true); }, onFocus: () => setOpen(true), onKeyDown: hKey, placeholder: placeholder || '', autoComplete: "off" }),
+        open && filtered.length > 0 && (React.createElement("div", { className: "ac-drop" }, filtered.map((s, i) => React.createElement("div", { key: s, className: `ac-item${hi === i ? ' hi' : ''}`, onMouseDown: e => { e.preventDefault(); pick(s); } }, s))))));
+}
+/* Stock tab */
+function StockView({ stock, onAdd, onEdit, onRemove, onQty }) {
+    const [showAdd, setShowAdd] = useState(false);
+    const [editId, setEditId] = useState(null);
+    const [fm, setFm] = useState({ name: '', category: 'Pots', quantity: 1, notes: '', image: null });
+    const CATS = ['Pots', 'Trays', 'Labels', 'Soil', 'Fertilizer', 'Clips', 'Other'];
+    const fref = useRef();
+    const set = (k, v) => setFm(p => (Object.assign(Object.assign({}, p), { [k]: v })));
+    const EMPTY = { name: '', category: 'Pots', quantity: 1, notes: '', image: null };
+    const doAdd = () => { if (!fm.name.trim())
+        return; onAdd(Object.assign(Object.assign({ id: uid() }, fm), { quantity: +fm.quantity || 0 })); setFm(EMPTY); setShowAdd(false); };
+    const doEdit = () => { if (!fm.name.trim())
+        return; onEdit(editId, fm); setEditId(null); };
+    const hImg = e => { const fl = e.target.files[0]; if (!fl)
+        return; const r = new FileReader(); r.onload = ev => set('image', ev.target.result); r.readAsDataURL(fl); };
+    return (React.createElement("div", { className: "stk" },
+        React.createElement("div", { className: "stk-head" },
+            React.createElement("div", { className: "stk-tit" }, "Stock"),
+            React.createElement("button", { className: "btn btnp bsm", onClick: () => { setFm(EMPTY); setShowAdd(true); } }, "+ Add item")),
+        React.createElement("div", { className: "stk-list" },
+            stock.length === 0 && React.createElement("div", { className: "stk-empty" },
+                React.createElement("div", { style: { fontSize: 30, opacity: .3 } }, "\uD83D\uDCE6"),
+                React.createElement("div", { style: { fontSize: 12 } }, "No stock items yet")),
+            stock.map(item => React.createElement("div", { key: item.id, className: "stk-item" },
+                React.createElement("div", { className: "stk-img", onClick: () => { setEditId(item.id); setFm({ name: item.name, category: item.category, quantity: item.quantity, notes: item.notes || '', image: item.image || null }); } }, item.image ? React.createElement("img", { src: item.image, alt: item.name }) : '📦'),
+                React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+                    React.createElement("div", { className: "stk-nm" }, item.name),
+                    React.createElement("div", { className: "stk-cat" },
+                        item.category,
+                        item.notes ? ` · ${item.notes}` : '')),
+                React.createElement("div", { className: "stk-qty" },
+                    React.createElement("button", { className: "stk-qbtn", onClick: () => onQty(item.id, -1) }, "-"),
+                    React.createElement("span", { className: "stk-qval" }, item.quantity),
+                    React.createElement("button", { className: "stk-qbtn", onClick: () => onQty(item.id, 1) }, "+")),
+                React.createElement("button", { className: "stk-del", onClick: () => onRemove(item.id) }, "Del"),
+                React.createElement("button", { className: "medbtn", onClick: () => { setEditId(item.id); setFm({ name: item.name, category: item.category, quantity: item.quantity, notes: item.notes || '', image: item.image || null }); } }, "Edit")))),
+        (showAdd || editId) && React.createElement(Modal, { title: editId ? 'Edit Item' : 'Add Stock Item', onClose: () => { setShowAdd(false); setEditId(null); }, onConfirm: editId ? doEdit : doAdd, confirmLabel: editId ? 'Save' : 'Add' },
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Item photo"),
+                React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 } },
+                    React.createElement("div", { style: { width: 80, height: 80, borderRadius: 'var(--r)', border: '1.5px dashed var(--b2)', background: 'var(--cr2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', flexShrink: 0, fontSize: 28 }, onClick: () => fref.current.click() }, fm.image ? React.createElement("img", { src: fm.image, alt: "item", style: { width: '100%', height: '100%', objectFit: 'cover' } }) : '📦'),
+                    React.createElement("div", null,
+                        React.createElement("button", { className: "btn btns bsm", onClick: () => fref.current.click() }, "Upload photo"),
+                        fm.image && React.createElement("button", { className: "btn btnd bsm", style: { marginLeft: 6 }, onClick: () => set('image', null) }, "Remove"),
+                        React.createElement("div", { style: { fontSize: 10, color: 'var(--i4)', marginTop: 4 } }, "Helps team identify items quickly")),
+                    React.createElement("input", { ref: fref, type: "file", accept: "image/*", style: { display: 'none' }, onChange: hImg }))),
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Item name"),
+                React.createElement("input", { className: "moi", placeholder: "e.g. 1L black pots", value: fm.name, onChange: e => set('name', e.target.value), autoFocus: true })),
+            React.createElement("div", { className: "morow" },
+                React.createElement("div", { className: "mof" },
+                    React.createElement("label", { className: "mol" }, "Category"),
+                    React.createElement("select", { className: "mosel", value: fm.category, onChange: e => set('category', e.target.value) }, CATS.map(c => React.createElement("option", { key: c, value: c }, c)))),
+                React.createElement("div", { className: "mof" },
+                    React.createElement("label", { className: "mol" }, "Quantity"),
+                    React.createElement("input", { className: "moi", type: "number", min: "0", value: fm.quantity, onChange: e => set('quantity', e.target.value) }))),
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Notes (optional)"),
+                React.createElement("input", { className: "moi", value: fm.notes, onChange: e => set('notes', e.target.value), placeholder: "Brand, size, location..." })))));
+}
+/* Pot popup */
+function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, users }) {
+    const CROPS = ['Tomato', 'Cucumber', 'Eggplant', 'Basil', 'Arabidopsis', 'Other'];
+    const [f, setF] = useState({ genotype: plant.genotype || '', treatment: plant.treatment || '', planting_date: plant.planting_date || '', status: plant.status || 'empty', disease_name: plant.disease_name || '', pest_name: plant.pest_name || '', crop: plant.crop || 'Tomato', owner: plant.owner || '', date_moved_in: plant.date_moved_in || '', date_until: plant.date_until || '', notes: plant.notes || '', pot_style: plant.pot_style || 'sm', image: plant.image || null, experiment_id: plant.experiment_id || null });
+    const allGenos = useMemo(() => [...new Set((allPlants || []).map(p => p.genotype).filter(Boolean))], [allPlants]);
+    const allTrts = useMemo(() => [...new Set((allPlants || []).map(p => p.treatment).filter(Boolean))], [allPlants]);
+    const userNames = useMemo(() => (users || []).map(u => u.name), [users]);
+    const DISEASES = ['Powdery mildew', 'Botrytis', 'Alternaria', 'TMV', 'Other'];
+    const PESTS = ['Tuta absoluta', 'Bemisia tabaci', 'White flies', 'Other'];
+    const ref = useRef(), fref = useRef(), gref = useRef();
+    const set = (k, v) => setF(p => (Object.assign(Object.assign({}, p), { [k]: v })));
+    useEffect(() => { setTimeout(() => { var _a; return (_a = gref.current) === null || _a === void 0 ? void 0 : _a.focus(); }, 50); }, []);
+    const pos = useMemo(() => { const vw = window.innerWidth, vh = window.innerHeight, pw = 316, ph = Math.min(Math.round(vh * 0.9), 560); if (!rect)
+        return { top: Math.max(8, (vh - ph) / 2), left: Math.max(8, (vw - pw) / 2) }; let l = rect.right + 12, t = rect.top; if (l + pw > vw - 8)
+        l = rect.left - pw - 12; if (l < 8)
+        l = 8; if (t + ph > vh - 8)
+        t = Math.max(8, vh - ph - 8); if (t < 8)
+        t = 8; return { top: t, left: l }; }, [rect]);
+    useEffect(() => { const fn = e => { if (ref.current && !ref.current.contains(e.target))
+        onClose(); }; setTimeout(() => window.addEventListener('mousedown', fn), 100); return () => window.removeEventListener('mousedown', fn); }, [onClose]);
+    const doSave = () => onSave(Object.assign(Object.assign({}, plant), f));
+    const onKey = e => { if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        doSave();
+    } if (e.key === 'Escape')
+        onClose(); };
+    const handleImg = e => { const fl = e.target.files[0]; if (!fl)
+        return; const r = new FileReader(); r.onload = ev => set('image', ev.target.result); r.readAsDataURL(fl); };
+    return (React.createElement("div", { className: "pop", ref: ref, style: { top: pos.top, left: pos.left, maxHeight: Math.min(Math.round(window.innerHeight * 0.9), 560) } },
+        React.createElement("div", { className: "pph" },
+            React.createElement("div", { className: "pppre" },
+                React.createElement(PotSVG, { sid: f.pot_style, sz: 36, sc: f.status !== 'empty' ? f.status : null })),
+            React.createElement("div", null,
+                React.createElement("div", { className: "pptit" }, f.genotype || 'Empty pot'),
+                React.createElement("div", { className: "ppsub" },
+                    ghNm,
+                    " \u203A ",
+                    tblNm,
+                    " \u00B7 R",
+                    plant.row + 1,
+                    "C",
+                    plant.col + 1)),
+            React.createElement("button", { className: "ppx", onClick: onClose }, "x")),
+        React.createElement("div", { className: "ppb" },
+            React.createElement("div", null,
+                React.createElement("label", { className: "fl" }, "Genotype"),
+                React.createElement(Autocomplete, { value: f.genotype, onChange: v => set('genotype', v), onKeyDown: onKey, suggestions: allGenos, placeholder: "e.g. Col-0, wrky33...", inputRef: gref, big: true })),
+            React.createElement("div", null,
+                React.createElement("label", { className: "fl" }, "Treatment"),
+                React.createElement(Autocomplete, { value: f.treatment, onChange: v => set('treatment', v), onKeyDown: onKey, suggestions: allTrts, placeholder: "e.g. Control, +SA..." })),
+            React.createElement("div", null,
+                React.createElement("label", { className: "fl" }, "Planting Date"),
+                React.createElement("input", { className: "fi", type: "date", value: f.planting_date, onChange: e => set('planting_date', e.target.value) })),
+            React.createElement("div", null,
+                React.createElement("label", { className: "fl" }, "Status"),
+                React.createElement("div", { className: "pills" }, [['healthy', 'Healthy', 'ph'], ['wilting', 'Wilting', 'pw'], ['dead', 'Dead', 'pd'], ['sick', 'Sick', ''], ['pests', 'Pests', '']].map(([k, l, c]) => (React.createElement("div", { key: k, className: `pill${f.status === k ? (c ? ' ' + c : ' ph') : ''}`, style: f.status === k && !c ? { background: '#fdf4ff', borderColor: '#a855f7', color: '#6b21a8' } : {}, onClick: () => set('status', k) }, l)))),
+                f.status === 'sick' && (React.createElement("div", { style: { marginTop: 7 } },
+                    React.createElement("select", { className: "fi", value: f.disease_name === 'Other' || !DISEASES.includes(f.disease_name) ? 'Other' : f.disease_name, onChange: e => set('disease_name', e.target.value) },
+                        React.createElement("option", { value: "" }, "\u2014 Select disease \u2014"),
+                        DISEASES.map(d => React.createElement("option", { key: d, value: d }, d))),
+                    (f.disease_name === 'Other' || (f.disease_name && !DISEASES.slice(0, -1).includes(f.disease_name))) && (React.createElement("input", { className: "fi", style: { marginTop: 5 }, value: DISEASES.slice(0, -1).includes(f.disease_name) ? '' : f.disease_name, onChange: e => set('disease_name', e.target.value), placeholder: "Enter disease name..." })))),
+                f.status === 'pests' && (React.createElement("div", { style: { marginTop: 7 } },
+                    React.createElement("select", { className: "fi", value: f.pest_name === 'Other' || !PESTS.includes(f.pest_name) ? 'Other' : f.pest_name, onChange: e => set('pest_name', e.target.value) },
+                        React.createElement("option", { value: "" }, "\u2014 Select pest \u2014"),
+                        PESTS.map(p => React.createElement("option", { key: p, value: p }, p))),
+                    (f.pest_name === 'Other' || (f.pest_name && !PESTS.slice(0, -1).includes(f.pest_name))) && (React.createElement("input", { className: "fi", style: { marginTop: 5 }, value: PESTS.slice(0, -1).includes(f.pest_name) ? '' : f.pest_name, onChange: e => set('pest_name', e.target.value), placeholder: "Enter pest name..." }))))),
+            React.createElement("div", null,
+                React.createElement("label", { className: "fl" }, "Pot Style"),
+                React.createElement("div", { className: "stylgrid" }, PS.map(s => React.createElement("div", { key: s.id, className: `stopt${f.pot_style === s.id ? ' on' : ''}`, onClick: () => set('pot_style', s.id) },
+                    React.createElement(PotSVG, { sid: s.id, sz: 28 }),
+                    React.createElement("span", { className: "stopt-lbl" }, s.lbl))))),
+            React.createElement("div", null,
+                React.createElement("label", { className: "fl" }, "Crop"),
+                React.createElement("select", { className: "fi", value: CROPS.includes(f.crop) && f.crop !== 'Other' ? f.crop : (f.crop && f.crop !== 'Other' ? 'Other' : f.crop || 'Tomato'), onChange: e => set('crop', e.target.value) }, CROPS.map(c => React.createElement("option", { key: c, value: c }, c))),
+                (!CROPS.slice(0, -1).includes(f.crop) && f.crop) && (React.createElement("input", { className: "fi", style: { marginTop: 5 }, value: f.crop === 'Other' ? '' : f.crop, onChange: e => set('crop', e.target.value), placeholder: "Enter crop name..." }))),
+            React.createElement("div", null,
+                React.createElement("label", { className: "fl" }, "Experiment"),
+                React.createElement("div", { className: "exsel" },
+                    React.createElement("div", { className: `exsopt${!f.experiment_id ? ' on' : ''}`, onClick: () => set('experiment_id', null) },
+                        React.createElement("div", { style: { width: 10, height: 10, borderRadius: 3, background: 'var(--bo)', flexShrink: 0 } }),
+                        React.createElement("span", { style: { color: 'var(--i4)' } }, "None")),
+                    exps.map(ex => React.createElement("div", { key: ex.id, className: `exsopt${f.experiment_id === ex.id ? ' on' : ''}`, onClick: () => set('experiment_id', ex.id) },
+                        React.createElement("div", { style: { width: 10, height: 10, borderRadius: 3, background: EC[ex.color_index % 8], flexShrink: 0 } }),
+                        React.createElement("span", { style: { flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, ex.name))))),
+            React.createElement("div", null,
+                React.createElement("label", { className: "fl" }, "Photo"),
+                React.createElement("div", { className: "imgup", onClick: () => !f.image && fref.current.click() }, f.image ? React.createElement(React.Fragment, null,
+                    React.createElement("img", { src: f.image, alt: "plant" }),
+                    React.createElement("button", { className: "imgrm", onClick: e => { e.stopPropagation(); set('image', null); } }, "x")) : React.createElement("div", { className: "iuph" }, "\uD83D\uDCF7 Click to upload")),
+                React.createElement("input", { ref: fref, type: "file", accept: "image/*", style: { display: 'none' }, onChange: handleImg })),
+            React.createElement("div", null,
+                React.createElement("label", { className: "fl" }, "Notes"),
+                React.createElement("textarea", { className: "fta", rows: 2, value: f.notes, onChange: e => set('notes', e.target.value), placeholder: "Observations..." })),
+            React.createElement("div", { style: { borderTop: '1px solid var(--bo)', paddingTop: 8, marginTop: 2 } },
+                React.createElement("div", { style: { fontSize: 10, fontWeight: 600, color: 'var(--i4)', marginBottom: 6 } }, "Tracking"),
+                React.createElement("div", null,
+                    React.createElement("label", { className: "fl" }, "Plant owner"),
+                    React.createElement("select", { className: "fi", value: userNames.includes(f.owner) ? f.owner : f.owner ? '__custom__' : '', onChange: e => { if (e.target.value !== '__custom__')
+                            set('owner', e.target.value);
+                        else
+                            set('owner', ''); } },
+                        React.createElement("option", { value: "" }, "\u2014 None \u2014"),
+                        userNames.map(u => React.createElement("option", { key: u, value: u }, u)),
+                        React.createElement("option", { value: "__custom__" }, "\u2014 Type name \u2014")),
+                    (!userNames.includes(f.owner) || f.owner === '') && React.createElement("input", { className: "fi", style: { marginTop: 4 }, placeholder: "Or type owner name...", value: f.owner, onChange: e => set('owner', e.target.value) })),
+                React.createElement("div", { style: { marginTop: 5 } },
+                    React.createElement("label", { className: "fl" }, "Moved to greenhouse"),
+                    React.createElement("input", { className: "fi", type: "date", value: f.date_moved_in, onChange: e => set('date_moved_in', e.target.value) })),
+                React.createElement("div", { style: { marginTop: 5 } },
+                    React.createElement("label", { className: "fl" }, "Stays until"),
+                    React.createElement("input", { className: "fi", type: "date", value: f.date_until, onChange: e => set('date_until', e.target.value) })))),
+        React.createElement("div", { className: "ppf" },
+            React.createElement("button", { className: "btn btnp bsm", style: { flex: 1 }, onClick: doSave }, "Save"),
+            (f.genotype || f.treatment) && React.createElement("button", { className: "btn btnd bxs", onClick: () => onSave(Object.assign(Object.assign({}, plant), { genotype: '', treatment: '', notes: '', status: 'empty', image: null })) }, "Clear"),
+            React.createElement("span", { style: { fontSize: 10, color: 'var(--i5)', marginLeft: 'auto', fontFamily: 'DM Mono' } }, "Enter to save"))));
+}
+/* Plants search */
+function SearchView({ plants, tables, ghs, exps, onSel }) {
+    const [q, setQ] = useState('');
+    const [sf, setSf] = useState(null);
+    const [gf, setGf] = useState(null);
+    const res = useMemo(() => plants.filter(p => p.genotype || p.treatment).filter(p => { const lq = q.toLowerCase(); const mq = !q || (p.genotype || '').toLowerCase().includes(lq) || (p.treatment || '').toLowerCase().includes(lq) || (p.notes || '').toLowerCase().includes(lq); return mq && (!sf || p.status === sf) && (!gf || p.greenhouse_id === gf); }), [plants, q, sf, gf]);
+    const path = p => { const g = ghs.find(x => x.id === p.greenhouse_id), t = tables.find(x => x.id === p.table_id); return `${(g === null || g === void 0 ? void 0 : g.name) || '?'} › ${(t === null || t === void 0 ? void 0 : t.name) || '?'} R${p.row + 1}C${p.col + 1}`; };
+    const genoCounts = useMemo(() => { const gc = {}; plants.filter(p => p.genotype).forEach(p => { gc[p.genotype] = (gc[p.genotype] || 0) + 1; }); return Object.entries(gc).sort((a, b) => b[1] - a[1]); }, [plants]);
+    return (React.createElement("div", { className: "sv2" },
+        React.createElement("div", { className: "svh" },
+            React.createElement("div", { className: "svtit" }, "Plant Directory"),
+            genoCounts.length > 0 && (React.createElement("div", { style: { marginBottom: 10, padding: '9px 11px', background: 'var(--ll)', border: '1px solid var(--ld)', borderRadius: 'var(--r2)' } },
+                React.createElement("div", { style: { fontSize: 10, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: 'var(--fo3)', marginBottom: 7 } }, "Genotype Summary"),
+                React.createElement("div", { style: { display: 'flex', flexWrap: 'wrap', gap: '5px 12px' } }, genoCounts.map(([g, n]) => React.createElement("div", { key: g, style: { display: 'flex', alignItems: 'center', gap: 5, fontSize: 11 } },
+                    React.createElement("span", { style: { fontFamily: 'DM Mono', fontWeight: 600, color: 'var(--fo2)' } }, g),
+                    React.createElement("span", { style: { background: 'var(--fo2)', color: '#fff', borderRadius: 20, padding: '1px 6px', fontSize: 10, fontWeight: 600 } }, n)))))),
+            React.createElement("div", { style: { display: 'flex', gap: 8, alignItems: 'center' } },
+                React.createElement("div", { className: "svbox" },
+                    React.createElement("span", { style: { fontSize: 14, color: 'var(--i4)' } }, "\uD83D\uDD0D"),
+                    React.createElement("input", { className: "svinp", placeholder: "Genotype, treatment, notes...", value: q, onChange: e => setQ(e.target.value), autoFocus: true }),
+                    q && React.createElement("span", { style: { cursor: 'pointer', color: 'var(--i4)' }, onClick: () => setQ('') }, "x")),
+                React.createElement("span", { className: "svcnt" },
+                    res.length,
+                    " found"))),
+        React.createElement("div", { className: "svfil" },
+            React.createElement("div", { className: `fc${!sf && !gf ? ' on' : ''}`, onClick: () => { setSf(null); setGf(null); } }, "All"),
+            ['healthy', 'wilting', 'dead'].map(s => React.createElement("div", { key: s, className: `fc${sf === s ? ' on' : ''}`, onClick: () => setSf(sf === s ? null : s) }, s[0].toUpperCase() + s.slice(1))),
+            React.createElement("div", { style: { width: 1, height: 16, background: 'var(--bo)', margin: '0 2px' } }),
+            ghs.map(g => React.createElement("div", { key: g.id, className: `fc${gf === g.id ? ' on' : ''}`, onClick: () => setGf(gf === g.id ? null : g.id) },
+                "\uD83C\uDF3F ",
+                g.name))),
+        React.createElement("div", { className: "svlist" }, res.length === 0 ? React.createElement("div", { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 130, gap: 8, color: 'var(--i4)' } },
+            React.createElement("div", { style: { fontSize: 30, opacity: .3 } }, "\uD83C\uDF31"),
+            React.createElement("div", { style: { fontSize: 12 } }, q ? 'No matches' : 'No data yet'))
+            : res.map(p => {
+                const ex = exps.find(e => e.id === p.experiment_id);
+                return (React.createElement("div", { key: p.id, className: "rc", onClick: () => onSel(p) },
+                    React.createElement(PotSVG, { sid: p.pot_style || 'sm', sz: 30, sc: p.status !== 'empty' ? p.status : null }),
+                    React.createElement("div", { className: "rcinfo" },
+                        React.createElement("div", { className: "rcgen" }, p.genotype),
+                        React.createElement("div", { className: "rcpath" },
+                            path(p),
+                            p.planting_date ? ' · ' + p.planting_date : '')),
+                    ex && React.createElement("div", { style: { fontSize: 9, padding: '2px 5px', borderRadius: 10, background: EC[ex.color_index % 8] + '22', color: EC[ex.color_index % 8], fontWeight: 600, flexShrink: 0 } }, ex.name.slice(0, 8)),
+                    p.treatment && React.createElement("div", { style: { fontSize: 10, color: 'var(--i3)', fontFamily: 'DM Mono', flexShrink: 0, maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis' } }, p.treatment),
+                    React.createElement("div", { className: `rcst ${p.status || 'empty'}` }, p.status || '—')));
+            }))));
+}
+/* Team page */
+function TeamPage({ users, curUser, onUpdate, onAdd }) {
+    var _a;
+    const [ed, setEd] = useState(null);
+    const [f, setF] = useState({});
+    const fr = useRef();
+    const set = (k, v) => setF(p => (Object.assign(Object.assign({}, p), { [k]: v })));
+    const save = () => { onUpdate(ed, f); setEd(null); };
+    const hph = e => { const fl = e.target.files[0]; if (!fl)
+        return; const r = new FileReader(); r.onload = ev => set('photo', ev.target.result); r.readAsDataURL(fl); };
+    return (React.createElement("div", { className: "tpage" },
+        React.createElement("div", { className: "tphead" },
+            React.createElement("div", { className: "tptit" }, "Lab Team"),
+            React.createElement("button", { className: "btn btnp bsm", onClick: onAdd }, "+ Add Member")),
+        React.createElement("div", { className: "tlist" }, users.map(u => React.createElement("div", { key: u.id, className: "mcard" },
+            React.createElement("div", { className: "mav", style: { background: u.color } }, u.photo ? React.createElement("img", { src: u.photo, alt: u.name }) : u.name.charAt(0)),
+            React.createElement("div", { className: "minfo" },
+                React.createElement("div", { className: "mnm" },
+                    u.name,
+                    u.id === (curUser === null || curUser === void 0 ? void 0 : curUser.id) ? ' (you)' : ''),
+                React.createElement("div", { className: "mem" }, u.email),
+                u.position && React.createElement("div", { className: "mpos" }, u.position)),
+            React.createElement("button", { className: "medbtn", onClick: () => { setEd(u.id); setF({ name: u.name, email: u.email, position: u.position || '', role: u.role, color: u.color, photo: u.photo || null }); } }, "Edit")))),
+        ed && React.createElement(Modal, { title: "Edit Profile", onClose: () => setEd(null), onConfirm: save, confirmLabel: "Save" },
+            React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 } },
+                React.createElement("div", { style: { width: 50, height: 50, borderRadius: '50%', background: f.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 700, color: '#fff', cursor: 'pointer', overflow: 'hidden', border: '2px solid var(--bo)' }, onClick: () => fr.current.click() }, f.photo ? React.createElement("img", { src: f.photo, alt: "av", style: { width: '100%', height: '100%', objectFit: 'cover' } }) : (_a = f.name) === null || _a === void 0 ? void 0 : _a.charAt(0)),
+                React.createElement("div", null,
+                    React.createElement("div", { style: { fontSize: 12, color: 'var(--i3)', marginBottom: 4 } }, "Profile photo"),
+                    React.createElement("button", { className: "btn btns bxs", onClick: () => fr.current.click() }, "Upload"),
+                    f.photo && React.createElement("button", { className: "btn btnd bxs", style: { marginLeft: 5 }, onClick: () => set('photo', null) }, "Remove")),
+                React.createElement("input", { ref: fr, type: "file", accept: "image/*", style: { display: 'none' }, onChange: hph })),
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Name"),
+                React.createElement("input", { className: "moi", value: f.name || '', onChange: e => set('name', e.target.value) })),
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Email"),
+                React.createElement("input", { className: "moi", type: "email", value: f.email || '', onChange: e => set('email', e.target.value) })),
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Position"),
+                React.createElement("select", { className: "mosel", value: f.position || '', onChange: e => set('position', e.target.value) },
+                    React.createElement("option", { value: "" }, "\u2014 Select \u2014"),
+                    LPOS.map(p => React.createElement("option", { key: p, value: p }, p)))),
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Role"),
+                React.createElement("select", { className: "mosel", value: f.role || 'member', onChange: e => set('role', e.target.value) },
+                    React.createElement("option", { value: "admin" }, "Admin"),
+                    React.createElement("option", { value: "member" }, "Member"))),
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Color"),
+                React.createElement("div", { style: { display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap' } }, ['#4e9e72', '#3b82f6', '#ec4899', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16'].map(c => React.createElement("div", { key: c, className: `csw${f.color === c ? ' on' : ''}`, style: { background: c }, onClick: () => set('color', c) })))))));
+}
+/* Login */
+/* Lab selection */
+function LabSelectScreen({ onSelectLab }) {
+    const [labs, setLabs] = useState(() => {
+        const existing = loadLabs();
+        if (existing.length > 0)
+            return existing;
+        const barLab = { id: uid(), name: 'Bar Lab', icon: '🌿', photo: null, created_at: now() };
+        saveLabs([barLab]);
+        return [barLab];
+    });
+    const [showAdd, setShowAdd] = useState(false);
+    const [newName, setNewName] = useState('');
+    const [settingsId, setSettingsId] = useState(null); // lab id whose settings are open
+    const [pwFm, setPwFm] = useState({ cur: '', nw: '', nw2: '' });
+    const [pwMsg, setPwMsg] = useState('');
+    const photoRef = useRef();
+    const addLab = () => {
+        if (!newName.trim())
+            return;
+        const lab = { id: uid(), name: newName.trim(), icon: '🍅', photo: null, created_at: now() };
+        const updated = [...labs, lab];
+        saveLabs(updated);
+        setLabs(updated);
+        setNewName('');
+        setShowAdd(false);
+    };
+    const handlePhoto = e => {
+        const f = e.target.files[0];
+        if (!f)
+            return;
+        const r = new FileReader();
+        r.onload = ev => {
+            const updated = labs.map(l => l.id === settingsId ? Object.assign(Object.assign({}, l), { photo: ev.target.result }) : l);
+            saveLabs(updated);
+            setLabs(updated);
+        };
+        r.readAsDataURL(f);
+    };
+    const removePhoto = () => {
+        const updated = labs.map(l => l.id === settingsId ? Object.assign(Object.assign({}, l), { photo: null }) : l);
+        saveLabs(updated);
+        setLabs(updated);
+    };
+    const changePassword = () => {
+        const lab = labs.find(l => l.id === settingsId);
+        if (!lab)
+            return;
+        if (hashPw(pwFm.cur) !== getDelPwHash(lab.id)) {
+            setPwMsg('error:Current password is incorrect.');
+            return;
+        }
+        if (!pwFm.nw.trim()) {
+            setPwMsg('error:New password cannot be empty.');
+            return;
+        }
+        if (pwFm.nw !== pwFm.nw2) {
+            setPwMsg('error:New passwords do not match.');
+            return;
+        }
+        setDelPwHash(lab.id, pwFm.nw);
+        setPwMsg('ok:Password changed successfully.');
+        setPwFm({ cur: '', nw: '', nw2: '' });
+    };
+    const activeLab = labs.find(l => l.id === settingsId);
+    return (React.createElement("div", { className: "lab-screen" },
+        React.createElement("div", { className: "lab-card" },
+            React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 9, marginBottom: 18 } },
+                React.createElement("div", { style: { width: 34, height: 34, background: 'var(--lf)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 } }, "\uD83C\uDF45"),
+                React.createElement("div", null,
+                    React.createElement("div", { style: { fontFamily: 'Lora,serif', fontSize: 20, color: 'var(--fo)' } }, "GreenLab"),
+                    React.createElement("div", { style: { fontSize: 10, color: 'var(--i4)', fontFamily: 'DM Mono' } }, "Select your lab to continue"))),
+            React.createElement("div", { className: "lab-tag" }, "Available labs"),
+            labs.map(lab => (React.createElement("div", { key: lab.id, className: "lab-item-wrap" },
+                settingsId === lab.id && (React.createElement("div", { className: "lab-settings-panel" },
+                    React.createElement("div", { className: "lsp-title" },
+                        "\u2699 ",
+                        lab.name,
+                        " \u2014 Settings"),
+                    React.createElement("div", { style: { marginBottom: 12 } },
+                        React.createElement("div", { style: { fontSize: 10, fontWeight: 600, color: 'var(--i3)', letterSpacing: '.05em', textTransform: 'uppercase', marginBottom: 6 } }, "Lab Photo"),
+                        React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 10 } },
+                            React.createElement("div", { style: { width: 56, height: 56, borderRadius: 'var(--r2)', border: '2px solid var(--bo)', background: 'var(--cr)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 } }, lab.photo ? React.createElement("img", { src: lab.photo, alt: lab.name, style: { width: '100%', height: '100%', objectFit: 'cover' } }) : React.createElement("span", { style: { fontSize: 24 } }, lab.icon || '🌿')),
+                            React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 5 } },
+                                React.createElement("button", { className: "btn btns bxs", onClick: () => photoRef.current.click() }, "Upload photo"),
+                                lab.photo && React.createElement("button", { className: "btn btnd bxs", onClick: removePhoto }, "Remove"),
+                                React.createElement("input", { ref: photoRef, type: "file", accept: "image/*", style: { display: 'none' }, onChange: handlePhoto })))),
+                    React.createElement("div", null,
+                        React.createElement("div", { style: { fontSize: 10, fontWeight: 600, color: 'var(--i3)', letterSpacing: '.05em', textTransform: 'uppercase', marginBottom: 6 } }, "Change Delete Password"),
+                        [['cur', 'Current password'], ['nw', 'New password'], ['nw2', 'Confirm new password']].map(([k, ph]) => React.createElement("input", { key: k, className: "moi", type: "password", placeholder: ph, value: pwFm[k], style: { marginBottom: 5 }, onChange: e => setPwFm(f => (Object.assign(Object.assign({}, f), { [k]: e.target.value }))) })),
+                        pwMsg && React.createElement("div", { className: pwMsg.startsWith('ok:') ? 'pw-ok' : 'pw-err', style: { marginBottom: 6 } }, pwMsg.slice(3)),
+                        React.createElement("div", { style: { display: 'flex', gap: 6 } },
+                            React.createElement("button", { className: "btn btnp bsm", onClick: changePassword }, "Change password"),
+                            React.createElement("button", { className: "btn btns bsm", onClick: () => { setSettingsId(null); setPwMsg(''); setPwFm({ cur: '', nw: '', nw2: '' }); } }, "Done"))))),
+                React.createElement("div", { className: "lab-item", style: { marginBottom: 0 }, onClick: () => { if (settingsId !== lab.id)
+                        onSelectLab(lab); } },
+                    React.createElement("div", { className: "lab-ic", style: { overflow: 'hidden' } }, lab.photo ? React.createElement("img", { src: lab.photo, alt: lab.name, style: { width: '100%', height: '100%', objectFit: 'cover' } }) : (lab.icon || '🌿')),
+                    React.createElement("div", { style: { flex: 1 } },
+                        React.createElement("div", { className: "lab-nm" }, lab.name),
+                        React.createElement("div", { className: "lab-meta" },
+                            "Created ",
+                            ago(lab.created_at) || 'recently')),
+                    React.createElement("button", { className: "lab-settings-btn", onClick: e => { e.stopPropagation(); setPwMsg(''); setPwFm({ cur: '', nw: '', nw2: '' }); setSettingsId(settingsId === lab.id ? null : lab.id); } }, settingsId === lab.id ? 'Close' : 'Settings'))))),
+            showAdd ? (React.createElement("div", { style: { marginTop: 8, display: 'flex', gap: 7 } },
+                React.createElement("input", { className: "moi", style: { flex: 1 }, placeholder: "Lab name...", value: newName, autoFocus: true, onChange: e => setNewName(e.target.value), onKeyDown: e => { if (e.key === 'Enter')
+                        addLab(); if (e.key === 'Escape')
+                        setShowAdd(false); } }),
+                React.createElement("button", { className: "btn btnp", onClick: addLab }, "Add"),
+                React.createElement("button", { className: "btn btns", onClick: () => setShowAdd(false) }, "Cancel"))) : (React.createElement("button", { className: "btn btns btnw bsm", style: { marginTop: 8 }, onClick: () => setShowAdd(true) }, "+ Add another lab")),
+            React.createElement("div", { style: { marginTop: 14, fontSize: 10, color: 'var(--i5)', fontFamily: 'DM Mono', textAlign: 'center' } }, "Each lab has its own members, greenhouses and data"))));
+}
+/* Password confirm modal */
+function PasswordConfirmModal({ title, warning, labId, onConfirm, onClose }) {
+    const [pw, setPw] = useState('');
+    const [err, setErr] = useState('');
+    const check = () => {
+        if (hashPw(pw) === getDelPwHash(labId)) {
+            onConfirm();
+            onClose();
+        }
+        else {
+            setErr('Incorrect password. Deletion cancelled.');
+            setPw('');
+        }
+    };
+    useEffect(() => { const fn = e => { if (e.key === 'Escape')
+        onClose(); }; window.addEventListener('keydown', fn); return () => window.removeEventListener('keydown', fn); }, [onClose]);
+    return (React.createElement("div", { className: "mov", onClick: e => e.target === e.currentTarget && onClose() },
+        React.createElement("div", { className: "mo" },
+            React.createElement("div", { className: "motit" }, title),
+            React.createElement("div", { className: "del-warn" },
+                React.createElement("strong", null, "Warning:"),
+                " ",
+                warning,
+                React.createElement("br", null),
+                "This cannot be undone. Enter the lab deletion password to confirm."),
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Delete password"),
+                React.createElement("input", { className: "moi", type: "password", value: pw, autoFocus: true, placeholder: "Enter password...", onChange: e => { setPw(e.target.value); setErr(''); }, onKeyDown: e => { if (e.key === 'Enter')
+                        check(); if (e.key === 'Escape')
+                        onClose(); } }),
+                err && React.createElement("div", { className: "pw-err" }, err)),
+            React.createElement("div", { style: { fontSize: 11, color: 'var(--i4)', marginTop: 4 } },
+                "Default password: ",
+                React.createElement("code", { style: { background: 'var(--cr2)', padding: '1px 5px', borderRadius: 3, fontFamily: 'DM Mono' } }, "greenlab2025")),
+            React.createElement("div", { className: "moacts" },
+                React.createElement("button", { className: "btn btns", onClick: onClose }, "Cancel"),
+                React.createElement("button", { className: "btn btnd", onClick: check }, "Confirm Delete")))));
+}
+function LoginScreen({ users, onLogin, labName }) {
+    const [nm, setNm] = useState('');
+    return (React.createElement("div", { className: "lsc" },
+        React.createElement("div", { className: "lcard" },
+            React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 } },
+                React.createElement("div", { style: { width: 32, height: 32, background: 'var(--lf)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17 } }, "\uD83C\uDF45"),
+                React.createElement("div", null,
+                    React.createElement("div", { className: "llogt" }, "GreenLab"),
+                    React.createElement("div", { style: { fontSize: 10, color: 'var(--i4)', fontFamily: 'DM Mono' } }, "Greenhouse Management"))),
+            React.createElement("div", { className: "lsub" },
+                "Select your account for ",
+                React.createElement("strong", null, labName || 'the lab'),
+                "."),
+            React.createElement("div", { className: "lmems" }, users.map(u => React.createElement("div", { key: u.id, className: "lmem", onClick: () => onLogin(u) },
+                React.createElement("div", { className: "lav", style: { background: u.color } }, u.photo ? React.createElement("img", { src: u.photo, alt: u.name }) : u.name.charAt(0)),
+                React.createElement("div", null,
+                    React.createElement("div", { style: { fontSize: 13, fontWeight: 500, color: 'var(--i1)' } }, u.name),
+                    React.createElement("div", { style: { fontSize: 10, color: 'var(--i4)' } }, u.position || u.role))))),
+            React.createElement("div", { className: "ldiv" }, "or join as new"),
+            React.createElement("div", { style: { display: 'flex', gap: 7 } },
+                React.createElement("input", { className: "moi", style: { flex: 1 }, placeholder: "Your name", value: nm, onChange: e => setNm(e.target.value), onKeyDown: e => { if (e.key === 'Enter' && nm.trim())
+                        onLogin({ id: uid(), name: nm.trim(), email: nm.toLowerCase().replace(/\s+/g, '') + '@lab.edu', role: 'member', position: '', color: '#' + Math.floor(Math.random() * 0x888888 + 0x444444).toString(16), photo: null }); } }),
+                React.createElement("button", { className: "btn btnp", onClick: () => { if (nm.trim())
+                        onLogin({ id: uid(), name: nm.trim(), email: nm.toLowerCase().replace(/\s+/g, '') + '@lab.edu', role: 'member', position: '', color: '#' + Math.floor(Math.random() * 0x888888 + 0x444444).toString(16), photo: null }); } }, "Join")))));
+}
+/* Dashboard + Donut chart */
+function SpaceDonut({ used, total, size = 160 }) {
+    const free = Math.max(0, total - used);
+    const pctFree = total > 0 ? Math.round(free / total * 100) : 0;
+    const pctUsed = total > 0 ? Math.round(used / total * 100) : 0;
+    const r = 54, cx = size / 2, cy = size / 2;
+    const circ = 2 * Math.PI * r;
+    const usedDash = total > 0 ? (used / total) * circ : 0;
+    const freeDash = circ - usedDash;
+    const freeSqM = (free / 10000).toFixed(1); // cm² → m²
+    const usedSqM = (used / 10000).toFixed(1);
+    const totalSqM = (total / 10000).toFixed(1);
+    // Start at top (rotate -90deg)
+    return (React.createElement("div", { className: "donut-wrap", style: { width: size, height: size } },
+        React.createElement("svg", { width: size, height: size, viewBox: `0 0 ${size} ${size}` },
+            React.createElement("circle", { cx: cx, cy: cy, r: r, fill: "none", stroke: "var(--cr2)", strokeWidth: "22" }),
+            usedDash > 0 && React.createElement("circle", { cx: cx, cy: cy, r: r, fill: "none", stroke: "#4e9e72", strokeWidth: "22", strokeDasharray: `${usedDash} ${freeDash}`, strokeDashoffset: circ / 4, strokeLinecap: "butt" }),
+            freeDash > 0 && React.createElement("circle", { cx: cx, cy: cy, r: r, fill: "none", stroke: "#e5e1da", strokeWidth: "22", strokeDasharray: `${freeDash} ${usedDash}`, strokeDashoffset: circ / 4 - usedDash, strokeLinecap: "butt" }),
+            React.createElement("circle", { cx: cx, cy: cy, r: r - 11, fill: "none", stroke: "var(--bo)", strokeWidth: "0.5", opacity: ".5" }),
+            React.createElement("circle", { cx: cx, cy: cy, r: r + 11, fill: "none", stroke: "var(--bo)", strokeWidth: "0.5", opacity: ".5" })),
+        React.createElement("div", { className: "donut-center" },
+            React.createElement("span", { className: "donut-val" },
+                freeSqM,
+                "m\u00B2"),
+            React.createElement("span", { className: "donut-sub" }, "free space"),
+            React.createElement("span", { style: { fontSize: 11, color: 'var(--lf)', fontWeight: 600, marginTop: 2 } },
+                pctFree,
+                "%"))));
+}
+function DashView({ greenhouses, tables, structs }) {
+    const spaceData = useMemo(() => {
+        const totalArea = greenhouses.reduce((s, g) => s + (g.width * g.length), 0); // cm²
+        const tableArea = tables.reduce((s, t) => s + (t.width * t.length), 0); // cm²
+        const structArea = (structs || []).reduce((s, st) => s + (st.w * st.h), 0); // cm²
+        const usedArea = tableArea + structArea;
+        const freeArea = Math.max(0, totalArea - usedArea);
+        return { totalArea, usedArea, freeArea,
+            totalM: (totalArea / 10000).toFixed(1),
+            usedM: (usedArea / 10000).toFixed(1),
+            freeM: (freeArea / 10000).toFixed(1),
+            pctUsed: totalArea > 0 ? Math.round(usedArea / totalArea * 100) : 0,
+            pctFree: totalArea > 0 ? Math.round(freeArea / totalArea * 100) : 0,
+        };
+    }, [greenhouses, tables, structs]);
+    const perGH = useMemo(() => greenhouses.map(g => {
+        const ghTbl = tables.filter(t => t.greenhouse_id === g.id);
+        const ghStr = (structs || []).filter(s => s.greenhouse_id === g.id);
+        const total = g.width * g.length;
+        const used = ghTbl.reduce((s, t) => s + (t.width * t.length), 0) + ghStr.reduce((s, st) => s + (st.w * st.h), 0);
+        return Object.assign(Object.assign({}, g), { total, used, free: Math.max(0, total - used), pct: total > 0 ? Math.round(used / total * 100) : 0 });
+    }), [greenhouses, tables, structs]);
+    if (greenhouses.length === 0)
+        return (React.createElement("div", { className: "dash-page" },
+            React.createElement("div", { className: "dash-head" },
+                React.createElement("div", { className: "dash-tit" }, "Dashboard")),
+            React.createElement("div", { style: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, color: 'var(--i4)' } },
+                React.createElement("div", { style: { fontSize: 36, opacity: .3 } }, "\uD83D\uDCCA"),
+                React.createElement("div", { style: { fontSize: 13 } }, "Add a greenhouse to see your space stats"))));
+    return (React.createElement("div", { className: "dash-page" },
+        React.createElement("div", { className: "dash-head" },
+            React.createElement("div", { className: "dash-tit" }, "Dashboard"),
+            React.createElement("div", { style: { fontSize: 11, color: 'var(--i4)', marginTop: 3, fontFamily: 'DM Mono' } },
+                greenhouses.length,
+                " greenhouse",
+                greenhouses.length !== 1 ? 's' : '',
+                " \u00B7 ",
+                tables.length,
+                " table",
+                tables.length !== 1 ? 's' : '')),
+        React.createElement("div", { className: "dash-body" },
+            React.createElement("div", { className: "widget-card", style: { flex: '1 1 260px' } },
+                React.createElement("h3", null, "Total Greenhouse Space"),
+                React.createElement(SpaceDonut, { used: spaceData.usedArea, total: spaceData.totalArea }),
+                React.createElement("div", { className: "donut-legend" },
+                    React.createElement("div", { className: "dl-row" },
+                        React.createElement("div", { className: "dl-dot", style: { background: '#4e9e72' } }),
+                        React.createElement("span", { className: "dl-label" }, "Occupied (tables + objects)"),
+                        React.createElement("span", { className: "dl-val" },
+                            spaceData.usedM,
+                            " m\u00B2")),
+                    React.createElement("div", { className: "dl-row" },
+                        React.createElement("div", { className: "dl-dot", style: { background: 'var(--cr2)', border: '1px solid var(--bo)' } }),
+                        React.createElement("span", { className: "dl-label" }, "Free space"),
+                        React.createElement("span", { className: "dl-val" },
+                            spaceData.freeM,
+                            " m\u00B2")),
+                    React.createElement("div", { className: "dl-row" },
+                        React.createElement("div", { className: "dl-dot", style: { background: 'var(--b2)' } }),
+                        React.createElement("span", { className: "dl-label" }, "Total area"),
+                        React.createElement("span", { className: "dl-val" },
+                            spaceData.totalM,
+                            " m\u00B2"))),
+                React.createElement("div", { style: { display: 'flex', gap: 8, width: '100%', marginTop: 4 } },
+                    React.createElement("div", { style: { flex: 1, background: 'var(--ll)', border: '1px solid var(--ld)', borderRadius: 'var(--r)', padding: '7px 10px', textAlign: 'center' } },
+                        React.createElement("div", { style: { fontSize: 18, fontWeight: 700, color: 'var(--fo2)', fontFamily: 'Lora,serif' } },
+                            spaceData.pctFree,
+                            "%"),
+                        React.createElement("div", { style: { fontSize: 10, color: 'var(--fo3)', marginTop: 2 } }, "free")),
+                    React.createElement("div", { style: { flex: 1, background: 'var(--cr2)', border: '1px solid var(--bo)', borderRadius: 'var(--r)', padding: '7px 10px', textAlign: 'center' } },
+                        React.createElement("div", { style: { fontSize: 18, fontWeight: 700, color: 'var(--i2)', fontFamily: 'Lora,serif' } },
+                            spaceData.pctUsed,
+                            "%"),
+                        React.createElement("div", { style: { fontSize: 10, color: 'var(--i4)', marginTop: 2 } }, "occupied")))),
+            perGH.length > 0 && React.createElement("div", { className: "widget-card", style: { flex: '1 1 240px', alignItems: 'flex-start' } },
+                React.createElement("h3", { style: { alignSelf: 'center' } }, "By Greenhouse"),
+                React.createElement("div", { style: { width: '100%', display: 'flex', flexDirection: 'column', gap: 10 } }, perGH.map(g => (React.createElement("div", { key: g.id },
+                    React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 12 } },
+                        React.createElement("span", { style: { fontWeight: 500, color: 'var(--i1)' } }, g.name),
+                        React.createElement("span", { style: { fontFamily: 'DM Mono', fontSize: 10, color: 'var(--i4)' } },
+                            (g.free / 10000).toFixed(1),
+                            "m\u00B2 free \u00B7 ",
+                            g.pct,
+                            "% used")),
+                    React.createElement("div", { style: { height: 8, borderRadius: 4, background: 'var(--cr2)', overflow: 'hidden', border: '1px solid var(--bo)' } },
+                        React.createElement("div", { style: { height: '100%', borderRadius: 4, background: 'var(--lf)', width: `${g.pct}%`, transition: 'width .4s' } })),
+                    React.createElement("div", { style: { display: 'flex', gap: 6, marginTop: 3, fontSize: 9, color: 'var(--i4)', fontFamily: 'DM Mono' } },
+                        React.createElement("span", null,
+                            g.width,
+                            "\u00D7",
+                            g.length,
+                            "cm total"),
+                        React.createElement("span", null, "\u00B7"),
+                        React.createElement("span", null,
+                            tables.filter(t => t.greenhouse_id === g.id).length,
+                            " tables"))))))))));
+}
+/* ════════════════════════════════════════════════
+   SYNC STATUS COMPONENT
+   
+   Current mode: localStorage only (single-browser).
+   All state transitions are real: saving → saved.
+   Firebase wiring is documented inline as TODO stubs.
+   
+   To connect to Firebase:
+   1. Replace saveData() with Firestore setDoc calls
+   2. Replace loadData() with onSnapshot listener
+   3. The syncStatus state machine below stays the same
+════════════════════════════════════════════════ */
+function SyncStatusChip({ status, lastSaved, lastBy, onClick }) {
+    const label = status === 'saving' ? 'Saving...'
+        : status === 'saved' ? 'Saved locally'
+            : status === 'synced' ? 'Synced'
+                : status === 'error' ? 'Sync failed — click to retry'
+                    : 'Not saved';
+    const timeStr = lastSaved ? ago(lastSaved.toISOString()) : null;
+    const byStr = lastBy ? ' by ' + lastBy : '';
+    const title = timeStr ? `Last saved ${timeStr}${byStr}` : label;
+    return (React.createElement("div", { className: `sync-chip ${status}`, title: title, onClick: onClick, style: { cursor: onClick ? 'pointer' : 'default' } },
+        React.createElement("div", { className: `sync-dot ${status}` }),
+        React.createElement("span", null, label),
+        timeStr && status !== 'saving' && React.createElement("span", { style: { opacity: .65 } },
+            "\u00B7 ",
+            timeStr)));
+}
+const FB_CODE_SNIPPET = '// saveData(d): await db.collection("labs").doc("main").set(d,{merge:true})\n// loadData: db.collection("labs").doc("main").onSnapshot(snap=>{if(snap.exists)setData(snap.data());})';
+/* Firebase integration guide panel */
+function FirebasePanel({ onClose, activityLog }) {
+    return (React.createElement("div", { className: "fb-panel", onClick: e => e.target === e.currentTarget && onClose() },
+        React.createElement("div", { className: "fb-card" },
+            React.createElement("h2", null, "Collaboration + Sync"),
+            React.createElement("div", { className: "sub" }, "Currently saving to this browser only. Connect Firebase Firestore so all lab members see changes in real time."),
+            React.createElement("div", { className: "fb-section" },
+                React.createElement("h3", null, "How to enable sharing"),
+                React.createElement("ol", { className: "fb-steps" },
+                    React.createElement("li", { "data-n": "1" }, "Create a Firebase project at console.firebase.google.com and enable Firestore."),
+                    React.createElement("li", { "data-n": "2" }, "Add the Firebase SDK scripts to the HTML head section."),
+                    React.createElement("li", { "data-n": "3" }, "Replace the saveData() and loadData() functions with Firestore setDoc and onSnapshot calls."),
+                    React.createElement("li", { "data-n": "4" }, "Deploy to Firebase Hosting and share the URL with your lab team."))),
+            React.createElement("div", { className: "fb-section" },
+                React.createElement("h3", null, "Code"),
+                React.createElement("div", { className: "code-block" }, FB_CODE_SNIPPET)),
+            activityLog.length > 0 && React.createElement("div", { className: "fb-section" },
+                React.createElement("h3", null, "Recent changes"),
+                React.createElement("div", { style: { border: '1px solid var(--bo)', borderRadius: 'var(--r)', padding: '8px', background: '#fff' } }, activityLog.slice(-5).reverse().map((a, i) => (React.createElement("div", { key: i, className: "activity-row" },
+                    React.createElement("div", { className: "activity-av", style: { background: a.color || '#4e9e72' } }, a.by.charAt(0)),
+                    React.createElement("div", { style: { flex: 1 } },
+                        React.createElement("strong", null, a.by),
+                        " \u00B7 ",
+                        a.what),
+                    React.createElement("div", { style: { fontSize: 10, color: 'var(--i5)', fontFamily: 'DM Mono' } }, ago(a.at))))))),
+            React.createElement("div", { style: { marginTop: 14, textAlign: 'right' } },
+                React.createElement("button", { className: "btn btnp bsm", onClick: onClose }, "Close")))));
+}
+/* Main App */
+function App() {
+    var _a, _b;
+    const [activeLab, setActiveLab] = useState(null); // null = lab not chosen yet
+    const [data, setData] = useState(() => seedIfEmpty(loadData(null)));
+    const [user, setUser] = useState(null);
+    const [tab, setTab] = useState('layout');
+    const [ghId, setGhId] = useState(() => { var _a; return ((_a = seedIfEmpty(loadData(null)).greenhouses[0]) === null || _a === void 0 ? void 0 : _a.id) || null; });
+    const [selTbl, setSelTbl] = useState(null);
+    const [actPot, setActPot] = useState(null);
+    const [popup, setPopup] = useState(null);
+    const [notif, setNotif] = useState(null);
+    const [syncStatus, setSyncStatus] = useState('saved'); // 'saving'|'saved'|'synced'|'error'
+    const [lastSaved, setLastSaved] = useState(null);
+    const [lastBy, setLastBy] = useState('');
+    const [activityLog, setActivityLog] = useState([]);
+    const [showFbPanel, setShowFbPanel] = useState(false);
+    const [selMode, setSelMode] = useState(false);
+    const [selPots, setSelPots] = useState([]);
+    const [editTbl, setEditTbl] = useState(null);
+    const [dimSpray, setDimSpray] = useState({});
+    const [zoom, setZoom] = useState(1);
+    const [pan, setPan] = useState({ x: 40, y: 40 });
+    const vpRef = useRef(), wrRef = useRef(), panRef = useRef(null), spRef = useRef(false);
+    const [showAGH, setShowAGH] = useState(false);
+    const [showATbl, setShowATbl] = useState(false);
+    const [showUL, setShowUL] = useState(false);
+    const [showSpray, setShowSpray] = useState(false);
+    const [showAExp, setShowAExp] = useState(false);
+    const [showAssExp, setShowAssExp] = useState(false);
+    const [showShare, setShowShare] = useState(false);
+    const [showAStr, setShowAStr] = useState(false);
+    const [showAMem, setShowAMem] = useState(false);
+    const [ghFm, setGhFm] = useState({ name: '', width: 600, length: 400 });
+    const [tFm, setTFm] = useState({ name: '', width: 230, length: 125, rows: 3, cols: 6 });
+    const [spFm, setSpFm] = useState({ material: '', category: 'fungicide', notes: '', sprayer: '' });
+    const [eFm, setEFm] = useState({ name: '', owner_name: '', description: '' });
+    const [showEditExp, setShowEditExp] = useState(false);
+    const [editExpId, setEditExpId] = useState(null);
+    const [aExpId, setAExpId] = useState('');
+    const [assExpFm, setAssExpFm] = useState({ mode: 'existing', newName: '', newOwner: '', newDesc: '', existId: '' });
+    const [nStType, setNStType] = useState('door');
+    const [nMFm, setNMFm] = useState({ name: '', email: '', position: '', role: 'member' });
+    const [nStrFm, setNStrFm] = useState({ type: 'door', w: 20, h: 40 });
+    const [delConfirm, setDelConfirm] = useState(null); // {type:'gh'|'tbl', id, name}
+    const [menuOpen, setMenuOpen] = useState(false); // mobile sidebar toggle
+    /* Save data + update sync status on every data change.
+       TODO Firebase: replace saveData() call with Firestore setDoc here.
+       The setSyncStatus('saving') → setSyncStatus('saved') flow stays the same;
+       just await the Firestore write and catch errors for setSyncStatus('error'). */
+    useEffect(() => {
+        if (!data.greenhouses.length)
+            return; // skip empty initial state
+        setSyncStatus('saving');
+        try {
+            saveData(data, activeLab === null || activeLab === void 0 ? void 0 : activeLab.id);
+            // Simulate brief "saving" flash then show "saved"
+            setTimeout(() => {
+                setSyncStatus('saved');
+                setLastSaved(new Date());
+                if (user)
+                    setLastBy(user.name);
+            }, 350);
+            // TODO: replace saveData with Firebase Firestore write
+        }
+        catch (e) {
+            setSyncStatus('error');
+        }
+    }, [data]);
+    const notify = useCallback(m => { setNotif(m); setTimeout(() => setNotif(null), 2500); }, []);
+    const logActivity = useCallback((what) => {
+        if (!user)
+            return;
+        const u = user; // capture
+        setActivityLog(lg => [...lg, { by: u.name, color: u.color, what, at: new Date().toISOString() }].slice(-30));
+    }, [user]);
+    /* Called when user selects a lab from LabSelectScreen */
+    const selectLab = useCallback(lab => {
+        var _a;
+        setActiveLab(lab);
+        const d = seedIfEmpty(loadLabData(lab.id));
+        setData(d);
+        setGhId(((_a = d.greenhouses[0]) === null || _a === void 0 ? void 0 : _a.id) || null);
+        setUser(null); // require account re-selection for this lab
+    }, []);
+    const locked = data.locked !== false;
+    const aGh = useMemo(() => data.greenhouses.find(g => g.id === ghId), [data, ghId]);
+    const aTbls = useMemo(() => data.tables.filter(t => t.greenhouse_id === ghId), [data, ghId]);
+    const aPlants = useMemo(() => data.plants.filter(p => p.greenhouse_id === ghId), [data, ghId]);
+    const aStructs = useMemo(() => (data.structs || []).filter(s => s.greenhouse_id === ghId), [data, ghId]);
+    const sTbl = useMemo(() => data.tables.find(t => t.id === selTbl), [data, selTbl]);
+    const swarn = useMemo(() => !aGh || dimSpray[ghId] ? null : sprayedRecently(aGh) ? aGh : null, [aGh, ghId, dimSpray]);
+    const stats = useMemo(() => { const ps = aPlants.filter(p => p.genotype); return { total: ps.length, h: ps.filter(p => p.status === 'healthy').length, w: ps.filter(p => p.status === 'wilting').length, d: ps.filter(p => p.status === 'dead').length }; }, [aPlants]);
+    /* zoom */
+    useEffect(() => { const vp = vpRef.current; if (!vp)
+        return; const fn = e => { e.preventDefault(); const r = vp.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top, fc = 1 - (e.deltaY * (e.ctrlKey ? 0.002 : 0.0008)); setZoom(z => { const nz = clamp(z * fc, MINZ, MAXZ); setPan(p => ({ x: mx - (mx - p.x) * (nz / z), y: my - (my - p.y) * (nz / z) })); return nz; }); }; vp.addEventListener('wheel', fn, { passive: false }); return () => vp.removeEventListener('wheel', fn); }, []);
+    useLayoutEffect(() => { if (!wrRef.current)
+        return; wrRef.current.style.transform = `translate(${pan.x}px,${pan.y}px) scale(${zoom})`; wrRef.current.dataset.zoom = zoom; }, [zoom, pan]);
+    useEffect(() => { const kd = e => { var _a; if (e.code === 'Space' && !e.target.matches('input,textarea,select')) {
+        e.preventDefault();
+        spRef.current = true;
+        (_a = vpRef.current) === null || _a === void 0 ? void 0 : _a.classList.add('space-mode');
+    } }; const ku = e => { var _a; if (e.code === 'Space') {
+        spRef.current = false;
+        (_a = vpRef.current) === null || _a === void 0 ? void 0 : _a.classList.remove('space-mode');
+    } }; window.addEventListener('keydown', kd); window.addEventListener('keyup', ku); return () => { window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); }; }, []);
+    const hVpMd = useCallback(e => { var _a; if (!(e.button === 1 || e.button === 2 || spRef.current))
+        return; e.preventDefault(); panRef.current = { sx: e.clientX, sy: e.clientY, px: pan.x, py: pan.y }; (_a = vpRef.current) === null || _a === void 0 ? void 0 : _a.classList.add('panning'); const mv = e => { if (!panRef.current)
+        return; setPan({ x: panRef.current.px + (e.clientX - panRef.current.sx), y: panRef.current.py + (e.clientY - panRef.current.sy) }); }; const up = () => { var _a; panRef.current = null; (_a = vpRef.current) === null || _a === void 0 ? void 0 : _a.classList.remove('panning'); window.removeEventListener('mousemove', mv); window.removeEventListener('mouseup', up); }; window.addEventListener('mousemove', mv); window.addEventListener('mouseup', up); }, [pan]);
+    const hVpTouch = useCallback(e => { var _a; if (e.touches.length !== 1)
+        return; const t = e.touches[0]; panRef.current = { sx: t.clientX, sy: t.clientY, px: pan.x, py: pan.y }; (_a = vpRef.current) === null || _a === void 0 ? void 0 : _a.classList.add('panning'); const mv = ev => { if (!panRef.current || ev.touches.length !== 1)
+        return; const tt = ev.touches[0]; setPan({ x: panRef.current.px + (tt.clientX - panRef.current.sx), y: panRef.current.py + (tt.clientY - panRef.current.sy) }); }; const up = () => { var _a; panRef.current = null; (_a = vpRef.current) === null || _a === void 0 ? void 0 : _a.classList.remove('panning'); window.removeEventListener('touchmove', mv); window.removeEventListener('touchend', up); }; window.addEventListener('touchmove', mv, { passive: false }); window.addEventListener('touchend', up); }, [pan]);
+    const fitRoom = useCallback(() => { if (!aGh || !vpRef.current)
+        return; const r = vpRef.current.getBoundingClientRect(); if (r.width < 50 || r.height < 50)
+        return; const nz = clamp(Math.min((r.width - 80) / (aGh.width * WS), (r.height - 80) / (aGh.length * WS)), MINZ, MAXZ); setZoom(nz); setPan({ x: (r.width - aGh.width * WS * nz) / 2, y: (r.height - aGh.length * WS * nz) / 2 }); }, [aGh]);
+    useEffect(() => { if (aGh)
+        setTimeout(fitRoom, 60); }, [ghId]);
+    useEffect(() => { if (tab === 'layout' && aGh)
+        setTimeout(fitRoom, 40); }, [tab]);
+    const updGh = (k, v) => setData(d => (Object.assign(Object.assign({}, d), { greenhouses: d.greenhouses.map(g => g.id === ghId ? Object.assign(Object.assign({}, g), { [k]: isNaN(+v) ? v : +v }) : g) })));
+    const createGH = () => { if (!ghFm.name.trim())
+        return; const g = { id: uid(), name: ghFm.name.trim(), width: +ghFm.width || 400, length: +ghFm.length || 300, notes: '', last_sprayed_at: null, spray_material: '', spray_category: '', spray_notes: '', created_by: (user === null || user === void 0 ? void 0 : user.id) || 'u', created_at: now() }; setData(d => (Object.assign(Object.assign({}, d), { greenhouses: [...d.greenhouses, g] }))); setGhId(g.id); setShowAGH(false); setGhFm({ name: '', width: 600, length: 400 }); notify(`"${g.name}" created`); logActivity(`Created greenhouse: ${g.name}`); };
+    const delGH = id => {
+        const g = data.greenhouses.find(x => x.id === id);
+        setDelConfirm({ type: 'gh', id, name: (g === null || g === void 0 ? void 0 : g.name) || 'this greenhouse',
+            onConfirm: () => {
+                var _a;
+                setData(d => (Object.assign(Object.assign({}, d), { greenhouses: d.greenhouses.filter(g => g.id !== id), tables: d.tables.filter(t => t.greenhouse_id !== id), plants: d.plants.filter(p => p.greenhouse_id !== id), structs: (d.structs || []).filter(s => s.greenhouse_id !== id) })));
+                if (ghId === id)
+                    setGhId(((_a = data.greenhouses.find(g => g.id !== id)) === null || _a === void 0 ? void 0 : _a.id) || null);
+                notify('Greenhouse deleted');
+            }
+        });
+    };
+    const recSpray = () => { if (!spFm.material.trim())
+        return; setData(d => (Object.assign(Object.assign({}, d), { greenhouses: d.greenhouses.map(g => g.id === ghId ? Object.assign(Object.assign({}, g), { last_sprayed_at: now(), spray_material: spFm.material, spray_category: spFm.category, spray_notes: spFm.notes, spray_sprayer: spFm.sprayer }) : g) }))); setShowSpray(false); setSpFm({ material: '', category: 'fungicide', notes: '', sprayer: '' }); setDimSpray(s => (Object.assign(Object.assign({}, s), { [ghId]: false }))); notify(`Spray: ${spFm.material}`); logActivity(`Recorded spray: ${spFm.material}`); };
+    const createTbl = () => { if (!tFm.name.trim() || !ghId)
+        return; const rows = clamp(+tFm.rows || 3, 1, 20), cols = clamp(+tFm.cols || 6, 1, 20); const t = { id: uid(), greenhouse_id: ghId, name: tFm.name.trim(), width: +tFm.width || 230, length: +tFm.length || 125, x_position: 20, y_position: 20, rows, cols }; const ps = []; for (let r = 0; r < rows; r++)
+        for (let c = 0; c < cols; c++)
+            ps.push({ id: uid(), table_id: t.id, greenhouse_id: ghId, row: r, col: c, genotype: '', treatment: '', planting_date: '', notes: '', status: 'empty', crop: 'Tomato', pot_style: 'sm', image: null, experiment_id: null, created_by: (user === null || user === void 0 ? void 0 : user.id) || 'u', updated_by: (user === null || user === void 0 ? void 0 : user.id) || 'u', updated_at: now() }); setData(d => (Object.assign(Object.assign({}, d), { tables: [...d.tables, t], plants: [...d.plants, ...ps] }))); setSelTbl(t.id); setShowATbl(false); setTFm({ name: '', width: 230, length: 125, rows: 3, cols: 6 }); notify(`"${t.name}" - ${rows}x${cols} pots`); logActivity(`Added table: ${t.name} (${rows}x${cols})`); };
+    const hDrag = (id, x, y, del = false) => {
+        if (del) {
+            const t = data.tables.find(x => x.id === id);
+            setDelConfirm({ type: 'tbl', id, name: (t === null || t === void 0 ? void 0 : t.name) || 'this table',
+                onConfirm: () => {
+                    setData(d => (Object.assign(Object.assign({}, d), { tables: d.tables.filter(t => t.id !== id), plants: d.plants.filter(p => p.table_id !== id) })));
+                    setSelTbl(null);
+                    notify('Table deleted');
+                }
+            });
+            return;
+        }
+        setData(d => (Object.assign(Object.assign({}, d), { tables: d.tables.map(t => t.id === id ? Object.assign(Object.assign({}, t), { x_position: Math.max(0, x), y_position: Math.max(0, y) }) : t) })));
+    };
+    const updGrid = (rows, cols) => setData(d => { const tbl = d.tables.find(t => t.id === selTbl); if (!tbl)
+        return d; const r = clamp(rows, 1, 20), c = clamp(cols, 1, 20), ex = d.plants.filter(p => p.table_id === selTbl), nps = []; for (let ri = 0; ri < r; ri++)
+        for (let ci = 0; ci < c; ci++) {
+            const ep = ex.find(p => p.row === ri && p.col === ci);
+            if (ep)
+                nps.push(ep);
+            else
+                nps.push({ id: uid(), table_id: selTbl, greenhouse_id: tbl.greenhouse_id, row: ri, col: ci, genotype: '', treatment: '', planting_date: '', notes: '', status: 'empty', crop: 'Tomato', pot_style: 'sm', image: null, experiment_id: null, created_by: (user === null || user === void 0 ? void 0 : user.id) || 'u', updated_by: (user === null || user === void 0 ? void 0 : user.id) || 'u', updated_at: now() });
+        } return Object.assign(Object.assign({}, d), { tables: d.tables.map(t => t.id === selTbl ? Object.assign(Object.assign({}, t), { rows: r, cols: c }) : t), plants: [...d.plants.filter(p => p.table_id !== selTbl), ...nps] }); });
+    /* struct */
+    const addStruct = () => { const defW = nStType === 'door' ? 20 : nStType === 'hall' ? +nStrFm.w || 60 : 50; const defH = nStType === 'door' ? 40 : nStType === 'hall' ? +nStrFm.h || 30 : 25; const s = { id: uid(), greenhouse_id: ghId, type: nStType, x: 30, y: 30, w: defW, h: defH }; setData(d => (Object.assign(Object.assign({}, d), { structs: [...(d.structs || []), s] }))); setShowAStr(false); notify('Object added'); };
+    const hStrDrag = (id, x, y) => setData(d => (Object.assign(Object.assign({}, d), { structs: (d.structs || []).map(s => s.id === id ? Object.assign(Object.assign({}, s), { x: Math.max(0, x), y: Math.max(0, y) }) : s) })));
+    const delStruct = id => setData(d => (Object.assign(Object.assign({}, d), { structs: (d.structs || []).filter(s => s.id !== id) })));
+    /* pot click */
+    const hPotClick = useCallback((e, tblId, row, col, plant) => { if (!plant)
+        return; setActPot(plant.id); const rect = e.currentTarget.getBoundingClientRect(); const tbl = data.tables.find(t => t.id === tblId), gh = data.greenhouses.find(g => g.id === (tbl === null || tbl === void 0 ? void 0 : tbl.greenhouse_id)); setPopup({ plant, rect, tblNm: (tbl === null || tbl === void 0 ? void 0 : tbl.name) || '?', ghNm: (gh === null || gh === void 0 ? void 0 : gh.name) || '?' }); }, [data]);
+    const savePlant = upd => { const w = Object.assign(Object.assign({}, upd), { updated_by: (user === null || user === void 0 ? void 0 : user.id) || 'u', updated_at: now() }); setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => p.id === w.id ? w : p) }))); setPopup(null); setActPot(null); notify('Saved'); logActivity(`Updated pot: ${w.genotype || 'empty'}`); };
+    /* delete pot = clear data, keep slot */
+    const delPot = id => { setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => p.id !== id ? p : Object.assign(Object.assign({}, p), { genotype: '', treatment: '', planting_date: '', notes: '', status: 'empty', image: null, experiment_id: null })) }))); notify('Pot cleared'); };
+    /* selection */
+    const togSel = id => setSelPots(ps => ps.includes(id) ? ps.filter(x => x !== id) : [...ps, id]);
+    const assExp = () => {
+        let eid = assExpFm.mode === 'existing' ? assExpFm.existId : null;
+        if (assExpFm.mode === 'new') {
+            if (!assExpFm.newName.trim())
+                return;
+            const ex = { id: uid(), name: assExpFm.newName.trim(), owner_name: assExpFm.newOwner || (user === null || user === void 0 ? void 0 : user.name) || '', description: assExpFm.newDesc, created_at: now(), color_index: data.experiments.length % 8 };
+            setData(d => { const nd = Object.assign(Object.assign({}, d), { experiments: [...d.experiments, ex], plants: d.plants.map(p => selPots.includes(p.id) ? Object.assign(Object.assign({}, p), { experiment_id: ex.id }) : p) }); return nd; });
+        }
+        else {
+            if (!eid)
+                return;
+            setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => selPots.includes(p.id) ? Object.assign(Object.assign({}, p), { experiment_id: eid }) : p) })));
+        }
+        setSelMode(false);
+        setSelPots([]);
+        setShowAssExp(false);
+        notify(`${selPots.length} pots assigned`);
+        logActivity(`Assigned ${selPots.length} pots to experiment`);
+    };
+    const createExp = () => { if (!eFm.name.trim())
+        return; const ex = { id: uid(), name: eFm.name.trim(), owner_name: eFm.owner_name || (user === null || user === void 0 ? void 0 : user.name) || '', description: eFm.description, created_at: now(), color_index: data.experiments.length % 8 }; setData(d => (Object.assign(Object.assign({}, d), { experiments: [...d.experiments, ex] }))); setShowAExp(false); setEFm({ name: '', owner_name: '', description: '' }); notify(`Exp "${ex.name}" created`); logActivity(`Created experiment: ${ex.name}`); };
+    const startEditExp = ex => { setEditExpId(ex.id); setEFm({ name: ex.name, owner_name: ex.owner_name || '', description: ex.description || '' }); setShowEditExp(true); };
+    const saveEditExp = () => { if (!eFm.name.trim())
+        return; setData(d => (Object.assign(Object.assign({}, d), { experiments: d.experiments.map(e => e.id === editExpId ? Object.assign(Object.assign({}, e), { name: eFm.name.trim(), owner_name: eFm.owner_name, description: eFm.description }) : e) }))); setShowEditExp(false); setEditExpId(null); setEFm({ name: '', owner_name: '', description: '' }); notify('Experiment updated'); };
+    const deleteExp = id => {
+        if (!window.confirm('Delete this experiment? Pots assigned to it will become unassigned. No pots are deleted.'))
+            return;
+        setData(d => (Object.assign(Object.assign({}, d), { experiments: d.experiments.filter(e => e.id !== id), plants: d.plants.map(p => p.experiment_id === id ? Object.assign(Object.assign({}, p), { experiment_id: null }) : p) })));
+        notify('Experiment deleted — pots unassigned');
+    };
+    const hSearchSel = p => { setGhId(p.greenhouse_id); setActPot(p.id); setTab('layout'); setTimeout(() => { const tbl = data.tables.find(t => t.id === p.table_id), gh = data.greenhouses.find(g => g.id === p.greenhouse_id); if (tbl && gh)
+        setPopup({ plant: p, rect: null, tblNm: tbl.name, ghNm: gh.name }); }, 300); };
+    const updUser = (id, fm) => { setData(d => (Object.assign(Object.assign({}, d), { users: d.users.map(u => u.id === id ? Object.assign(Object.assign({}, u), fm) : u) }))); if ((user === null || user === void 0 ? void 0 : user.id) === id)
+        setUser(u => (Object.assign(Object.assign({}, u), fm))); notify('Profile saved'); };
+    const addMember = () => { if (!nMFm.name.trim())
+        return; const u = { id: uid(), name: nMFm.name.trim(), email: nMFm.email, position: nMFm.position, role: nMFm.role, color: '#' + Math.floor(Math.random() * 0x888888 + 0x444444).toString(16), photo: null }; setData(d => (Object.assign(Object.assign({}, d), { users: [...d.users, u] }))); setShowAMem(false); setNMFm({ name: '', email: '', position: '', role: 'member' }); notify(`${u.name} added`); };
+    /* stock */
+    const addStockItem = it => setData(d => (Object.assign(Object.assign({}, d), { stock: [...(d.stock || []), it] })));
+    const editStockItem = (id, fm) => setData(d => (Object.assign(Object.assign({}, d), { stock: (d.stock || []).map(s => s.id === id ? Object.assign(Object.assign(Object.assign({}, s), fm), { quantity: +fm.quantity || 0 }) : s) })));
+    const removeStockItem = id => setData(d => (Object.assign(Object.assign({}, d), { stock: (d.stock || []).filter(s => s.id !== id) })));
+    const qtyStockItem = (id, delta) => setData(d => (Object.assign(Object.assign({}, d), { stock: (d.stock || []).map(s => s.id === id ? Object.assign(Object.assign({}, s), { quantity: Math.max(0, s.quantity + delta) }) : s) })));
+    const togLock = () => { if (!locked) {
+        setData(d => (Object.assign(Object.assign({}, d), { locked: true })));
+        setEditTbl(null);
+        notify('Layout locked');
+        return;
+    } setShowUL(true); };
+    const totPlants = useMemo(() => data.plants.filter(p => p.genotype).length, [data]);
+    if (!activeLab)
+        return React.createElement(LabSelectScreen, { onSelectLab: selectLab });
+    if (!user)
+        return React.createElement(LoginScreen, { users: data.users, onLogin: u => { setUser(u); if (!data.users.find(x => x.id === u.id))
+                setData(d => (Object.assign(Object.assign({}, d), { users: [...d.users, u] }))); }, labName: activeLab.name });
+    return (React.createElement(React.Fragment, null,
+        swarn && React.createElement("div", { className: "swarn" },
+            React.createElement("span", { style: { fontSize: 16 } }, "\u26A0\uFE0F"),
+            React.createElement("div", { style: { fontSize: 12, fontWeight: 600, color: '#fff', flex: 1 } }, aGh === null || aGh === void 0 ? void 0 :
+                aGh.name,
+                " sprayed ",
+                ago(aGh === null || aGh === void 0 ? void 0 : aGh.last_sprayed_at),
+                " \u2014 ", aGh === null || aGh === void 0 ? void 0 :
+                aGh.spray_material,
+                " (", aGh === null || aGh === void 0 ? void 0 :
+                aGh.spray_category,
+                ")"),
+            React.createElement("span", { style: { fontSize: 11, color: 'rgba(255,255,255,.7)', fontFamily: 'DM Mono', flexShrink: 0 } }, "24h warning"),
+            React.createElement("button", { style: { background: 'rgba(255,255,255,.15)', border: 'none', color: '#fff', borderRadius: 5, padding: '3px 9px', fontSize: 11, cursor: 'pointer' }, onClick: () => setDimSpray(s => (Object.assign(Object.assign({}, s), { [ghId]: true }))) }, "Dismiss")),
+        React.createElement("div", { className: "app" },
+            menuOpen && React.createElement("div", { className: "sb-overlay", onClick: () => setMenuOpen(false) }),
+            React.createElement("div", { className: `sb${menuOpen ? " open" : ""}` },
+                React.createElement("div", { className: "sb-logo" },
+                    React.createElement("div", { className: "sb-logo-ic" }, "\uD83C\uDF45"),
+                    React.createElement("div", null,
+                        React.createElement("div", { className: "sb-logo-txt" }, "GreenLab"),
+                        React.createElement("div", { className: "sb-logo-sub" }, "Greenhouse Management"))),
+                React.createElement("div", { className: "sb-lab", onClick: () => { setActiveLab(null); setUser(null); } },
+                    React.createElement("div", { className: "sb-lab-dot" }),
+                    React.createElement("span", { className: "sb-lab-name" },
+                        activeLab.icon || '🌿',
+                        " ",
+                        activeLab.name),
+                    React.createElement("span", { className: "sb-lab-arrow" }, "\u21C4")),
+                React.createElement("div", { style: { height: 8 } }),
+                React.createElement("div", { className: "sb-section-lbl", style: { padding: '0 12px 6px' } }, "Greenhouses"),
+                React.createElement("div", { className: "sb-top" },
+                    React.createElement("div", { className: "slbl" }, "Greenhouses"),
+                    data.greenhouses.map(g => React.createElement("div", { key: g.id, className: `ghi${ghId === g.id ? ' on' : ''}${sprayedRecently(g) ? ' spray' : ''}`, onClick: () => { setGhId(g.id); setSelTbl(null); setActPot(null); setPopup(null); setEditTbl(null); } },
+                        React.createElement("div", { className: "ghdot" }),
+                        React.createElement("div", { className: "ghinfo" },
+                            React.createElement("div", { className: "ghnm" },
+                                g.name,
+                                sprayedRecently(g) && React.createElement("span", { style: { marginLeft: 5, fontSize: 9, color: '#ef4444', fontWeight: 600 } }, "SPRAYED")),
+                            React.createElement("div", { className: "ghmeta" },
+                                g.width,
+                                "x",
+                                g.length,
+                                "cm \u00B7 ",
+                                data.tables.filter(t => t.greenhouse_id === g.id).length,
+                                "T",
+                                g.last_sprayed_at ? ' · ' + ago(g.last_sprayed_at) : '')),
+                        !locked && React.createElement("button", { className: "ghdel", onClick: e => { e.stopPropagation(); delGH(g.id); } }, "x"))),
+                    !locked && React.createElement("button", { className: "btn btns btnw bsm", style: { marginTop: 8 }, onClick: () => { setGhFm({ name: '', width: 600, length: 400 }); setShowAGH(true); } }, "+ New Greenhouse")),
+                React.createElement("div", { className: "sb-sc" },
+                    aGh && React.createElement("div", { className: "pg" },
+                        React.createElement("div", { className: "pgt" }, "Notes"),
+                        React.createElement("textarea", { className: "pta", rows: 3, value: aGh.notes || '', placeholder: "General notes...", onChange: e => updGh('notes', e.target.value) })),
+                    aGh && React.createElement("div", { className: "pg", style: { borderTop: '1px solid var(--bo)', paddingTop: 11 } },
+                        React.createElement("div", { className: "pgt" }, "Spray"),
+                        aGh.last_sprayed_at ? React.createElement("div", { style: { fontSize: 11, fontFamily: 'DM Mono', lineHeight: 1.6 } },
+                            React.createElement("div", { style: { color: sprayedRecently(aGh) ? '#dc2626' : 'var(--i2)', fontWeight: 600 } }, aGh.spray_material),
+                            React.createElement("div", { style: { fontSize: 10, color: 'var(--i4)' } },
+                                aGh.spray_category,
+                                " \u00B7 ",
+                                ago(aGh.last_sprayed_at),
+                                aGh.spray_sprayer ? ' · ' + aGh.spray_sprayer : ''))
+                            : React.createElement("div", { style: { fontSize: 11, color: 'var(--i5)', fontFamily: 'DM Mono' } }, "No spray recorded"),
+                        React.createElement("button", { className: "btn bamb btnw bsm", style: { marginTop: 6 }, onClick: () => { setSpFm({ material: '', category: 'fungicide', notes: '' }); setShowSpray(true); } }, "Record Spray")),
+                    aGh && !locked && React.createElement("div", { className: "pg", style: { borderTop: '1px solid var(--bo)', paddingTop: 11 } },
+                        React.createElement("div", { className: "pgt" }, "Room"),
+                        React.createElement("div", { className: "pr" },
+                            React.createElement("span", { className: "pla" }, "Name"),
+                            React.createElement("input", { className: "pi", value: aGh.name, onChange: e => updGh('name', e.target.value) })),
+                        React.createElement("div", { className: "pr" },
+                            React.createElement("span", { className: "pla" }, "Width"),
+                            React.createElement("div", { className: "piu" },
+                                React.createElement("input", { type: "number", value: aGh.width, onChange: e => updGh('width', e.target.value) }),
+                                React.createElement("span", { className: "pu" }, "cm"))),
+                        React.createElement("div", { className: "pr" },
+                            React.createElement("span", { className: "pla" }, "Length"),
+                            React.createElement("div", { className: "piu" },
+                                React.createElement("input", { type: "number", value: aGh.length, onChange: e => updGh('length', e.target.value) }),
+                                React.createElement("span", { className: "pu" }, "cm"))),
+                        React.createElement("button", { className: "btn btns btnw bsm", style: { marginTop: 6 }, onClick: () => setShowAStr(true) }, "+ Add object")),
+                    sTbl && !locked && React.createElement("div", { className: "pg", style: { borderTop: '1px solid var(--bo)', paddingTop: 11 } },
+                        React.createElement("div", { className: "pgt" },
+                            "Table - ",
+                            sTbl.name),
+                        React.createElement("div", { className: "pr" },
+                            React.createElement("span", { className: "pla" }, "Name"),
+                            React.createElement("input", { className: "pi", value: sTbl.name, onChange: e => setData(d => (Object.assign(Object.assign({}, d), { tables: d.tables.map(t => t.id === selTbl ? Object.assign(Object.assign({}, t), { name: e.target.value }) : t) }))) })),
+                        React.createElement("div", { style: { fontSize: 10, color: 'var(--i4)', fontFamily: 'DM Mono', marginBottom: 6 } },
+                            "Fixed size: ",
+                            sTbl.width,
+                            "x",
+                            sTbl.length,
+                            "cm"),
+                        React.createElement("div", { className: "pr" },
+                            React.createElement("span", { className: "pla" }, "Rows"),
+                            React.createElement("div", { className: "piu" },
+                                React.createElement("input", { type: "number", min: "1", max: "20", value: sTbl.rows, onChange: e => updGrid(+e.target.value, sTbl.cols) }))),
+                        React.createElement("div", { className: "pr" },
+                            React.createElement("span", { className: "pla" }, "Cols"),
+                            React.createElement("div", { className: "piu" },
+                                React.createElement("input", { type: "number", min: "1", max: "20", value: sTbl.cols, onChange: e => updGrid(sTbl.rows, +e.target.value) }))),
+                        React.createElement("div", { style: { display: 'flex', gap: 5, marginTop: 7 } },
+                            React.createElement("button", { className: "btn btns bsm", style: { flex: 1 }, onClick: () => setEditTbl(editTbl === selTbl ? null : selTbl) }, editTbl === selTbl ? 'Done editing' : 'Edit pots'),
+                            React.createElement("button", { className: "btn btnd bsm", onClick: () => hDrag(selTbl, null, null, true) }, "Delete"))),
+                    aGh && locked && React.createElement(React.Fragment, null,
+                        React.createElement("div", { className: "pg", style: { borderTop: '1px solid var(--bo)', paddingTop: 11 } },
+                            React.createElement("div", { className: "pgt" }, aGh.name),
+                            React.createElement("div", { className: "sc" },
+                                React.createElement("div", { className: "scard" },
+                                    React.createElement("div", { className: "sv" }, aTbls.length),
+                                    React.createElement("div", { className: "sk" }, "Tables")),
+                                React.createElement("div", { className: "scard" },
+                                    React.createElement("div", { className: "sv" }, stats.total),
+                                    React.createElement("div", { className: "sk" }, "Plants")),
+                                React.createElement("div", { className: "scard", style: { borderColor: '#a3d4b0', background: '#edf7f1' } },
+                                    React.createElement("div", { className: "sv", style: { color: 'var(--lf)' } }, stats.h),
+                                    React.createElement("div", { className: "sk" }, "Healthy")),
+                                React.createElement("div", { className: "scard", style: { borderColor: '#f5d88a', background: '#fef9e7' } },
+                                    React.createElement("div", { className: "sv", style: { color: 'var(--am)' } }, stats.w),
+                                    React.createElement("div", { className: "sk" }, "Wilting")),
+                                stats.d > 0 && React.createElement("div", { className: "scard", style: { borderColor: '#f0b8b8', background: '#fdf0ef', gridColumn: '1/-1' } },
+                                    React.createElement("div", { className: "sv", style: { color: 'var(--to)' } }, stats.d),
+                                    React.createElement("div", { className: "sk" }, "Dead")))),
+                        aTbls.length > 0 && React.createElement("div", { className: "pg", style: { borderTop: '1px solid var(--bo)', paddingTop: 11 } },
+                            React.createElement("div", { className: "pgt" }, "Tables"),
+                            aTbls.map(t => {
+                                const filled = aPlants.filter(p => p.table_id === t.id && p.genotype).length;
+                                return (React.createElement("div", { key: t.id, className: `tli${selTbl === t.id ? ' on' : ''}`, onClick: () => setSelTbl(t.id === selTbl ? null : t.id) },
+                                    React.createElement("div", null,
+                                        React.createElement("span", { style: { fontSize: 11, fontWeight: 500, color: 'var(--i2)', fontFamily: 'DM Mono', display: 'block' } }, t.name),
+                                        React.createElement("span", { style: { fontSize: 10, color: 'var(--i4)', fontFamily: 'DM Mono', display: 'block', marginTop: 1 } },
+                                            t.rows,
+                                            "x",
+                                            t.cols,
+                                            " \u00B7 ",
+                                            filled,
+                                            "/",
+                                            t.rows * t.cols))));
+                            }))),
+                    React.createElement("div", { className: "pg", style: { borderTop: '1px solid var(--bo)', paddingTop: 11 } },
+                        React.createElement("div", { className: "pgt", style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+                            "Experiments",
+                            React.createElement("button", { className: "btn btns bxs", onClick: () => { setEFm({ name: '', owner_name: (user === null || user === void 0 ? void 0 : user.name) || '', description: '' }); setShowAExp(true); } }, "+")),
+                        data.experiments.length === 0 && React.createElement("div", { style: { fontSize: 10, color: 'var(--i5)', fontFamily: 'DM Mono' } }, "None yet"),
+                        data.experiments.map(ex => {
+                            const cnt = data.plants.filter(p => p.experiment_id === ex.id).length;
+                            return (React.createElement("div", { key: ex.id, className: "eli" },
+                                React.createElement("div", { style: { width: 10, height: 10, borderRadius: 3, background: EC[ex.color_index % 8], flexShrink: 0 } }),
+                                React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+                                    React.createElement("div", { style: { fontSize: 11, fontWeight: 500, color: 'var(--i2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, ex.name),
+                                    React.createElement("div", { style: { fontSize: 9, color: 'var(--i4)', fontFamily: 'DM Mono' } },
+                                        ex.owner_name ? ex.owner_name.split(' ')[0] : '—',
+                                        " \u00B7 ",
+                                        cnt,
+                                        " pot",
+                                        cnt !== 1 ? 's' : '')),
+                                React.createElement("div", { className: "eli-acts" },
+                                    React.createElement("button", { className: "eli-btn", onClick: () => startEditExp(ex) }, "Edit"),
+                                    React.createElement("button", { className: "eli-btn del", onClick: () => deleteExp(ex.id) }, "Del"))));
+                        }))),
+                React.createElement("div", { className: "sb-bottom" },
+                    React.createElement("div", { className: "sb-user", onClick: () => setUser(null) },
+                        React.createElement("div", { className: "uav", style: { background: user.color } }, user.photo ? React.createElement("img", { src: user.photo, alt: user.name }) : user.name.charAt(0)),
+                        React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+                            React.createElement("div", { className: "sb-user-name" }, user.name),
+                            React.createElement("div", { className: "sb-user-role" }, user.position || user.role))))),
+            React.createElement("div", { className: "main" },
+                React.createElement("div", { className: "tab-bar" },
+                    React.createElement("button", { className: "mob-menu-btn", onClick: () => setMenuOpen(m => !m), "aria-label": "Menu" }, "\u2630"),
+                    [['layout', 'Layout'], ['search', 'Plants'], ['team', 'Team'], ['stock', 'Stock'], ['dash', 'Dashboard']].map(([t, lbl]) => (React.createElement("button", { key: t, className: `tab-btn${tab === t ? ' on' : ''}`, onClick: () => { setTab(t); setMenuOpen(false); } }, lbl))),
+                    React.createElement("div", { className: "tab-bar-r" },
+                        React.createElement("span", { className: "hbadge" },
+                            totPlants,
+                            " plants"),
+                        React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, onClick: syncStatus === 'error' ? () => { saveData(data, activeLab === null || activeLab === void 0 ? void 0 : activeLab.id); setSyncStatus('saved'); } : () => setShowFbPanel(true) }),
+                        React.createElement("button", { className: "btns btn bsm", onClick: () => setShowShare(true) }, "Share"),
+                        React.createElement("button", { className: `lkbtn${!locked ? ' edit' : ''}`, onClick: togLock }, locked ? 'Locked' : 'Edit mode'))),
+                React.createElement("div", { className: "toolbar" },
+                    !locked && aGh && tab === 'layout' && React.createElement("button", { className: "btn btnp bsm", onClick: () => { setTFm({ name: `B${aTbls.length + 1}`, width: 230, length: 125, rows: 3, cols: 6 }); setShowATbl(true); } }, "+ Table"),
+                    !locked && React.createElement("div", { className: "enote" }, "Edit mode"),
+                    editTbl && React.createElement("div", { className: "tenote" }, "Table edit \u2014 click x to remove pots"),
+                    tab === 'layout' && React.createElement(React.Fragment, null,
+                        React.createElement("div", { className: "tsep" }),
+                        React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 4 } },
+                            React.createElement("button", { className: "zbtn", onClick: () => setZoom(z => clamp(z / 1.25, MINZ, MAXZ)) }, "-"),
+                            React.createElement("span", { className: "zval" },
+                                Math.round(zoom * 100),
+                                "%"),
+                            React.createElement("button", { className: "zbtn", onClick: () => setZoom(z => clamp(z * 1.25, MINZ, MAXZ)) }, "+"),
+                            React.createElement("button", { className: "zbtn", style: { width: 'auto', padding: '0 7px', fontSize: 9, fontFamily: 'DM Mono' }, onClick: fitRoom }, "Fit")),
+                        React.createElement("div", { className: "tsep" }),
+                        React.createElement("button", { className: `selbtn${selMode ? ' on' : ''}`, onClick: () => { setSelMode(s => !s); setSelPots([]); } }, selMode ? 'Selecting...' : 'Select pots')),
+                    aGh && tab === 'layout' && React.createElement("div", { className: "tmeta" },
+                        aGh.name,
+                        " \u00B7 ",
+                        aGh.width,
+                        "x",
+                        aGh.length,
+                        "cm")),
+                selMode && selPots.length > 0 && React.createElement("div", { className: "ssel" },
+                    React.createElement("strong", null, selPots.length),
+                    " pots selected",
+                    React.createElement("button", { className: "btn btnp bsm", onClick: () => { var _a; setAssExpFm({ mode: 'existing', newName: '', newOwner: (user === null || user === void 0 ? void 0 : user.name) || '', newDesc: '', existId: ((_a = data.experiments[0]) === null || _a === void 0 ? void 0 : _a.id) || '' }); setShowAssExp(true); } }, "Assign experiment"),
+                    React.createElement("button", { className: "btn bsm", style: { background: 'rgba(255,255,255,.15)', color: '#fff', border: 'none' }, onClick: () => { setSelPots([]); setSelMode(false); } }, "Cancel")),
+                tab === 'layout' && React.createElement(React.Fragment, null,
+                    React.createElement("div", { ref: vpRef, className: "cvp", onMouseDown: hVpMd, onTouchStart: hVpTouch, onContextMenu: e => e.preventDefault(), onClick: e => { if (e.target === e.currentTarget) {
+                            setSelTbl(null);
+                            setPopup(null);
+                        } } },
+                        aGh ? React.createElement("div", { ref: wrRef, className: "cvw" },
+                            React.createElement("div", { className: "ghr", style: { width: aGh.width * WS, height: aGh.length * WS }, onClick: e => { if (e.target === e.currentTarget) {
+                                    setSelTbl(null);
+                                    setPopup(null);
+                                } } },
+                                React.createElement("div", { className: "rgrid" }),
+                                React.createElement("div", { className: "rlabel" }, aGh.name),
+                                aStructs.map(s => React.createElement(StructObj, { key: s.id, obj: s, locked: locked, onDrag: hStrDrag, onDel: delStruct })),
+                                React.createElement(ExpOverlay, { tables: aTbls, plants: aPlants, exps: data.experiments }),
+                                aTbls.map(t => React.createElement(TableBlock, { key: t.id, table: t, plants: aPlants.filter(p => p.table_id === t.id), locked: locked, isSel: selTbl === t.id, activePotId: actPot, selMode: selMode, selPots: selPots, editTblId: editTbl, onSel: id => { setSelTbl(id); setPopup(null); }, onDrag: hDrag, onPotClick: hPotClick, onPotSel: togSel, onDel: delPot, onToggleEdit: id => setEditTbl(editTbl === id ? null : id) })))) : React.createElement("div", { className: "empty-st", style: { position: 'absolute', inset: 0, display: 'flex' } },
+                            React.createElement("div", { style: { fontSize: 48, opacity: .3 } }, "\uD83C\uDF45"),
+                            React.createElement("div", { style: { fontFamily: 'Lora', fontSize: 17, color: 'var(--i2)' } }, "No greenhouse selected"),
+                            React.createElement("button", { className: "btn btnp", onClick: () => { setData(d => (Object.assign(Object.assign({}, d), { locked: false }))); setGhFm({ name: '', width: 600, length: 400 }); setShowAGH(true); } }, "Create greenhouse")),
+                        aGh && React.createElement("div", { className: "cvhint" },
+                            "Scroll=zoom \u00B7 Space+drag=pan",
+                            React.createElement("br", null),
+                            "Click pot to edit \u00B7 \"Edit\" on table header")),
+                    React.createElement("div", { className: "sbar" },
+                        React.createElement("div", { className: "si" },
+                            React.createElement("div", { className: "sidot", style: { background: 'var(--lf)' } }),
+                            "Zoom ",
+                            React.createElement("strong", null,
+                                Math.round(zoom * 100),
+                                "%")),
+                        ((_a = data.plants.find(p => p.id === actPot)) === null || _a === void 0 ? void 0 : _a.genotype) && React.createElement("div", { className: "si" },
+                            "Selected: ",
+                            React.createElement("strong", null, data.plants.find(p => p.id === actPot).genotype)),
+                        React.createElement("div", { className: "si", style: { marginLeft: 'auto' } },
+                            React.createElement("div", { className: "sidot", style: { background: locked ? 'var(--lf)' : 'var(--am)' } }),
+                            locked ? 'Click pot to edit' : 'Edit mode',
+                            editTbl && ' · Table edit active'))),
+                tab === 'search' && React.createElement(SearchView, { plants: data.plants, tables: data.tables, ghs: data.greenhouses, exps: data.experiments, onSel: hSearchSel }),
+                tab === 'team' && React.createElement(TeamPage, { users: data.users, curUser: user, onUpdate: updUser, onAdd: () => setShowAMem(true) }),
+                tab === 'stock' && React.createElement(StockView, { stock: data.stock || [], onAdd: addStockItem, onEdit: editStockItem, onRemove: removeStockItem, onQty: qtyStockItem }),
+                tab === 'dash' && React.createElement(DashView, { greenhouses: data.greenhouses, tables: data.tables, structs: data.structs || [] }))),
+        popup && React.createElement(PotPopup, { plant: popup.plant, tblNm: popup.tblNm, ghNm: popup.ghNm, rect: popup.rect, exps: data.experiments, allPlants: data.plants, users: data.users, onSave: savePlant, onClose: () => { setPopup(null); setActPot(null); } }),
+        showAGH && React.createElement(Modal, { title: "New Greenhouse", onClose: () => setShowAGH(false), onConfirm: createGH },
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Name"),
+                React.createElement("input", { className: "moi", placeholder: "e.g. Greenhouse A", value: ghFm.name, onChange: e => setGhFm(f => (Object.assign(Object.assign({}, f), { name: e.target.value }))), autoFocus: true })),
+            React.createElement("div", { className: "morow" },
+                React.createElement("div", { className: "mof" },
+                    React.createElement("label", { className: "mol" }, "Width (cm)"),
+                    React.createElement("input", { className: "moi", type: "number", value: ghFm.width, onChange: e => setGhFm(f => (Object.assign(Object.assign({}, f), { width: e.target.value }))) })),
+                React.createElement("div", { className: "mof" },
+                    React.createElement("label", { className: "mol" }, "Length (cm)"),
+                    React.createElement("input", { className: "moi", type: "number", value: ghFm.length, onChange: e => setGhFm(f => (Object.assign(Object.assign({}, f), { length: e.target.value }))) })))),
+        showATbl && React.createElement(Modal, { title: "Add Table", wide: true, onClose: () => setShowATbl(false), onConfirm: createTbl, sub: "Table size fixed after creation." },
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Name"),
+                React.createElement("input", { className: "moi", placeholder: "e.g. Bench-1", value: tFm.name, onChange: e => setTFm(f => (Object.assign(Object.assign({}, f), { name: e.target.value }))), autoFocus: true })),
+            React.createElement("div", { className: "morow" },
+                React.createElement("div", { className: "mof" },
+                    React.createElement("label", { className: "mol" }, "Width (cm)"),
+                    React.createElement("input", { className: "moi", type: "number", value: tFm.width, onChange: e => setTFm(f => (Object.assign(Object.assign({}, f), { width: e.target.value }))) })),
+                React.createElement("div", { className: "mof" },
+                    React.createElement("label", { className: "mol" }, "Length (cm)"),
+                    React.createElement("input", { className: "moi", type: "number", value: tFm.length, onChange: e => setTFm(f => (Object.assign(Object.assign({}, f), { length: e.target.value }))) }))),
+            React.createElement("div", { className: "morow" },
+                React.createElement("div", { className: "mof" },
+                    React.createElement("label", { className: "mol" }, "Rows"),
+                    React.createElement("input", { className: "moi", type: "number", min: "1", max: "20", value: tFm.rows, onChange: e => setTFm(f => (Object.assign(Object.assign({}, f), { rows: e.target.value }))) })),
+                React.createElement("div", { className: "mof" },
+                    React.createElement("label", { className: "mol" }, "Cols"),
+                    React.createElement("input", { className: "moi", type: "number", min: "1", max: "20", value: tFm.cols, onChange: e => setTFm(f => (Object.assign(Object.assign({}, f), { cols: e.target.value }))) }))),
+            React.createElement("div", { style: { background: 'var(--cr2)', border: '1px solid var(--bo)', borderRadius: 'var(--r)', padding: '8px 10px', marginTop: 6, fontSize: 11, color: 'var(--i3)', fontFamily: 'DM Mono' } },
+                +tFm.rows || 0,
+                " x ",
+                +tFm.cols || 0,
+                " = ",
+                (+tFm.rows || 0) * (+tFm.cols || 0),
+                " pots")),
+        showSpray && React.createElement(Modal, { title: "Record Spray", sub: `Log spraying for ${aGh === null || aGh === void 0 ? void 0 : aGh.name}`, onClose: () => setShowSpray(false), onConfirm: recSpray, confirmLabel: "Record" },
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Material"),
+                React.createElement("input", { className: "moi", placeholder: "e.g. Previcur...", value: spFm.material, onChange: e => setSpFm(f => (Object.assign(Object.assign({}, f), { material: e.target.value }))), autoFocus: true })),
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Category"),
+                React.createElement("select", { className: "mosel", value: spFm.category, onChange: e => setSpFm(f => (Object.assign(Object.assign({}, f), { category: e.target.value }))) }, ['fungicide', 'insecticide', 'herbicide', 'fertilizer', 'growth-regulator', 'other'].map(c => React.createElement("option", { key: c, value: c }, c)))),
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Notes"),
+                React.createElement("textarea", { className: "mota", rows: 2, value: spFm.notes, onChange: e => setSpFm(f => (Object.assign(Object.assign({}, f), { notes: e.target.value }))) })),
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Sprayed by"),
+                React.createElement("select", { className: "mosel", value: data.users.find(u => u.name === spFm.sprayer) ? spFm.sprayer : '__custom__', onChange: e => e.target.value !== '__custom__' ? setSpFm(f => (Object.assign(Object.assign({}, f), { sprayer: e.target.value }))) : setSpFm(f => (Object.assign(Object.assign({}, f), { sprayer: '' }))) },
+                    React.createElement("option", { value: "__custom__" }, "\u2014 Select or type below \u2014"),
+                    data.users.map(u => React.createElement("option", { key: u.id, value: u.name }, u.name))),
+                (!data.users.find(u => u.name === spFm.sprayer) || !spFm.sprayer) && React.createElement("input", { className: "moi", style: { marginTop: 5 }, placeholder: "Sprayer name...", value: spFm.sprayer, onChange: e => setSpFm(f => (Object.assign(Object.assign({}, f), { sprayer: e.target.value }))) })),
+            React.createElement("div", { style: { background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 'var(--r)', padding: '8px 10px', marginTop: 5, fontSize: 11, color: '#9a3412' } }, "24-hour warning will be shown to all users.")),
+        showAExp && React.createElement(Modal, { title: "New Experiment", onClose: () => setShowAExp(false), onConfirm: createExp },
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Name"),
+                React.createElement("input", { className: "moi", placeholder: "e.g. SA Treatment", value: eFm.name, onChange: e => setEFm(f => (Object.assign(Object.assign({}, f), { name: e.target.value }))), autoFocus: true })),
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Owner"),
+                React.createElement("input", { className: "moi", value: eFm.owner_name, onChange: e => setEFm(f => (Object.assign(Object.assign({}, f), { owner_name: e.target.value }))) })),
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Description"),
+                React.createElement("textarea", { className: "mota", rows: 2, value: eFm.description, onChange: e => setEFm(f => (Object.assign(Object.assign({}, f), { description: e.target.value }))) }))),
+        showEditExp && React.createElement(Modal, { title: "Edit Experiment", onClose: () => { setShowEditExp(false); setEditExpId(null); }, onConfirm: saveEditExp, confirmLabel: "Save" },
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Name"),
+                React.createElement("input", { className: "moi", placeholder: "e.g. SA Treatment", value: eFm.name, onChange: e => setEFm(f => (Object.assign(Object.assign({}, f), { name: e.target.value }))), autoFocus: true })),
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Owner"),
+                React.createElement("input", { className: "moi", value: eFm.owner_name, onChange: e => setEFm(f => (Object.assign(Object.assign({}, f), { owner_name: e.target.value }))) })),
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Description"),
+                React.createElement("textarea", { className: "mota", rows: 2, value: eFm.description, onChange: e => setEFm(f => (Object.assign(Object.assign({}, f), { description: e.target.value }))) })),
+            React.createElement("div", { style: { fontSize: 11, color: 'var(--i4)', marginTop: 4 } },
+                data.plants.filter(p => p.experiment_id === editExpId).length,
+                " pot(s) currently linked to this experiment.")),
+        showAssExp && React.createElement(Modal, { title: "Assign Experiment", sub: `${selPots.length} pots selected`, onClose: () => { var _a; setShowAssExp(false); setAssExpFm({ mode: 'existing', newName: '', newOwner: '', newDesc: '', existId: ((_a = data.experiments[0]) === null || _a === void 0 ? void 0 : _a.id) || '' }); }, onConfirm: assExp, confirmLabel: "Assign" },
+            React.createElement("div", { style: { display: 'flex', gap: 6, marginBottom: 10 } },
+                React.createElement("button", { className: `btn bsm${assExpFm.mode === 'existing' ? ' btnp' : ' btns'}`, onClick: () => setAssExpFm(f => (Object.assign(Object.assign({}, f), { mode: 'existing' }))) }, "Existing"),
+                React.createElement("button", { className: `btn bsm${assExpFm.mode === 'new' ? ' btnp' : ' btns'}`, onClick: () => setAssExpFm(f => (Object.assign(Object.assign({}, f), { mode: 'new' }))) }, "New experiment")),
+            assExpFm.mode === 'existing' && (data.experiments.length === 0
+                ? React.createElement("div", { style: { fontSize: 12, color: 'var(--i4)', padding: '4px 0' } }, "No experiments yet \u2014 use \"New experiment\" above.")
+                : React.createElement("select", { className: "mosel", value: assExpFm.existId || ((_b = data.experiments[0]) === null || _b === void 0 ? void 0 : _b.id), onChange: e => setAssExpFm(f => (Object.assign(Object.assign({}, f), { existId: e.target.value }))) }, data.experiments.map(ex => React.createElement("option", { key: ex.id, value: ex.id },
+                    ex.name,
+                    " (",
+                    ex.owner_name,
+                    ")")))),
+            assExpFm.mode === 'new' && (React.createElement(React.Fragment, null,
+                React.createElement("div", { className: "mof" },
+                    React.createElement("label", { className: "mol" }, "Experiment name"),
+                    React.createElement("input", { className: "moi", placeholder: "e.g. SA Treatment", value: assExpFm.newName, onChange: e => setAssExpFm(f => (Object.assign(Object.assign({}, f), { newName: e.target.value }))), autoFocus: true })),
+                React.createElement("div", { className: "mof" },
+                    React.createElement("label", { className: "mol" }, "Owner"),
+                    React.createElement("select", { className: "mosel", value: data.users.find(u => u.name === assExpFm.newOwner) ? assExpFm.newOwner : '__custom__', onChange: e => { if (e.target.value !== '__custom__')
+                            setAssExpFm(f => (Object.assign(Object.assign({}, f), { newOwner: e.target.value })));
+                        else
+                            setAssExpFm(f => (Object.assign(Object.assign({}, f), { newOwner: '' }))); } },
+                        React.createElement("option", { value: "__custom__" }, "\u2014 Type name below \u2014"),
+                        data.users.map(u => React.createElement("option", { key: u.id, value: u.name }, u.name))),
+                    (!data.users.find(u => u.name === assExpFm.newOwner) || !assExpFm.newOwner) && React.createElement("input", { className: "moi", style: { marginTop: 5 }, placeholder: "Owner name...", value: assExpFm.newOwner, onChange: e => setAssExpFm(f => (Object.assign(Object.assign({}, f), { newOwner: e.target.value }))) })),
+                React.createElement("div", { className: "mof" },
+                    React.createElement("label", { className: "mol" }, "Description (optional)"),
+                    React.createElement("input", { className: "moi", value: assExpFm.newDesc, onChange: e => setAssExpFm(f => (Object.assign(Object.assign({}, f), { newDesc: e.target.value }))), placeholder: "Brief description..." })))),
+            React.createElement("div", { style: { marginTop: 10 } },
+                React.createElement("button", { className: "btn btnd bsm", onClick: () => { setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => selPots.includes(p.id) ? Object.assign(Object.assign({}, p), { experiment_id: null }) : p) }))); setSelMode(false); setSelPots([]); setShowAssExp(false); notify('Removed from exp'); } }, "Remove from experiment"))),
+        showAStr && React.createElement(Modal, { title: "Add Object", onClose: () => setShowAStr(false), onConfirm: addStruct, confirmLabel: "Add" },
+            React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7, marginBottom: 10 } }, STYPES.map(t => React.createElement("div", { key: t.id, onClick: () => setNStType(t.id), style: { padding: '9px 8px', border: `2px solid ${nStType === t.id ? 'var(--fo2)' : 'var(--bo)'}`, borderRadius: 'var(--r)', cursor: 'pointer', background: nStType === t.id ? 'var(--ll)' : '#fff', display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 500, color: 'var(--i2)' } },
+                React.createElement("span", { style: { fontSize: 18 } }, t.id === 'door' ? '🚪' : t.id === 'ac' ? '❄️' : t.id === 'hall' ? '🏠' : '🚶'),
+                t.lbl))),
+            nStType === 'hall' && React.createElement("div", { className: "morow" },
+                React.createElement("div", { className: "mof" },
+                    React.createElement("label", { className: "mol" }, "Width (cm)"),
+                    React.createElement("input", { className: "moi", type: "number", value: nStrFm.w, onChange: e => setNStrFm(f => (Object.assign(Object.assign({}, f), { w: e.target.value }))) })),
+                React.createElement("div", { className: "mof" },
+                    React.createElement("label", { className: "mol" }, "Length (cm)"),
+                    React.createElement("input", { className: "moi", type: "number", value: nStrFm.h, onChange: e => setNStrFm(f => (Object.assign(Object.assign({}, f), { h: e.target.value }))) }))),
+            React.createElement("p", { className: "monote", style: { marginTop: 6 } }, "Right-click object in layout to delete.")),
+        showAMem && React.createElement(Modal, { title: "Add Member", onClose: () => setShowAMem(false), onConfirm: addMember, confirmLabel: "Add" },
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Name"),
+                React.createElement("input", { className: "moi", placeholder: "Full name", value: nMFm.name, onChange: e => setNMFm(f => (Object.assign(Object.assign({}, f), { name: e.target.value }))), autoFocus: true })),
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Email"),
+                React.createElement("input", { className: "moi", type: "email", value: nMFm.email, onChange: e => setNMFm(f => (Object.assign(Object.assign({}, f), { email: e.target.value }))) })),
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Position"),
+                React.createElement("select", { className: "mosel", value: nMFm.position, onChange: e => setNMFm(f => (Object.assign(Object.assign({}, f), { position: e.target.value }))) },
+                    React.createElement("option", { value: "" }, "\u2014 Select \u2014"),
+                    LPOS.map(p => React.createElement("option", { key: p, value: p }, p))))),
+        showUL && React.createElement(Modal, { title: "Unlock Layout", onClose: () => setShowUL(false), onConfirm: () => { setData(d => (Object.assign(Object.assign({}, d), { locked: false }))); setShowUL(false); notify('Edit mode active'); }, confirmLabel: "Unlock", sub: "Move tables, add/remove objects." },
+            React.createElement("div", { className: "ulkw" }, "Plant data is always editable regardless of lock state.")),
+        showShare && React.createElement(Modal, { title: "Share GreenLab", sub: "Send this link to lab members.", onClose: () => setShowShare(false), onConfirm: () => { var _a; (_a = navigator.clipboard) === null || _a === void 0 ? void 0 : _a.writeText(window.location.href); notify('Link copied!'); setShowShare(false); }, confirmLabel: "Copy Link" },
+            React.createElement("div", { style: { background: 'var(--cr2)', border: '1px solid var(--bo)', borderRadius: 'var(--r)', padding: '8px 10px', fontFamily: 'DM Mono', fontSize: 11, color: 'var(--i3)', wordBreak: 'break-all' } }, window.location.href),
+            React.createElement("div", { style: { background: 'var(--ll)', border: '1px solid var(--ld)', borderRadius: 'var(--r)', padding: '8px 10px', marginTop: 8, fontSize: 11, color: 'var(--fo2)', lineHeight: 1.5 } }, "With Firebase Auth: anyone with this link signs in and sees shared data in real-time.")),
+        delConfirm && React.createElement(PasswordConfirmModal, { title: delConfirm.type === 'gh' ? 'Delete Greenhouse' : 'Delete Table', warning: delConfirm.type === 'gh'
+                ? `You are about to permanently delete "${delConfirm.name}" and all its tables, pots, and data.`
+                : `You are about to permanently delete table "${delConfirm.name}" and all its pot data.`, labId: activeLab === null || activeLab === void 0 ? void 0 : activeLab.id, onConfirm: delConfirm.onConfirm, onClose: () => setDelConfirm(null) }),
+        showFbPanel && React.createElement(FirebasePanel, { onClose: () => setShowFbPanel(false), activityLog: activityLog }),
+        notif && React.createElement("div", { className: "notif" },
+            React.createElement("div", { className: "ndot" }),
+            notif)));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App, null));
+
+</script>
+</body>
+</html>
