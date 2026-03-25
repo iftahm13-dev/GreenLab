@@ -2651,7 +2651,11 @@ useEffect(() => {
     const touchHandlerRef = useRef(null);
     touchHandlerRef.current = useCallback((e) => {
         const vp = vpRef.current; if (!vp) return;
-        e.preventDefault(); // Must be called here - iOS decides preventability on touchstart
+        // NOTE: we call preventDefault() here so iOS marks this gesture as
+        // preventable — but for single-finger we only ACTUALLY prevent scrolling
+        // once the finger moves enough to be a pan. For taps we fire a synthetic
+        // click so buttons still work.
+        e.preventDefault();
 
         if (e.touches.length === 2) {
             // ── Two fingers: pinch-zoom + pan ────────────────────────────
@@ -2688,25 +2692,43 @@ useEffect(() => {
         }
 
         if (e.touches.length === 1) {
-            // ── One finger: pan ───────────────────────────────────────────
+            // ── One finger: pan or tap ────────────────────────────────────
             const t = e.touches[0];
             const startX = t.clientX, startY = t.clientY;
             const startPan = { ...readPan() };
-            vp.classList.add('panning');
+            const TAP_THRESHOLD = 8; // px — below this = tap, above = pan
+            let isPan = false;
+            let tapTarget = e.target; // remember what was touched for synthetic click
+
             const onMove = ev => {
                 ev.preventDefault();
                 const tt = ev.touches[0];
+                const dx = tt.clientX - startX, dy = tt.clientY - startY;
+                if (!isPan && Math.hypot(dx, dy) > TAP_THRESHOLD) {
+                    isPan = true;
+                    vp.classList.add('panning');
+                }
+                if (!isPan) return;
                 livePan.current = {
-                    x: startPan.x + (tt.clientX - startX),
-                    y: startPan.y + (tt.clientY - startY),
+                    x: startPan.x + dx,
+                    y: startPan.y + dy,
                 };
                 scheduleFlush();
             };
             const onEnd = () => {
-                vp.classList.remove('panning');
                 window.removeEventListener('touchmove', onMove);
                 window.removeEventListener('touchend', onEnd);
-                commitTransform();
+                if (isPan) {
+                    // Was a pan — finish it
+                    vp.classList.remove('panning');
+                    commitTransform();
+                } else {
+                    // Was a tap — fire a real click on the element that was touched
+                    // so buttons, pots, and "Edit" all still work
+                    if (tapTarget && typeof tapTarget.click === 'function') {
+                        tapTarget.click();
+                    }
+                }
             };
             window.addEventListener('touchmove', onMove, { passive: false });
             window.addEventListener('touchend', onEnd);
