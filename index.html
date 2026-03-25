@@ -687,6 +687,35 @@ body{font-family:'Inter',sans-serif;background:#f4f6f8;color:#111827;font-size:1
 .ord-priority.normal{background:var(--cr2);color:var(--i4)}
 .ord-priority.low{background:var(--ll);color:#166534}
 .ord-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:10px;color:var(--i4);padding:60px}
+
+/* ── Plant Timeline ── */
+.tl{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--bo);padding-top:10px;margin-top:4px}
+.tl-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;cursor:pointer;user-select:none}
+.tl-title{font-size:11px;font-weight:600;color:var(--i3)}
+.tl-toggle{font-size:10px;color:var(--i4)}
+.tl-empty{font-size:11px;color:var(--i5);font-style:italic;padding:4px 0}
+.tl-row{display:flex;gap:8px;align-items:flex-start;padding:5px 0;border-bottom:1px solid var(--cr2)}
+.tl-row:last-child{border-bottom:none}
+.tl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.tl-text{font-size:11px;color:var(--i2);flex:1;line-height:1.4}
+.tl-date{font-size:10px;color:var(--i5);flex-shrink:0;white-space:nowrap}
+
+/* ── Phase 2: Alerts bar ── */
+.alerts-bar{flex-shrink:0;background:#fff;border-bottom:1px solid var(--bo);padding:6px 20px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.alert-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500}
+.alert-chip.red{background:#fef2f2;color:#991b1b;border:1px solid #fca5a5}
+.alert-chip.amber{background:#fffbeb;color:#92400e;border:1px solid #fcd34d}
+.alert-chip.green{background:#f0fdf4;color:#166534;border:1px solid #86efac}
+.alert-chip.blue{background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe}
+/* ── Phase 2: Color-by-experiment pot overlay ── */
+.pcw.exp-colored{border-radius:6px}
+/* ── Phase 2: Dashboard widgets ── */
+.dash-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.dash-bar-label{font-size:11px;color:var(--i2);width:110px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.dash-bar-track{flex:1;height:8px;background:var(--cr2);border-radius:4px;overflow:hidden;border:1px solid var(--bo)}
+.dash-bar-fill{height:100%;border-radius:4px;transition:width .3s}
+.dash-bar-val{font-size:10px;color:var(--i4);width:28px;text-align:right;flex-shrink:0}
+.exp-plan-row{display:flex;align-items:center;gap:6px;margin-bottom:5px}
 </style>
 </head>
 <body>
@@ -698,7 +727,7 @@ body{font-family:'Inter',sans-serif;background:#f4f6f8;color:#111827;font-size:1
    API: https://api.jsonbin.io/v3/b/<BIN_ID>
    Header: X-Master-Key: <YOUR_KEY>
 ════════════════════════════════════════════════ */
-var JB_KEY    = 'PASTE_YOUR_MASTER_KEY_HERE';  // your JSONBin Master Key
+var JB_KEY    = '$2a$10$VdByQrrh52qhtymuGH3N9uggACh.2hEbbh78qw0tH3.0pbn3QN71O';  // your JSONBin Master Key
 var JB_BIN_ID = 'PASTE_YOUR_BIN_ID_HERE';       // created automatically on first run
 
 function jbRead() {
@@ -831,7 +860,7 @@ function PotSVG({ sid = 'sm', sz = 40, sc = null, hi = false, iu = null }) {
         sf && React.createElement("circle", { cx: "27", cy: "9", r: "3", fill: sf, stroke: "#fff", strokeWidth: "1.2" })));
 }
 /* PotCell: always shows label below pot icon. Never shifts on delete. */
-function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onDel, expInitials, expColor, onExpHover, onExpLeave }) {
+function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onDel, expInitials, expColor, onExpHover, onExpLeave, expBg }) {
     const filled = !!((plant === null || plant === void 0 ? void 0 : plant.genotype) || (plant === null || plant === void 0 ? void 0 : plant.treatment));
     const sc = (plant === null || plant === void 0 ? void 0 : plant.status) && plant.status !== 'empty' ? plant.status : null;
     const lbl = (plant === null || plant === void 0 ? void 0 : plant.genotype) || '';
@@ -848,7 +877,7 @@ function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onD
             React.createElement("div", { style: { height: LBH, display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: fs - 1, color: '#c0ccc4', fontFamily: 'Inter,sans-serif', userSelect: 'none' } }, teMode ? '+' : '')));
     }
-    return (React.createElement("div", { className: 'pcw' + (isActive ? ' active' : '') + (isSel ? ' pot-sel' : '') + (selMode ? ' sel-mode' : '') + (teMode ? ' temode' : ''), style: { width: ppx, height: ppx + LBH, position: 'relative' }, title: lbl + (plant.treatment ? ' | ' + plant.treatment : ''), onClick: e => { e.stopPropagation(); if (selMode || !teMode)
+    return (React.createElement("div", { className: 'pcw' + (isActive ? ' active' : '') + (isSel ? ' pot-sel' : '') + (selMode ? ' sel-mode' : '') + (teMode ? ' temode' : ''), style: { width: ppx, height: ppx + LBH, position: 'relative', background: expBg || undefined, borderRadius: expBg ? 6 : undefined }, title: lbl + (plant.treatment ? ' | ' + plant.treatment : ''), onClick: e => { e.stopPropagation(); if (selMode || !teMode)
             onPotClick(e, plant); },
         onMouseEnter: expInitials && onExpHover ? e => onExpHover(e.clientX, e.clientY) : undefined,
         onMouseMove:  expInitials && onExpHover ? e => onExpHover(e.clientX, e.clientY) : undefined,
@@ -917,7 +946,7 @@ function ExpOverlay({ tables, plants, exps, users }) {
     return null; // Experiment shown via initials badge on each pot + hover tooltip
 }
 /* Table block */
-function TableBlock({ table, plants, locked, isSel, activePotId, selMode, selPots, editTblId, onSel, onDrag, onPotClick, onPotSel, onDel, onToggleEdit, exps, users, onExpTip }) {
+function TableBlock({ table, plants, locked, isSel, activePotId, selMode, selPots, editTblId, onSel, onDrag, onPotClick, onPotSel, onDel, onToggleEdit, exps, users, onExpTip, colorByExp }) {
     const ref = useRef(), dr = useRef(null);
     const wx = table.x_position * WS, wy = table.y_position * WS, ww = table.width * WS, wh = table.length * WS;
     const GAP = 5, avW = ww - 10, avH = wh - HDR - 10;
@@ -966,7 +995,8 @@ function TableBlock({ table, plants, locked, isSel, activePotId, selMode, selPot
                                 const owner = (users||[]).find(u=>u.name===exp.owner_name);
                                 onExpTip({ x: clientX, y: clientY, exp, owner });
                             } : null,
-                            onExpLeave: onExpTip ? () => onExpTip(null) : null
+                            onExpLeave: onExpTip ? () => onExpTip(null) : null,
+                            expBg: colorByExp && p && p.experiment_id ? ((() => { const _ex=(exps||[]).find(ex=>ex.id===p.experiment_id); return _ex ? EC[_ex.color_index%8]+'22' : null; })()) : null
                         }));
         })))));
 }
@@ -1236,6 +1266,93 @@ function StockView({ stock, onAdd, onEdit, onRemove, onQty }) {
                 React.createElement("label", { className: "mol" }, "Notes (optional)"),
                 React.createElement("input", { className: "moi", value: fm.notes, onChange: e => set('notes', e.target.value), placeholder: "Brand, size, location..." })))));
 }
+
+/* ── Timeline helpers ── */
+var TL_COLORS = {
+    genotype:'#16a34a', status:'#d97706', experiment:'#3b82f6',
+    treatment:'#8b5cf6', note:'#6b7280', moved_in:'#059669',
+    date_until:'#0891b2', owner:'#64748b', disease:'#dc2626', pest:'#dc2626'
+};
+function tlColor(type) { return TL_COLORS[type] || '#6b7280'; }
+function tlDiff(oldP, newP, userName, exps) {
+    var events = [];
+    var d = new Date().toISOString();
+    var by = userName || '';
+    if ((newP.genotype||'') !== (oldP.genotype||'') && newP.genotype) {
+        events.push({ type:'genotype', text:'Genotype set to ' + newP.genotype + (newP.treatment ? ' / ' + newP.treatment : ''), date:d, by:by });
+    }
+    if ((newP.status||'') !== (oldP.status||'') && newP.status && newP.status !== 'empty') {
+        events.push({ type:'status', text:'Status changed to ' + newP.status + (newP.status==='sick'&&newP.disease_name?' ('+newP.disease_name+')':newP.status==='pests'&&newP.pest_name?' ('+newP.pest_name+')':''), date:d, by:by });
+    }
+    if ((newP.experiment_id||'') !== (oldP.experiment_id||'')) {
+        var expName = newP.experiment_id ? ((exps||[]).find(function(ex){return ex.id===newP.experiment_id;})||{}).name||newP.experiment_id : null;
+        if (expName) events.push({ type:'experiment', text:'Assigned to experiment: ' + expName, date:d, by:by });
+        else if (oldP.experiment_id) events.push({ type:'experiment', text:'Removed from experiment', date:d, by:by });
+    }
+    if ((newP.date_moved_in||'') !== (oldP.date_moved_in||'') && newP.date_moved_in) {
+        events.push({ type:'moved_in', text:'Moved into greenhouse: ' + newP.date_moved_in, date:d, by:by });
+    }
+    if ((newP.notes||'') !== (oldP.notes||'') && newP.notes && newP.notes.trim()) {
+        events.push({ type:'note', text:'Note: ' + newP.notes.slice(0,120), date:d, by:by });
+    }
+    if ((newP.owner||'') !== (oldP.owner||'') && newP.owner) {
+        events.push({ type:'owner', text:'Owner set to ' + newP.owner, date:d, by:by });
+    }
+    return events;
+}
+
+
+function TimelineSection({ timeline }) {
+    const [open, setOpen] = React.useState(true);
+    const sorted = (timeline || []).slice().sort(function(a,b){return b.date.localeCompare(a.date);});
+    const fmtDate = function(iso) {
+        try { return new Date(iso).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'}); }
+        catch(e){ return iso; }
+    };
+    return React.createElement('div', { className: 'tl' },
+        React.createElement('div', { className: 'tl-hdr', onClick: function(){ setOpen(function(o){return !o;}); } },
+            React.createElement('span', { className: 'tl-title' }, 'History (' + sorted.length + ')'),
+            React.createElement('span', { className: 'tl-toggle' }, open ? '▲ hide' : '▼ show')
+        ),
+        open && (sorted.length === 0
+            ? React.createElement('div', { className: 'tl-empty' }, 'No history yet — saved changes will appear here')
+            : sorted.map(function(ev, i) {
+                return React.createElement('div', { key: i, className: 'tl-row' },
+                    React.createElement('div', { className: 'tl-dot', style: { background: tlColor(ev.type) } }),
+                    React.createElement('div', { className: 'tl-text' },
+                        ev.text,
+                        ev.by && React.createElement('span', { style: { color: 'var(--i4)', marginLeft: 4 } }, '— ' + ev.by)
+                    ),
+                    React.createElement('div', { className: 'tl-date' }, fmtDate(ev.date))
+                );
+            })
+        )
+    );
+}
+
+function PlannedGenotypesEditor({ value, onChange }) {
+    var rows = value && value.length > 0 ? value : [];
+    function addRow() { onChange([...rows, { genotype: '', replicates: 1 }]); }
+    function updRow(i, k, v) { var r = rows.slice(); r[i] = Object.assign({}, r[i], {[k]: v}); onChange(r); }
+    function delRow(i) { onChange(rows.filter(function(_,idx){return idx!==i;})); }
+    return React.createElement('div', { className: 'mof' },
+        React.createElement('div', { style: { display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 } },
+            React.createElement('label', { className: 'mol', style:{marginBottom:0} }, 'Planned genotypes'),
+            React.createElement('button', { className: 'btn btns bxs', onClick: addRow }, '+ Add')
+        ),
+        rows.length === 0
+            ? React.createElement('div', { style: { fontSize:11, color:'var(--i5)', padding:'4px 0' } }, 'No planned genotypes yet')
+            : rows.map(function(r, i) {
+                return React.createElement('div', { key: i, className: 'exp-plan-row' },
+                    React.createElement('input', { className: 'moi', style:{flex:2}, placeholder:'Genotype', value: r.genotype, onChange: function(ev){updRow(i,'genotype',ev.target.value);} }),
+                    React.createElement('input', { className: 'moi', style:{width:60,flexShrink:0}, type:'number', min:1, value: r.replicates, title:'Replicates', onChange: function(ev){updRow(i,'replicates',+ev.target.value||1);} }),
+                    React.createElement('span', { style:{fontSize:10,color:'var(--i4)',flexShrink:0} }, 'reps'),
+                    React.createElement('button', { className: 'btn btnd bxs', style:{flexShrink:0}, onClick: function(){delRow(i);} }, '×')
+                );
+            })
+    );
+}
+
 /* Pot popup */
 function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, users }) {
     const CROPS = ['Tomato', 'Cucumber', 'Eggplant', 'Basil', 'Arabidopsis', 'Other'];
@@ -1361,6 +1478,7 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
                 React.createElement("div", { style: { marginTop: 5 } },
                     React.createElement("label", { className: "fl" }, "Stays until"),
                     React.createElement("input", { className: "fi", type: "date", value: f.date_until, onChange: e => set('date_until', e.target.value) })))),
+        React.createElement(TimelineSection, { timeline: plant.timeline || [] }),
         React.createElement("div", { className: "ppf" },
             React.createElement("button", { className: "btn btnp bsm", style: { flex: 1 }, onClick: doSave }, "Save"),
             (f.genotype || f.treatment) && React.createElement("button", { className: "btn btnd bxs", onClick: () => onSave(Object.assign(Object.assign({}, plant), { genotype: '', treatment: '', notes: '', status: 'empty', image: null })) }, "Clear"),
@@ -1424,12 +1542,12 @@ const ORDER_CATS = ['Equipment','Consumables','Chemicals','Reagents','Plasticwar
 const ORDER_CURRENCIES = ['USD','EUR','ILS','GBP','CHF','Other'];
 const ORDER_PRIORITIES = ['Urgent','High','Normal','Low'];
 
-function OrdersView({ orders, users, curUser, onAdd, onUpd, onDel }) {
+function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel }) {
     const [filter, setFilter] = React.useState('all');
     const [sort, setSort] = React.useState('order_date_desc');
     const [showForm, setShowForm] = React.useState(false);
     const [editId, setEditId] = React.useState(null);
-    const EMPTY_ORDER = { item_name:'', category:'Equipment', description:'', ordered_by: curUser?.name||'', supplier:'', status:'Draft', quantity:1, order_date: new Date().toISOString().slice(0,10), expected_arrival_date:'', actual_arrival_date:'', estimated_cost:'', currency:'USD', catalog_number:'', supplier_link:'', notes:'', priority:'Normal', storage_location:'', received_by:'', item_image:null, quotation_file:null, quotation_file_name:'' };
+    const EMPTY_ORDER = { item_name:'', category:'Equipment', description:'', ordered_by: curUser?.name||'', supplier:'', status:'Draft', quantity:1, order_date: new Date().toISOString().slice(0,10), expected_arrival_date:'', actual_arrival_date:'', estimated_cost:'', currency:'USD', catalog_number:'', supplier_link:'', notes:'', priority:'Normal', storage_location:'', received_by:'', item_image:null, quotation_file:null, quotation_file_name:'', experiment_id:'' };
     const [fm, setFm] = React.useState(EMPTY_ORDER);
     const imgRef = React.useRef(); const pdfRef = React.useRef();
     const set = (k,v) => setFm(p => ({...p,[k]:v}));
@@ -1554,6 +1672,9 @@ function OrdersView({ orders, users, curUser, onAdd, onUpd, onDel }) {
                         ),
                         o.quotation_file && React.createElement('a', {className:'ord-quot', href:o.quotation_file, download:o.quotation_file_name||'quotation.pdf', onClick:e=>e.stopPropagation()},
                             '📄 ', o.quotation_file_name||'Quotation'
+                        ),
+                        o.experiment_id && (exps||[]).find(ex=>ex.id===o.experiment_id) && React.createElement('span', {className:'ord-quot', style:{cursor:'default',background:'var(--ll)',borderColor:'var(--ld)',color:'var(--fo2)'}},
+                            '🧪 ', ((exps||[]).find(ex=>ex.id===o.experiment_id)||{}).name||''
                         ),
                         o.supplier_link && React.createElement('a', {href:o.supplier_link, target:'_blank', rel:'noopener noreferrer', className:'ord-quot', style:{color:'var(--fo2)',background:'var(--ll)',borderColor:'var(--ld)'}},
                             '🔗 Supplier page'
@@ -1695,6 +1816,12 @@ function OrdersView({ orders, users, curUser, onAdd, onUpd, onDel }) {
                     )
                 ),
 
+                React.createElement('div',{className:'mof'},
+                    React.createElement('label',{className:'mol'},'Linked experiment'),
+                    React.createElement('select',{className:'mosel',value:fm.experiment_id||'',onChange:function(e){set('experiment_id',e.target.value);}},
+                        React.createElement('option',{value:''},'— None —'),
+                        (exps||[]).map(function(ex){return React.createElement('option',{key:ex.id,value:ex.id},ex.name);})
+                    )),
                 React.createElement('div',{className:'mof'},
                     React.createElement('label',{className:'mol'},'Notes'),
                     React.createElement('textarea',{className:'mota',rows:2,placeholder:'Any additional notes...',value:fm.notes,onChange:e=>set('notes',e.target.value)})
@@ -2033,105 +2160,164 @@ function SpaceDonut({ used, total, size = 160 }) {
                 pctFree,
                 "%"))));
 }
-function DashView({ greenhouses, tables, structs, plants }) {
-    // Per-table pot counts
+function DashView({ greenhouses, tables, structs, plants, experiments }) {
     const perTable = useMemo(() => tables.map(t => {
-        const tPlants = (plants || []).filter(p => p.table_id === t.id);
-        const total   = t.rows * t.cols;
-        const filled  = tPlants.filter(p => p.genotype || p.treatment).length;
-        const free    = total - filled;
-        const pct     = total > 0 ? Math.round(filled / total * 100) : 0;
-        return { ...t, total, filled, free, pct };
+        const tp = (plants||[]).filter(p => p.table_id === t.id);
+        const total  = t.rows * t.cols;
+        const filled = tp.filter(p => p.genotype || p.treatment).length;
+        return Object.assign({}, t, { total, filled, free: total - filled, pct: total > 0 ? Math.round(filled/total*100) : 0 });
     }), [tables, plants]);
 
-    // Per-greenhouse summary
     const perGH = useMemo(() => greenhouses.map(g => {
-        const ghTables = perTable.filter(t => t.greenhouse_id === g.id);
-        const total  = ghTables.reduce((s, t) => s + t.total,  0);
-        const filled = ghTables.reduce((s, t) => s + t.filled, 0);
+        const gt = perTable.filter(t => t.greenhouse_id === g.id);
+        const total  = gt.reduce((s,t) => s + t.total,  0);
+        const filled = gt.reduce((s,t) => s + t.filled, 0);
         const free   = total - filled;
-        const pct    = total > 0 ? Math.round(filled / total * 100) : 0;
-        return { ...g, total, filled, free, pct, tables: ghTables };
+        const pct    = total > 0 ? Math.round(filled/total*100) : 0;
+        return Object.assign({}, g, { total, filled, free, pct, tables: gt });
     }), [greenhouses, perTable]);
 
-    const grandTotal  = perGH.reduce((s, g) => s + g.total,  0);
-    const grandFilled = perGH.reduce((s, g) => s + g.filled, 0);
+    const grandTotal  = perGH.reduce((s,g) => s + g.total,  0);
+    const grandFilled = perGH.reduce((s,g) => s + g.filled, 0);
     const grandFree   = grandTotal - grandFilled;
 
+    // Genotype counts
+    const genoCounts = useMemo(() => {
+        const gc = {};
+        (plants||[]).filter(p => p.genotype).forEach(p => { gc[p.genotype] = (gc[p.genotype]||0)+1; });
+        return Object.entries(gc).sort((a,b) => b[1]-a[1]).slice(0,10);
+    }, [plants]);
+
+    // Health counts
+    const healthCounts = useMemo(() => {
+        const filled = (plants||[]).filter(p => p.genotype);
+        return [
+            { key:'healthy', label:'Healthy', color:'#16a34a' },
+            { key:'wilting', label:'Wilting', color:'#d97706' },
+            { key:'sick',    label:'Sick',    color:'#dc2626' },
+            { key:'pests',   label:'Pests',   color:'#9333ea' },
+            { key:'dead',    label:'Dead',    color:'#6b7280' }
+        ].map(s => Object.assign({}, s, { cnt: filled.filter(p => p.status===s.key).length }))
+         .filter(s => s.cnt > 0);
+    }, [plants]);
+
     if (greenhouses.length === 0)
-        return (React.createElement("div", { className: "dash-page" },
+        return React.createElement("div", { className: "dash-page" },
             React.createElement("div", { className: "dash-head" },
                 React.createElement("div", { className: "dash-tit" }, "Dashboard")),
-            React.createElement("div", { style: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, color: 'var(--i4)' } },
-                React.createElement("div", { style: { fontSize: 36, opacity: .3 } }, "\uD83D\uDCCA"),
-                React.createElement("div", { style: { fontSize: 13 } }, "Add a greenhouse to see your pot stats"))));
+            React.createElement("div", { style: { flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10, color:'var(--i4)' } },
+                React.createElement("div", { style: { fontSize:36, opacity:.3 } }, "\uD83D\uDCCA"),
+                React.createElement("div", { style: { fontSize:13 } }, "Add a greenhouse to see your stats")));
 
-    return (React.createElement("div", { className: "dash-page" },
+    return React.createElement("div", { className: "dash-page" },
         React.createElement("div", { className: "dash-head" },
             React.createElement("div", { className: "dash-tit" }, "Dashboard"),
-            React.createElement("div", { style: { fontSize: 11, color: 'var(--i4)', marginTop: 3 } },
-                greenhouses.length, " greenhouse", greenhouses.length !== 1 ? 's' : '',
-                " \u00B7 ", tables.length, " table", tables.length !== 1 ? 's' : '',
+            React.createElement("div", { style: { fontSize:11, color:'var(--i4)', marginTop:3 } },
+                greenhouses.length, " greenhouse", greenhouses.length!==1?'s':'',
+                " \u00B7 ", tables.length, " table", tables.length!==1?'s':'',
                 " \u00B7 ", grandTotal, " pots total")),
-
         React.createElement("div", { className: "dash-body" },
 
-            /* ── Overall summary card ── */
-            React.createElement("div", { className: "widget-card", style: { flex: '1 1 220px' } },
+            React.createElement("div", { className: "widget-card", style: { flex:'1 1 220px' } },
                 React.createElement("h3", null, "Pot Overview"),
                 React.createElement(SpaceDonut, { used: grandFilled, total: grandTotal }),
                 React.createElement("div", { className: "donut-legend" },
                     React.createElement("div", { className: "dl-row" },
-                        React.createElement("div", { className: "dl-dot", style: { background: 'var(--lf)' } }),
+                        React.createElement("div", { className: "dl-dot", style: { background:'var(--lf)' } }),
                         React.createElement("span", { className: "dl-label" }, "Pots in use"),
                         React.createElement("span", { className: "dl-val" }, grandFilled)),
                     React.createElement("div", { className: "dl-row" },
-                        React.createElement("div", { className: "dl-dot", style: { background: 'var(--cr2)', border: '1px solid var(--bo)' } }),
-                        React.createElement("span", { className: "dl-label" }, "Pots available"),
+                        React.createElement("div", { className: "dl-dot", style: { background:'var(--cr2)', border:'1px solid var(--bo)' } }),
+                        React.createElement("span", { className: "dl-label" }, "Available"),
                         React.createElement("span", { className: "dl-val" }, grandFree)),
                     React.createElement("div", { className: "dl-row" },
-                        React.createElement("div", { className: "dl-dot", style: { background: 'var(--b2)' } }),
-                        React.createElement("span", { className: "dl-label" }, "Total pot slots"),
+                        React.createElement("div", { className: "dl-dot", style: { background:'var(--b2)' } }),
+                        React.createElement("span", { className: "dl-label" }, "Total slots"),
                         React.createElement("span", { className: "dl-val" }, grandTotal))),
-                React.createElement("div", { style: { display: 'flex', gap: 8, width: '100%', marginTop: 4 } },
-                    React.createElement("div", { style: { flex: 1, background: 'var(--ll)', border: '1px solid var(--ld)', borderRadius: 'var(--r)', padding: '7px 10px', textAlign: 'center' } },
-                        React.createElement("div", { style: { fontSize: 22, fontWeight: 700, color: 'var(--fo2)' } }, grandFree),
-                        React.createElement("div", { style: { fontSize: 10, color: 'var(--fo3)', marginTop: 2 } }, "pots free")),
-                    React.createElement("div", { style: { flex: 1, background: 'var(--cr2)', border: '1px solid var(--bo)', borderRadius: 'var(--r)', padding: '7px 10px', textAlign: 'center' } },
-                        React.createElement("div", { style: { fontSize: 22, fontWeight: 700, color: 'var(--i2)' } }, grandFilled),
-                        React.createElement("div", { style: { fontSize: 10, color: 'var(--i4)', marginTop: 2 } }, "pots used")))),
+                React.createElement("div", { style: { display:'flex', gap:8, width:'100%', marginTop:4 } },
+                    React.createElement("div", { style: { flex:1, background:'var(--ll)', border:'1px solid var(--ld)', borderRadius:'var(--r)', padding:'7px 10px', textAlign:'center' } },
+                        React.createElement("div", { style: { fontSize:22, fontWeight:700, color:'var(--fo2)' } }, grandFree),
+                        React.createElement("div", { style: { fontSize:10, color:'var(--fo3)', marginTop:2 } }, "pots free")),
+                    React.createElement("div", { style: { flex:1, background:'var(--cr2)', border:'1px solid var(--bo)', borderRadius:'var(--r)', padding:'7px 10px', textAlign:'center' } },
+                        React.createElement("div", { style: { fontSize:22, fontWeight:700, color:'var(--i2)' } }, grandFilled),
+                        React.createElement("div", { style: { fontSize:10, color:'var(--i4)', marginTop:2 } }, "pots used")))),
 
-            /* ── Per-greenhouse + per-table breakdown ── */
-            perGH.length > 0 && React.createElement("div", { className: "widget-card", style: { flex: '2 1 320px', alignItems: 'flex-start' } },
-                React.createElement("h3", { style: { alignSelf: 'center' } }, "By Greenhouse & Table"),
-                React.createElement("div", { style: { width: '100%', display: 'flex', flexDirection: 'column', gap: 16 } },
+            perGH.length > 0 && React.createElement("div", { className: "widget-card", style: { flex:'2 1 320px', alignItems:'flex-start' } },
+                React.createElement("h3", { style: { alignSelf:'center' } }, "By Greenhouse & Table"),
+                React.createElement("div", { style: { width:'100%', display:'flex', flexDirection:'column', gap:16 } },
                     perGH.map(g => React.createElement("div", { key: g.id },
-                        /* Greenhouse header */
-                        React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 } },
-                            React.createElement("span", { style: { fontWeight: 700, fontSize: 13, color: 'var(--i1)' } }, g.name),
-                            React.createElement("span", { style: { fontSize: 11, color: 'var(--i4)', fontWeight: 500 } },
+                        React.createElement("div", { style: { display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 } },
+                            React.createElement("span", { style: { fontWeight:700, fontSize:13, color:'var(--i1)' } }, g.name),
+                            React.createElement("span", { style: { fontSize:11, color:'var(--i4)' } },
                                 g.filled, " / ", g.total, " pots \u00B7 ", g.free, " free")),
-                        /* Per-table rows */
-                        React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 7 } },
+                        React.createElement("div", { style: { display:'flex', flexDirection:'column', gap:7 } },
                             g.tables.length === 0
-                                ? React.createElement("div", { style: { fontSize: 11, color: 'var(--i5)', padding: '4px 0' } }, "No tables")
+                                ? React.createElement("div", { style: { fontSize:11, color:'var(--i5)', padding:'4px 0' } }, "No tables")
                                 : g.tables.map(t => React.createElement("div", { key: t.id },
-                                    React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', marginBottom: 3, fontSize: 12 } },
-                                        React.createElement("span", { style: { color: 'var(--i2)', fontWeight: 500 } }, t.name),
-                                        React.createElement("span", { style: { fontSize: 11, color: 'var(--i4)' } },
+                                    React.createElement("div", { style: { display:'flex', justifyContent:'space-between', marginBottom:3, fontSize:12 } },
+                                        React.createElement("span", { style: { color:'var(--i2)', fontWeight:500 } }, t.name),
+                                        React.createElement("span", { style: { fontSize:11, color:'var(--i4)' } },
                                             t.filled, " / ", t.total,
-                                            React.createElement("span", { style: { color: 'var(--lf)', fontWeight: 600, marginLeft: 5 } },
-                                                t.free > 0 ? "+" + t.free + " free" : "full"))),
-                                    React.createElement("div", { style: { height: 7, borderRadius: 4, background: 'var(--cr2)', overflow: 'hidden', border: '1px solid var(--bo)' } },
-                                        React.createElement("div", { style: { height: '100%', borderRadius: 4, background: t.pct >= 90 ? '#f97316' : 'var(--lf)', width: t.pct + '%', transition: 'width .4s' } }))
-                                ))
+                                            React.createElement("span", { style: { color: t.free>0?'var(--lf)':'var(--i5)', fontWeight:600, marginLeft:5 } },
+                                                t.free > 0 ? "+"+t.free+" free" : "full"))),
+                                    React.createElement("div", { style: { height:7, borderRadius:4, background:'var(--cr2)', overflow:'hidden', border:'1px solid var(--bo)' } },
+                                        React.createElement("div", { style: { height:'100%', borderRadius:4, background: t.pct>=90?'#f97316':'var(--lf)', width:t.pct+'%', transition:'width .4s' } }))
+                                    )
+                                )
                         )
                     ))
-                )
-            )
-        )
-    ));
+                )),
+
+            genoCounts.length > 0 && React.createElement("div", { className: "widget-card", style: { flex:'2 1 300px', alignItems:'flex-start' } },
+                React.createElement("h3", { style: { alignSelf:'center', marginBottom:8 } }, "Plants by Genotype"),
+                React.createElement("div", { style: { width:'100%' } },
+                    genoCounts.map(function(entry) {
+                        var max = genoCounts[0][1];
+                        return React.createElement("div", { key: entry[0], className: "dash-bar-row" },
+                            React.createElement("div", { className: "dash-bar-label", title: entry[0] }, entry[0]),
+                            React.createElement("div", { className: "dash-bar-track" },
+                                React.createElement("div", { className: "dash-bar-fill", style: { width: Math.round(entry[1]/max*100)+'%', background:'var(--lf)' } })),
+                            React.createElement("div", { className: "dash-bar-val" }, entry[1]));
+                    }))),
+
+            healthCounts.length > 0 && React.createElement("div", { className: "widget-card", style: { flex:'1 1 200px', alignItems:'flex-start' } },
+                React.createElement("h3", { style: { alignSelf:'center', marginBottom:8 } }, "Plant Health"),
+                React.createElement("div", { style: { width:'100%', display:'flex', flexDirection:'column', gap:8 } },
+                    healthCounts.map(function(st) {
+                        var total = healthCounts.reduce(function(s,x){return s+x.cnt;},0)||1;
+                        return React.createElement("div", { key: st.key, className: "dash-bar-row" },
+                            React.createElement("div", { className: "dash-bar-label" }, st.label),
+                            React.createElement("div", { className: "dash-bar-track" },
+                                React.createElement("div", { className: "dash-bar-fill", style: { width: Math.round(st.cnt/total*100)+'%', background:st.color } })),
+                            React.createElement("div", { className: "dash-bar-val" }, st.cnt));
+                    }))),
+
+            (experiments||[]).length > 0 && React.createElement("div", { className: "widget-card", style: { flex:'2 1 320px', alignItems:'flex-start' } },
+                React.createElement("h3", { style: { alignSelf:'center', marginBottom:8 } }, "Experiments"),
+                React.createElement("div", { style: { width:'100%', display:'flex', flexDirection:'column', gap:8 } },
+                    (experiments||[]).map(function(ex) {
+                        var cnt = (plants||[]).filter(function(p){return p.experiment_id===ex.id;}).length;
+                        var isActive = !ex.until_date || new Date(ex.until_date) >= new Date();
+                        var daysLeft = ex.until_date ? Math.ceil((new Date(ex.until_date)-new Date())/86400000) : null;
+                        var col = EC[ex.color_index % 8];
+                        return React.createElement("div", { key: ex.id, style: { display:'flex', alignItems:'center', gap:10, padding:'8px 10px', borderRadius:'var(--r)', background:'var(--cr2)', border:'1px solid var(--bo)' } },
+                            React.createElement("div", { style: { width:10, height:10, borderRadius:3, background:col, flexShrink:0 } }),
+                            React.createElement("div", { style: { flex:1, minWidth:0 } },
+                                React.createElement("div", { style: { fontSize:12, fontWeight:600, color:'var(--i1)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' } }, ex.name),
+                                React.createElement("div", { style: { fontSize:10, color:'var(--i4)', marginTop:1 } },
+                                    (ex.owner_name ? ex.owner_name.split(' ')[0]+' \u00B7 ' : ''),
+                                    cnt, ' pot', cnt!==1?'s':'',
+                                    daysLeft !== null ? (daysLeft < 0 ? ' \u00B7 ended' : ' \u00B7 '+daysLeft+'d left') : '')),
+                            React.createElement("span", { style: { fontSize:10, fontWeight:600, padding:'2px 8px', borderRadius:20, flexShrink:0,
+                                background: isActive ? '#f0fdf4' : '#f3f4f6',
+                                color: isActive ? '#166534' : '#6b7280',
+                                border: '1px solid '+(isActive ? '#86efac' : '#e5e7eb') } },
+                                isActive ? 'Active' : 'Ended'));
+                    })))
+        ));
 }
+
+
 /* ════════════════════════════════════════════════
    SYNC STATUS COMPONENT
    
@@ -2226,7 +2412,7 @@ function App() {
     const [ghFm, setGhFm] = useState({ name: '', width: 600, length: 400 });
     const [tFm, setTFm] = useState({ name: '', width: 230, length: 125, rows: 3, cols: 6 });
     const [spFm, setSpFm] = useState({ material: '', category: 'fungicide', notes: '', sprayer: '' });
-    const [eFm, setEFm] = useState({ name: '', owner_name: '', description: '', until_date: '' });
+    const [eFm, setEFm] = useState({ name: '', owner_name: '', description: '', until_date: '', planned_genotypes: [] });
     const [showEditExp, setShowEditExp] = useState(false);
     const [editExpId, setEditExpId] = useState(null);
     const [aExpId, setAExpId] = useState('');
@@ -2237,6 +2423,28 @@ function App() {
     const [delConfirm, setDelConfirm] = useState(null); // {type:'gh'|'tbl', id, name}
     const [menuOpen, setMenuOpen] = useState(false); // mobile sidebar toggle
     const [expTip, setExpTip] = useState(null); // {x,y,exp,owner} for hover tooltip
+    const [colorByExp, setColorByExp] = useState(false); // toggle experiment color overlay
+
+    // ── Compute alerts from live data ────────────────────────────
+    const alerts = useMemo(() => {
+        const list = [];
+        // Sick/dead plants
+        const sickCount = data.plants.filter(p => p.status === 'sick' || p.status === 'pests').length;
+        const deadCount = data.plants.filter(p => p.status === 'dead').length;
+        if (sickCount > 0) list.push({ type: 'red', text: sickCount + ' plant' + (sickCount>1?'s':'') + ' sick or have pests' });
+        if (deadCount > 0) list.push({ type: 'red', text: deadCount + ' plant' + (deadCount>1?'s':'') + ' dead' });
+        // Experiments ending within 7 days
+        const soon = data.experiments.filter(ex => {
+            if (!ex.until_date) return false;
+            const diff = (new Date(ex.until_date) - new Date()) / 86400000;
+            return diff >= 0 && diff <= 7;
+        });
+        soon.forEach(ex => list.push({ type: 'amber', text: 'Experiment "' + ex.name + '" ends in ' + Math.ceil((new Date(ex.until_date)-new Date())/86400000) + 'd' }));
+        // Orders arrived recently
+        const arrivedOrders = (data.orders||[]).filter(o => o.status === 'Arrived' || o.status === 'Received');
+        if (arrivedOrders.length > 0) list.push({ type: 'green', text: arrivedOrders.length + ' order' + (arrivedOrders.length>1?'s':'') + ' arrived — check Orders tab' });
+        return list;
+    }, [data.plants, data.experiments, data.orders]);
     /* Save data + update sync status on every data change.
        TODO Firebase: replace saveData() call with Firestore setDoc here.
        The setSyncStatus('saving') → setSyncStatus('saved') flow stays the same;
@@ -2366,43 +2574,67 @@ useEffect(() => {
     hVpTouchRef.current = (e) => {
         e.preventDefault();
         if (e.touches.length === 2) {
-            // ── Pinch-to-zoom ─────────────────────────────────────────────
+            // ── Two fingers: pinch-to-zoom ────────────────────────────────
             const t0 = e.touches[0], t1 = e.touches[1];
             const startDist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
+            if (startDist < 1) return;
             const midX = (t0.clientX + t1.clientX) / 2;
             const midY = (t0.clientY + t1.clientY) / 2;
             const vp = vpRef.current;
             const r = vp ? vp.getBoundingClientRect() : { left: 0, top: 0 };
             const mx = midX - r.left;
             const my = midY - r.top;
-            const currentZoom = wrRef.current ? parseFloat(wrRef.current.dataset.zoom || '1') : 1;
-            const startPan = { x: pan.x, y: pan.y };
+            // Read current zoom + pan from DOM/ref so they're never stale
+            const startZoom = wrRef.current ? parseFloat(wrRef.current.dataset.zoom || '1') : 1;
+            const startPanX = panRef.current ? panRef.current.px || 0 : 0;
+            const startPanY = panRef.current ? panRef.current.py || 0 : 0;
+            // Capture pan from wrRef transform as fallback
+            let capX = startPanX, capY = startPanY;
+            if (wrRef.current) {
+                const m = wrRef.current.style.transform.match(/translate\(([^,]+)px,([^p]+)px\)/);
+                if (m) { capX = parseFloat(m[1]); capY = parseFloat(m[2]); }
+            }
             const mv = ev => {
                 if (ev.touches.length !== 2) return;
                 ev.preventDefault();
                 const a = ev.touches[0], b = ev.touches[1];
                 const newDist = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
-                const nz = clamp(currentZoom * (newDist / startDist), MINZ, MAXZ);
-                setPan({ x: mx - (mx - startPan.x) * (nz / currentZoom), y: my - (my - startPan.y) * (nz / currentZoom) });
+                const scale = newDist / startDist;
+                const nz = clamp(startZoom * scale, MINZ, MAXZ);
+                const nx = mx - (mx - capX) * (nz / startZoom);
+                const ny = my - (my - capY) * (nz / startZoom);
                 setZoom(nz);
+                setPan({ x: nx, y: ny });
             };
-            const up = () => { window.removeEventListener('touchmove', mv); window.removeEventListener('touchend', up); };
+            const up = () => {
+                window.removeEventListener('touchmove', mv);
+                window.removeEventListener('touchend', up);
+            };
             window.addEventListener('touchmove', mv, { passive: false });
             window.addEventListener('touchend', up);
             return;
         }
-        // ── Single-finger pan ─────────────────────────────────────────────
+        // ── One finger: pan ───────────────────────────────────────────────
         if (e.touches.length !== 1) return;
         const t = e.touches[0];
-        panRef.current = { sx: t.clientX, sy: t.clientY, px: pan.x, py: pan.y };
+        // Read current pan from the transform on wrRef — always up to date
+        let curX = 0, curY = 0;
+        if (wrRef.current) {
+            const m = wrRef.current.style.transform.match(/translate\(([^,]+)px,([^p]+)px\)/);
+            if (m) { curX = parseFloat(m[1]); curY = parseFloat(m[2]); }
+        }
+        const startX = t.clientX, startY = t.clientY;
+        const basePanX = curX, basePanY = curY;
         if (vpRef.current) vpRef.current.classList.add('panning');
         const mv = ev => {
-            if (!panRef.current || ev.touches.length !== 1) return;
+            if (ev.touches.length !== 1) return;
+            ev.preventDefault();
             const tt = ev.touches[0];
-            setPan({ x: panRef.current.px + (tt.clientX - panRef.current.sx), y: panRef.current.py + (tt.clientY - panRef.current.sy) });
+            const dx = tt.clientX - startX;
+            const dy = tt.clientY - startY;
+            setPan({ x: basePanX + dx, y: basePanY + dy });
         };
         const up = () => {
-            panRef.current = null;
             if (vpRef.current) vpRef.current.classList.remove('panning');
             window.removeEventListener('touchmove', mv);
             window.removeEventListener('touchend', up);
@@ -2456,7 +2688,7 @@ useEffect(() => {
     const createTbl = () => { if (!tFm.name.trim() || !ghId)
         return; const rows = clamp(+tFm.rows || 3, 1, 20), cols = clamp(+tFm.cols || 6, 1, 20); const t = { id: uid(), greenhouse_id: ghId, name: tFm.name.trim(), width: +tFm.width || 230, length: +tFm.length || 125, x_position: 20, y_position: 20, rows, cols }; const ps = []; for (let r = 0; r < rows; r++)
         for (let c = 0; c < cols; c++)
-            ps.push({ id: uid(), table_id: t.id, greenhouse_id: ghId, row: r, col: c, genotype: '', treatment: '', planting_date: '', notes: '', status: 'empty', crop: 'Tomato', pot_style: 'sm', image: null, experiment_id: null, created_by: (user === null || user === void 0 ? void 0 : user.id) || 'u', updated_by: (user === null || user === void 0 ? void 0 : user.id) || 'u', updated_at: now() }); setData(d => (Object.assign(Object.assign({}, d), { tables: [...d.tables, t], plants: [...d.plants, ...ps] }))); setSelTbl(t.id); lastTblRef.current = { width: +tFm.width || 230, length: +tFm.length || 125, rows: rows, cols: cols }; setShowATbl(false); setTFm({ name: '', width: 230, length: 125, rows: 3, cols: 6 }); notify(`"${t.name}" - ${rows}x${cols} pots`); logActivity(`Added table: ${t.name} (${rows}x${cols})`); };
+            ps.push({ id: uid(), table_id: t.id, greenhouse_id: ghId, row: r, col: c, genotype: '', treatment: '', planting_date: '', notes: '', status: 'empty', crop: 'Tomato', pot_style: 'sm', image: null, experiment_id: null, timeline: [], created_by: (user === null || user === void 0 ? void 0 : user.id) || 'u', updated_by: (user === null || user === void 0 ? void 0 : user.id) || 'u', updated_at: now() }); setData(d => (Object.assign(Object.assign({}, d), { tables: [...d.tables, t], plants: [...d.plants, ...ps] }))); setSelTbl(t.id); lastTblRef.current = { width: +tFm.width || 230, length: +tFm.length || 125, rows: rows, cols: cols }; setShowATbl(false); setTFm({ name: '', width: 230, length: 125, rows: 3, cols: 6 }); notify(`"${t.name}" - ${rows}x${cols} pots`); logActivity(`Added table: ${t.name} (${rows}x${cols})`); };
     const hDrag = (id, x, y, del = false) => {
         if (del) {
             const t = data.tables.find(x => x.id === id);
@@ -2487,7 +2719,7 @@ useEffect(() => {
             if (ep)
                 nps.push(ep);
             else
-                nps.push({ id: uid(), table_id: selTbl, greenhouse_id: tbl.greenhouse_id, row: ri, col: ci, genotype: '', treatment: '', planting_date: '', notes: '', status: 'empty', crop: 'Tomato', pot_style: 'sm', image: null, experiment_id: null, created_by: (user === null || user === void 0 ? void 0 : user.id) || 'u', updated_by: (user === null || user === void 0 ? void 0 : user.id) || 'u', updated_at: now() });
+                nps.push({ id: uid(), table_id: selTbl, greenhouse_id: tbl.greenhouse_id, row: ri, col: ci, genotype: '', treatment: '', planting_date: '', notes: '', status: 'empty', crop: 'Tomato', pot_style: 'sm', image: null, experiment_id: null, timeline: [], created_by: (user === null || user === void 0 ? void 0 : user.id) || 'u', updated_by: (user === null || user === void 0 ? void 0 : user.id) || 'u', updated_at: now() });
         } return Object.assign(Object.assign({}, d), { tables: d.tables.map(t => t.id === selTbl ? Object.assign(Object.assign({}, t), { rows: r, cols: c }) : t), plants: [...d.plants.filter(p => p.table_id !== selTbl), ...nps] }); });
     /* struct */
     const addStruct = () => { const defW = nStType === 'door' ? 20 : nStType === 'hall' ? +nStrFm.w || 60 : 50; const defH = nStType === 'door' ? 40 : nStType === 'hall' ? +nStrFm.h || 30 : 25; const s = { id: uid(), greenhouse_id: ghId, type: nStType, x: 30, y: 30, w: defW, h: defH }; setData(d => (Object.assign(Object.assign({}, d), { structs: [...(d.structs || []), s] }))); setShowAStr(false); notify('Object added'); };
@@ -2496,7 +2728,19 @@ useEffect(() => {
     /* pot click */
     const hPotClick = useCallback((e, tblId, row, col, plant) => { if (!plant)
         return; setActPot(plant.id); const rect = e.currentTarget.getBoundingClientRect(); const tbl = data.tables.find(t => t.id === tblId), gh = data.greenhouses.find(g => g.id === (tbl === null || tbl === void 0 ? void 0 : tbl.greenhouse_id)); setPopup({ plant, rect, tblNm: (tbl === null || tbl === void 0 ? void 0 : tbl.name) || '?', ghNm: (gh === null || gh === void 0 ? void 0 : gh.name) || '?' }); }, [data]);
-    const savePlant = upd => { const w = Object.assign(Object.assign({}, upd), { updated_by: (user === null || user === void 0 ? void 0 : user.id) || 'u', updated_at: now() }); setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => p.id === w.id ? w : p) }))); setPopup(null); setActPot(null); notify('Saved'); logActivity(`Updated pot: ${w.genotype || 'empty'}`); };
+    const savePlant = upd => {
+        // Build timeline events from diff between old and new plant state
+        const oldP = data.plants.find(function(p){return p.id===upd.id;}) || {};
+        const newEvents = tlDiff(oldP, upd, user && user.name, data.experiments);
+        const existingTimeline = (oldP.timeline || []);
+        const w = Object.assign(Object.assign({}, upd), {
+            updated_by: (user === null || user === void 0 ? void 0 : user.id) || 'u',
+            updated_at: now(),
+            timeline: newEvents.length > 0 ? [...existingTimeline, ...newEvents] : existingTimeline
+        });
+        setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => p.id === w.id ? w : p) })));
+        setPopup(null); setActPot(null); notify('Saved'); logActivity(`Updated pot: ${w.genotype || 'empty'}`);
+    };
     /* delete pot = clear data, keep slot */
     const delPot = id => { setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => p.id !== id ? p : Object.assign(Object.assign({}, p), { genotype: '', treatment: '', planting_date: '', notes: '', status: 'empty', image: null, experiment_id: null })) }))); notify('Pot cleared'); };
     /* selection */
@@ -2521,10 +2765,10 @@ useEffect(() => {
         logActivity(`Assigned ${selPots.length} pots to experiment`);
     };
     const createExp = () => { if (!eFm.name.trim())
-        return; const ex = { id: uid(), name: eFm.name.trim(), owner_name: eFm.owner_name || (user === null || user === void 0 ? void 0 : user.name) || '', description: eFm.description, until_date: eFm.until_date || '', created_at: now(), color_index: data.experiments.length % 8 }; setData(d => (Object.assign(Object.assign({}, d), { experiments: [...d.experiments, ex] }))); setShowAExp(false); setEFm({ name: '', owner_name: '', description: '', until_date: '' }); notify(`Exp "${ex.name}" created`); logActivity(`Created experiment: ${ex.name}`); };
-    const startEditExp = ex => { setEditExpId(ex.id); setEFm({ name: ex.name, owner_name: ex.owner_name || '', description: ex.description || '', until_date: ex.until_date || '' }); setShowEditExp(true); };
+        return; const ex = { id: uid(), name: eFm.name.trim(), owner_name: eFm.owner_name || (user === null || user === void 0 ? void 0 : user.name) || '', description: eFm.description, until_date: eFm.until_date || '', planned_genotypes: eFm.planned_genotypes || [], created_at: now(), color_index: data.experiments.length % 8 }; setData(d => (Object.assign(Object.assign({}, d), { experiments: [...d.experiments, ex] }))); setShowAExp(false); setEFm({ name: '', owner_name: '', description: '', until_date: '', planned_genotypes: [] }); notify(`Exp "${ex.name}" created`); logActivity(`Created experiment: ${ex.name}`); };
+    const startEditExp = ex => { setEditExpId(ex.id); setEFm({ name: ex.name, owner_name: ex.owner_name || '', description: ex.description || '', until_date: ex.until_date || '', planned_genotypes: ex.planned_genotypes || [] }); setShowEditExp(true); };
     const saveEditExp = () => { if (!eFm.name.trim())
-        return; setData(d => (Object.assign(Object.assign({}, d), { experiments: d.experiments.map(e => e.id === editExpId ? Object.assign(Object.assign({}, e), { name: eFm.name.trim(), owner_name: eFm.owner_name, description: eFm.description, until_date: eFm.until_date || '' }) : e) }))); setShowEditExp(false); setEditExpId(null); setEFm({ name: '', owner_name: '', description: '', until_date: '' }); notify('Experiment updated'); };
+        return; setData(d => (Object.assign(Object.assign({}, d), { experiments: d.experiments.map(e => e.id === editExpId ? Object.assign(Object.assign({}, e), { name: eFm.name.trim(), owner_name: eFm.owner_name, description: eFm.description, until_date: eFm.until_date || '', planned_genotypes: eFm.planned_genotypes || [] }) : e) }))); setShowEditExp(false); setEditExpId(null); setEFm({ name: '', owner_name: '', description: '', until_date: '', planned_genotypes: [] }); notify('Experiment updated'); };
     const deleteExp = id => {
         if (!window.confirm('Delete this experiment? Pots assigned to it will become unassigned. No pots are deleted.'))
             return;
@@ -2704,7 +2948,8 @@ useEffect(() => {
                                         " \u00B7 ",
                                         cnt,
                                         " pot",
-                                        cnt !== 1 ? 's' : '')),
+                                        cnt !== 1 ? 's' : '',
+                                        (() => { const oc = (data.orders||[]).filter(o=>o.experiment_id===ex.id).length; return oc > 0 ? ' · 📦 ' + oc : ''; })())),
                                 React.createElement("div", { className: "eli-acts" },
                                     React.createElement("button", { className: "eli-btn", onClick: () => startEditExp(ex) }, "Edit"),
                                     React.createElement("button", { className: "eli-btn del", onClick: () => deleteExp(ex.id) }, "Del"))));
@@ -2726,6 +2971,11 @@ useEffect(() => {
                         React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, onClick: syncStatus === 'error' ? () => { saveData(data, activeLab === null || activeLab === void 0 ? void 0 : activeLab.id); setSyncStatus('saved'); } : () => setShowFbPanel(true) }),
                         React.createElement("button", { className: "btns btn bsm", onClick: () => setShowShare(true) }, "Share"),
                         React.createElement("button", { className: `lkbtn${!locked ? ' edit' : ''}`, onClick: togLock }, locked ? 'Locked' : 'Edit mode'))),
+                alerts.length > 0 && React.createElement("div", { className: "alerts-bar" },
+                    alerts.map(function(a, i) {
+                        return React.createElement("span", { key: i, className: "alert-chip " + a.type }, a.text);
+                    })
+                ),
                 React.createElement("div", { className: "gh-tab-bar" },
                     data.greenhouses.map(g => React.createElement("div", { key: g.id, style: { display:'flex', alignItems:'center', gap:2, flexShrink:0 } },
                         React.createElement("button", {
@@ -2761,7 +3011,8 @@ useEffect(() => {
                             React.createElement("button", { className: "zbtn", onClick: () => setZoom(z => clamp(z * 1.25, MINZ, MAXZ)) }, "+"),
                             React.createElement("button", { className: "zbtn", style: { width: 'auto', padding: '0 7px', fontSize: 9, fontFamily: 'Inter' }, onClick: fitRoom }, "Fit")),
                         React.createElement("div", { className: "tsep" }),
-                        React.createElement("button", { className: `selbtn${selMode ? ' on' : ''}`, onClick: () => { setSelMode(s => !s); setSelPots([]); } }, selMode ? 'Selecting...' : 'Select pots')),
+                        React.createElement("button", { className: `selbtn${selMode ? ' on' : ''}`, onClick: () => { setSelMode(s => !s); setSelPots([]); } }, selMode ? 'Selecting...' : 'Select pots'),
+                        React.createElement("button", { className: `selbtn${colorByExp ? ' on' : ''}`, onClick: () => setColorByExp(c => !c), title: "Color pots by experiment" }, colorByExp ? 'Exp colors on' : 'Color by exp')),
                     aGh && tab === 'layout' && React.createElement("div", { className: "tmeta" },
                         aGh.name,
                         " \u00B7 ",
@@ -2788,7 +3039,7 @@ useEffect(() => {
                                 React.createElement("div", { className: "rlabel" }, aGh.name),
                                 aStructs.map(s => React.createElement(StructObj, { key: s.id, obj: s, locked: locked, onDrag: hStrDrag, onDel: delStruct })),
                                 React.createElement(ExpOverlay, { tables: aTbls, plants: aPlants, exps: data.experiments, users: data.users }),
-                                aTbls.map(t => React.createElement(TableBlock, { key: t.id, table: t, plants: aPlants.filter(p => p.table_id === t.id), locked: locked, isSel: selTbl === t.id || selTbls.has(t.id), activePotId: actPot, selMode: selMode, selPots: selPots, editTblId: editTbl, onSel: (id, multi) => { if (multi) { setSelTbls(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; }); } else { setSelTbl(id); setSelTbls(new Set([id])); setPopup(null); } }, onDrag: hDrag, onPotClick: hPotClick, onPotSel: togSel, exps: data.experiments, users: data.users, onExpTip: setExpTip, onDel: delPot, onToggleEdit: id => setEditTbl(editTbl === id ? null : id) })))) : React.createElement("div", { className: "empty-st", style: { position: 'absolute', inset: 0, display: 'flex' } },
+                                aTbls.map(t => React.createElement(TableBlock, { key: t.id, table: t, plants: aPlants.filter(p => p.table_id === t.id), locked: locked, isSel: selTbl === t.id || selTbls.has(t.id), activePotId: actPot, selMode: selMode, selPots: selPots, editTblId: editTbl, onSel: (id, multi) => { if (multi) { setSelTbls(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; }); } else { setSelTbl(id); setSelTbls(new Set([id])); setPopup(null); } }, onDrag: hDrag, onPotClick: hPotClick, onPotSel: togSel, exps: data.experiments, users: data.users, onExpTip: setExpTip, colorByExp: colorByExp, onDel: delPot, onToggleEdit: id => setEditTbl(editTbl === id ? null : id) })))) : React.createElement("div", { className: "empty-st", style: { position: 'absolute', inset: 0, display: 'flex' } },
                             React.createElement("div", { style: { fontSize: 48, opacity: .3 } }, "\uD83C\uDF45"),
                             React.createElement("div", { style: { fontFamily: 'Inter', fontSize: 17, color: 'var(--i2)' } }, "No greenhouse selected"),
                             React.createElement("button", { className: "btn btnp", onClick: () => { setData(d => (Object.assign(Object.assign({}, d), { locked: false }))); setGhFm({ name: '', width: 600, length: 400 }); setShowAGH(true); } }, "Create greenhouse")),
@@ -2813,8 +3064,8 @@ useEffect(() => {
                 tab === 'search' && React.createElement(SearchView, { plants: data.plants, tables: data.tables, ghs: data.greenhouses, exps: data.experiments, onSel: hSearchSel }),
                 tab === 'team' && React.createElement(TeamPage, { users: data.users, curUser: user, onUpdate: updUser, onDel: delUser, onAdd: () => setShowAMem(true) }),
                 tab === 'stock' && React.createElement(StockView, { stock: data.stock || [], onAdd: addStockItem, onEdit: editStockItem, onRemove: removeStockItem, onQty: qtyStockItem }),
-                tab === 'orders' && React.createElement(OrdersView, { orders: data.orders||[], users: data.users, curUser: user, onAdd: addOrder, onUpd: updOrder, onDel: delOrder }),
-                tab === 'dash' && React.createElement(DashView, { greenhouses: data.greenhouses, tables: data.tables, structs: data.structs || [], plants: data.plants || [] }))),
+                tab === 'orders' && React.createElement(OrdersView, { orders: data.orders||[], users: data.users, curUser: user, exps: data.experiments||[], onAdd: addOrder, onUpd: updOrder, onDel: delOrder }),
+                tab === 'dash' && React.createElement(DashView, { greenhouses: data.greenhouses, tables: data.tables, structs: data.structs || [], plants: data.plants || [], experiments: data.experiments || [] }))),
         popup && React.createElement(PotPopup, { plant: popup.plant, tblNm: popup.tblNm, ghNm: popup.ghNm, rect: popup.rect, exps: data.experiments, allPlants: data.plants, users: data.users, onSave: savePlant, onClose: () => { setPopup(null); setActPot(null); } }),
         expTip && React.createElement("div", { className: "exp-tip", style: {
             left: Math.min(expTip.x + 14, window.innerWidth - 220),
@@ -2903,7 +3154,8 @@ useEffect(() => {
                 React.createElement("textarea", { className: "mota", rows: 2, value: eFm.description, onChange: e => setEFm(f => (Object.assign(Object.assign({}, f), { description: e.target.value }))) })),
             React.createElement("div", { className: "mof" },
                 React.createElement("label", { className: "mol" }, "In greenhouse until"),
-                React.createElement("input", { className: "moi", type: "date", value: eFm.until_date || '', onChange: e => setEFm(f => (Object.assign(Object.assign({}, f), { until_date: e.target.value }))) }))),
+                React.createElement("input", { className: "moi", type: "date", value: eFm.until_date || '', onChange: e => setEFm(f => (Object.assign(Object.assign({}, f), { until_date: e.target.value }))) })),
+            React.createElement(PlannedGenotypesEditor, { value: eFm.planned_genotypes || [], onChange: v => setEFm(f => ({...f, planned_genotypes: v})) })),
         showEditExp && React.createElement(Modal, { title: "Edit Experiment", onClose: () => { setShowEditExp(false); setEditExpId(null); }, onConfirm: saveEditExp, confirmLabel: "Save" },
             React.createElement("div", { className: "mof" },
                 React.createElement("label", { className: "mol" }, "Name"),
@@ -2917,6 +3169,7 @@ useEffect(() => {
             React.createElement("div", { className: "mof" },
                 React.createElement("label", { className: "mol" }, "In greenhouse until"),
                 React.createElement("input", { className: "moi", type: "date", value: eFm.until_date || '', onChange: e => setEFm(f => (Object.assign(Object.assign({}, f), { until_date: e.target.value }))) })),
+            React.createElement(PlannedGenotypesEditor, { value: eFm.planned_genotypes || [], onChange: v => setEFm(f => ({...f, planned_genotypes: v})) }),
             React.createElement("div", { style: { fontSize: 11, color: 'var(--i4)', marginTop: 4 } },
                 data.plants.filter(p => p.experiment_id === editExpId).length,
                 " pot(s) currently linked to this experiment.")),
