@@ -1922,20 +1922,6 @@ function LabSelectScreen({onSelectLab}){
 
   // Load labs from Firestore on mount
   React.useEffect(() => {
-    if (!db || typeof db === 'undefined') {
-      // Firestore not available, fall back to localStorage
-      const existing = loadLabs();
-      if (existing.length === 0) {
-        const barLab = {id:'barlab-default', name:'Bar Lab', icon:'🌿', photo:null, created_at:now()};
-        saveLabs([barLab]);
-        setLabs([barLab]);
-      } else {
-        setLabs(existing);
-      }
-      setLoading(false);
-      return;
-    }
-    // Subscribe to labs index in Firestore
     // JSONBin stores one bin per lab — lab list lives in localStorage
       var existing = loadLabs();
       if (existing.length === 0) {
