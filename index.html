@@ -2430,8 +2430,8 @@ function App() {
 useEffect(() => {
         if (!activeLab) return;
         function fetchLabData() {
-            if (!JB_BIN_ID || JB_BIN_ID.indexOf('PASTE') !== -1) {
-                // JSONBin not configured yet — use localStorage
+            if (!JB_KEY || JB_KEY.indexOf('PASTE') !== -1) {
+                // No key at all — use localStorage only
                 var local = loadLabData(activeLab.id);
                 if (local && local.greenhouses && local.greenhouses.length > 0) {
                     remoteUpdateRef.current = true;
@@ -2439,6 +2439,31 @@ useEffect(() => {
                     setGhId(local.greenhouses[0].id);
                 }
                 setSyncStatus('saved');
+                return;
+            }
+            // If BIN_ID is placeholder, skip read and go straight to create
+            if (JB_BIN_ID && JB_BIN_ID.indexOf('PASTE') !== -1) {
+                var seeded = seedIfEmpty({ greenhouses:[], tables:[], plants:[],
+                    experiments:[], users:[], structs:[], stock:[], orders:[], locked:true });
+                jbCreate(seeded).then(function(res) {
+                    if (res && res.metadata && res.metadata.id) {
+                        JB_BIN_ID = res.metadata.id;
+                        console.log('[DB] Created JSONBin. ID:', JB_BIN_ID, '— SAVE THIS in your index.html as JB_BIN_ID');
+                        alert('Bin created! ID: ' + JB_BIN_ID + '\n\nSend this to your developer to save permanently.');
+                    }
+                    remoteUpdateRef.current = true;
+                    setData(seeded);
+                    if (seeded.greenhouses.length > 0) setGhId(seeded.greenhouses[0].id);
+                }).catch(function(e2) {
+                    console.error('[DB] jbCreate failed:', e2.message);
+                    // Fall back to localStorage
+                    var local = loadLabData(activeLab.id);
+                    if (local && local.greenhouses && local.greenhouses.length > 0) {
+                        remoteUpdateRef.current = true;
+                        setData(local);
+                        setGhId(local.greenhouses[0].id);
+                    }
+                });
                 return;
             }
             jbRead()
