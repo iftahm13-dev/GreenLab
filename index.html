@@ -543,7 +543,7 @@ body{font-family:'Inter',sans-serif;background:#f4f6f8;color:#111827;font-size:1
 .sb-overlay{display:none}
 
 @media (max-width:768px){
-  #root{overflow:auto}
+  #root{overflow:hidden}
   .sb{
     position:fixed;top:0;left:0;bottom:0;z-index:300;
     transform:translateX(-100%);
@@ -2642,7 +2642,7 @@ useEffect(() => {
         };
         vp.addEventListener('wheel', onWheel, { passive: false });
         return () => vp.removeEventListener('wheel', onWheel);
-    }, [scheduleFlush, commitTransform]);
+    }, [tab]);
 
     // ── Touch: attach at WINDOW level so child elements don't block it ──────
     useEffect(() => {
@@ -2744,10 +2744,25 @@ useEffect(() => {
             }
         };
 
-        // Use capture phase so we get the event before child elements
-        window.addEventListener('touchstart', onTouchStart, { passive: false, capture: true });
-        return () => window.removeEventListener('touchstart', onTouchStart, { capture: true });
-    }, [scheduleFlush, commitTransform]);
+        // iOS Safari CRITICAL: listeners must be on the element (not window).
+        // If touchstart is on window, iOS marks the whole gesture as non-preventable
+        // and all subsequent preventDefault() calls (even on element listeners) are ignored.
+        // By putting touchstart on the element with passive:false, iOS allows preventDefault
+        // on all events in that gesture.
+        vp.addEventListener('touchstart', onTouchStart, { passive: false });
+        // touchmove must also be on the element for preventDefault to work on iOS
+        // We use a blocking wrapper that prevents scroll whenever a canvas touch is active
+        const blockScroll = ev => {
+            if (activeTouchId !== null || ev.touches.length === 2) {
+                ev.preventDefault();
+            }
+        };
+        vp.addEventListener('touchmove', blockScroll, { passive: false });
+        return () => {
+            vp.removeEventListener('touchstart', onTouchStart);
+            vp.removeEventListener('touchmove', blockScroll);
+        };
+    }, [tab]);
     useLayoutEffect(() => {
         if (!wrRef.current) return;
         livePan.current  = { x: pan.x, y: pan.y };
@@ -3370,58 +3385,5 @@ if (window._fbReady) {
 }
 
 </script>
-
-<style>
-#dbg{
-  position:fixed;bottom:0;left:0;right:0;z-index:99999;
-  background:rgba(0,0,0,0.85);color:#0f0;font-family:monospace;font-size:11px;
-  padding:6px 8px;max-height:140px;overflow-y:auto;pointer-events:none;
-}
-#dbg div{margin:1px 0}
-</style>
-<div id="dbg"><div>DEBUG READY — touch the canvas</div></div>
-<script>
-(function(){
-  var dbg = document.getElementById('dbg');
-  var lines = [];
-  function log(msg){
-    lines.push(msg);
-    if(lines.length > 10) lines.shift();
-    dbg.innerHTML = lines.map(function(l){return '<div>'+l+'</div>';}).join('');
-  }
-
-  // Listen at document level to catch everything
-  document.addEventListener('touchstart', function(e){
-    var t = e.touches[0];
-    log('TOUCHSTART: touches='+e.touches.length+' x='+Math.round(t.clientX)+' y='+Math.round(t.clientY)+' target='+e.target.className.toString().slice(0,20));
-  }, {passive:true, capture:true});
-
-  document.addEventListener('touchmove', function(e){
-    var t = e.touches[0];
-    log('TOUCHMOVE: x='+Math.round(t.clientX)+' y='+Math.round(t.clientY)+' prevented='+e.defaultPrevented);
-  }, {passive:true, capture:true});
-
-  document.addEventListener('touchend', function(e){
-    log('TOUCHEND');
-  }, {passive:true, capture:true});
-
-  // Also check if vpRef element gets its listeners
-  // Poll for the cvp element and report
-  var checked = false;
-  setInterval(function(){
-    if(checked) return;
-    var cvp = document.querySelector('.cvp');
-    if(cvp){
-      checked = true;
-      log('CVP FOUND: w='+cvp.offsetWidth+' h='+cvp.offsetHeight+' ta='+getComputedStyle(cvp).touchAction+' ovf='+getComputedStyle(cvp).overflow);
-      var root = document.getElementById('root');
-      if(root) log('ROOT: ovf='+getComputedStyle(root).overflow+' ta='+getComputedStyle(root).touchAction);
-      var body = document.body;
-      log('BODY: ovf='+getComputedStyle(body).overflow+' ta='+getComputedStyle(body).touchAction);
-    }
-  }, 500);
-})();
-</script>
-
 </body>
 </html>
