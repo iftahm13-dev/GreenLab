@@ -212,10 +212,15 @@ body{font-family:'Inter',sans-serif;background:#f4f6f8;color:#111827;font-size:1
 /* ═══════════════════════════════════
    CANVAS / LAYOUT VIEW
 ═══════════════════════════════════ */
-.cvp{flex:1;min-height:0;overflow:hidden;background:#f0f2f5;background-image:radial-gradient(circle,#d1d5db 1px,transparent 1px);background-size:22px 22px;position:relative}
+.cvp{flex:1;min-height:0;overflow:hidden;background:#f0f2f5;background-image:radial-gradient(circle,#d1d5db 1px,transparent 1px);background-size:22px 22px;position:relative;touch-action:none}
 .cvp.panning{cursor:grabbing!important}
 .cvp.space-mode{cursor:grab}
-.cvw{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}
+.cvw{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform;touch-action:none}
+/* Pan mode toggle button (mobile) */
+.pan-toggle{display:none;align-items:center;gap:5px;padding:6px 14px;border-radius:var(--r);font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid var(--bo);background:#fff;color:var(--i3);transition:all .13s}
+.pan-toggle.on{background:var(--ll);border-color:var(--ld);color:var(--fo2)}
+@media (pointer:coarse){.pan-toggle{display:flex}}
+@media (pointer:coarse){.cvhint{display:none}}
 .ghr{position:absolute;top:0;left:0;background:#fff;border:1.5px solid #e5e7eb;border-radius:16px;box-shadow:var(--sh);overflow:visible}
 .rgrid{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(#f3f4f6 1px,transparent 1px),linear-gradient(90deg,#f3f4f6 1px,transparent 1px);background-size:40px 40px;border-radius:16px}
 .rlabel{position:absolute;top:10px;left:14px;font-size:12px;color:var(--i4);pointer-events:none;font-weight:500}
@@ -2401,6 +2406,9 @@ function App() {
     const [menuOpen, setMenuOpen] = useState(false); // mobile sidebar toggle
     const [expTip, setExpTip] = useState(null); // {x,y,exp,owner} for hover tooltip
     const [colorByExp, setColorByExp] = useState(false); // toggle experiment color overlay
+    const [panMode, setPanMode] = useState(false); // touch pan mode toggle for mobile
+    const panModeRef = useRef(false);
+    panModeRef.current = panMode;
 
     // ── Compute alerts from live data ────────────────────────────
     const alerts = useMemo(() => {
@@ -2616,8 +2624,15 @@ useEffect(() => {
             window.addEventListener('touchend', up);
             return;
         }
-        // ── One finger: pan ───────────────────────────────────────────────
+        // ── One finger: pan (always pan if panMode on, or if touching empty background) ──
         if (e.touches.length !== 1) return;
+        // Check if touch target is the canvas background (not a table/pot)
+        const touchTarget = e.target;
+        const isBackground = touchTarget === vpRef.current || touchTarget === wrRef.current ||
+            touchTarget.classList.contains('ghr') || touchTarget.classList.contains('rgrid') ||
+            touchTarget.classList.contains('rlabel') || touchTarget.classList.contains('cvw');
+        // Pan if: pan mode is on, OR touching empty background, OR two-finger
+        if (!panModeRef.current && !isBackground) return;
         const t = e.touches[0];
         // Read current pan from the transform on wrRef — always up to date
         let curX = 0, curY = 0;
@@ -2627,6 +2642,7 @@ useEffect(() => {
         }
         const startX = t.clientX, startY = t.clientY;
         const basePanX = curX, basePanY = curY;
+        let moved = false;
         if (vpRef.current) vpRef.current.classList.add('panning');
         const mv = ev => {
             if (ev.touches.length !== 1) return;
@@ -2634,6 +2650,7 @@ useEffect(() => {
             const tt = ev.touches[0];
             const dx = tt.clientX - startX;
             const dy = tt.clientY - startY;
+            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
             setPan({ x: basePanX + dx, y: basePanY + dy });
         };
         const up = () => {
@@ -3013,6 +3030,7 @@ useEffect(() => {
                             React.createElement("button", { className: "zbtn", onClick: () => setZoom(z => clamp(z * 1.25, MINZ, MAXZ)) }, "+"),
                             React.createElement("button", { className: "zbtn", style: { width: 'auto', padding: '0 7px', fontSize: 9, fontFamily: 'Inter' }, onClick: fitRoom }, "Fit")),
                         React.createElement("div", { className: "tsep" }),
+                        React.createElement("button", { className: `pan-toggle${panMode ? ' on' : ''}`, onClick: () => setPanMode(p => !p), title: "Toggle pan mode (touch)" }, panMode ? '\u270B Panning' : '\u270B Pan'),
                         React.createElement("button", { className: `selbtn${selMode ? ' on' : ''}`, onClick: () => { setSelMode(s => !s); setSelPots([]); } }, selMode ? 'Selecting...' : 'Select pots'),
                         React.createElement("button", { className: `selbtn${colorByExp ? ' on' : ''}`, onClick: () => setColorByExp(c => !c), title: "Color pots by experiment" }, colorByExp ? 'Exp colors on' : 'Color by exp')),
                     aGh && tab === 'layout' && React.createElement("div", { className: "tmeta" },
