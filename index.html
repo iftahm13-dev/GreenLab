@@ -2468,8 +2468,8 @@ useEffect(() => {
             }
             jbRead()
                 .then(function(remote) {
-                    if (!remote || !remote.greenhouses) {
-                        // Bin is empty or first run — seed it
+                    if (!remote || !remote.greenhouses || !remote.users || remote.users.length === 0) {
+                        // Bin is empty or has no users — seed it
                         var seeded = seedIfEmpty({ greenhouses:[], tables:[], plants:[],
                             experiments:[], users:[], structs:[], stock:[], orders:[], locked:true });
                         saveData(seeded, activeLab.id);
