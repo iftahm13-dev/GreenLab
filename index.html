@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GreenLab</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
@@ -13,7 +13,7 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 input[type=number]{-moz-appearance:textfield}
 input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
-html,body{height:100%;touch-action:none;overflow:hidden}
+html,body{height:100%}
 body{font-family:'Inter',sans-serif;background:#f4f6f8;color:#111827;font-size:14px}
 #root{display:flex;flex-direction:column;height:100vh;overflow:hidden}
 ::-webkit-scrollbar{width:5px;height:5px}
@@ -183,7 +183,7 @@ body{font-family:'Inter',sans-serif;background:#f4f6f8;color:#111827;font-size:1
 /* ═══════════════════════════════════
    MAIN CONTENT AREA
 ═══════════════════════════════════ */
-.main{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);touch-action:pan-x pan-y}
+.main{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
 
 /* Top toolbar */
 .toolbar{
@@ -2571,158 +2571,190 @@ useEffect(() => {
     const swarn = useMemo(() => !aGh || dimSpray[ghId] ? null : sprayedRecently(aGh) ? aGh : null, [aGh, ghId, dimSpray]);
     const stats = useMemo(() => { const ps = aPlants.filter(p => p.genotype); return { total: ps.length, h: ps.filter(p => p.status === 'healthy').length, w: ps.filter(p => p.status === 'wilting').length, d: ps.filter(p => p.status === 'dead').length }; }, [aPlants]);
     /* zoom */
-    // ══════════════════════════════════════════════════
-    //  CANVAS NAVIGATION  –  pan + zoom
-    // ══════════════════════════════════════════════════
-    const _p   = useRef({ x: pan.x, y: pan.y });
-    const _z   = useRef(zoom);
-    const _raf = useRef(false);
+    // ── Live pan/zoom stored in refs for RAF-based smooth updates ──────────
+    // panRef doubles as the live {x,y} pan state (separate from React pan state)
+    const livePan = useRef({ x: pan.x, y: pan.y });
+    const liveZoom = useRef(zoom);
+    const rafPending = useRef(false);
 
-    const applyDOM = () => {
-        _raf.current = false;
+    // Flush live refs → DOM immediately (called inside RAF)
+    const flushTransform = useCallback(() => {
+        rafPending.current = false;
         if (!wrRef.current) return;
-        wrRef.current.style.transform =
-            `translate(${_p.current.x}px,${_p.current.y}px) scale(${_z.current})`;
-        wrRef.current.dataset.zoom = _z.current;
-    };
-    const scheduleDOM = () => {
-        if (!_raf.current) { _raf.current = true; requestAnimationFrame(applyDOM); }
-    };
-    const commitNav = () => {
-        setZoom(_z.current);
-        setPan({ x: _p.current.x, y: _p.current.y });
-    };
+        wrRef.current.style.transform = `translate(${livePan.current.x}px,${livePan.current.y}px) scale(${liveZoom.current})`;
+        wrRef.current.dataset.zoom = liveZoom.current;
+    }, []);
 
-    // Sync refs when React state changes (fitRoom / zoom buttons)
-    useLayoutEffect(() => {
-        if (!wrRef.current) return;
-        _p.current = { x: pan.x, y: pan.y };
-        _z.current = zoom;
-        wrRef.current.style.transform =
-            `translate(${pan.x}px,${pan.y}px) scale(${zoom})`;
-        wrRef.current.dataset.zoom = zoom;
-    }, [zoom, pan]);
+    const scheduleFlush = useCallback(() => {
+        if (!rafPending.current) {
+            rafPending.current = true;
+            requestAnimationFrame(flushTransform);
+        }
+    }, [flushTransform]);
 
-    // ── Wheel (mouse + trackpad) ──────────────────────────────────
+    // Commit live refs → React state (called on gesture end so fitRoom / zoom buttons stay in sync)
+    const commitTransform = useCallback(() => {
+        setZoom(liveZoom.current);
+        setPan({ x: livePan.current.x, y: livePan.current.y });
+    }, []);
+
+    // Helper: read current pan from live ref (always fresh, no stale closure)
+    const readPan  = () => livePan.current;
+    const readZoom = () => liveZoom.current;
+
+    // ── Wheel: trackpad two-finger swipe = pan, pinch/ctrl = zoom ──────────
     useEffect(() => {
         const vp = vpRef.current; if (!vp) return;
-        const fn = e => {
+        const onWheel = e => {
             e.preventDefault();
-            const r  = vp.getBoundingClientRect();
-            const mx = e.clientX - r.left, my = e.clientY - r.top;
+            const r = vp.getBoundingClientRect();
+            const mx = e.clientX - r.left;
+            const my = e.clientY - r.top;
             if (e.ctrlKey || e.metaKey) {
-                const nz = clamp(_z.current * (1 - e.deltaY * 0.008), MINZ, MAXZ);
-                _p.current = { x: mx - (mx - _p.current.x) * nz / _z.current,
-                               y: my - (my - _p.current.y) * nz / _z.current };
-                _z.current = nz;
-            } else if (e.deltaMode === 0 && (Math.abs(e.deltaX) > 0 || Math.abs(e.deltaY) < 60)) {
-                _p.current = { x: _p.current.x - e.deltaX, y: _p.current.y - e.deltaY };
+                // Pinch-to-zoom on trackpad / mouse wheel zoom
+                const factor = 1 - e.deltaY * 0.008;
+                const z  = readZoom();
+                const nz = clamp(z * factor, MINZ, MAXZ);
+                const p  = readPan();
+                livePan.current  = { x: mx - (mx - p.x) * (nz / z), y: my - (my - p.y) * (nz / z) };
+                liveZoom.current = nz;
             } else {
-                const nz = clamp(_z.current * (1 - e.deltaY * 0.001), MINZ, MAXZ);
-                _p.current = { x: mx - (mx - _p.current.x) * nz / _z.current,
-                               y: my - (my - _p.current.y) * nz / _z.current };
-                _z.current = nz;
+                // Two-finger swipe (trackpad) = pan; regular scroll wheel = zoom
+                const isTrackpad = Math.abs(e.deltaX) > 0 || Math.abs(e.deltaY) < 50;
+                if (isTrackpad) {
+                    // Pan
+                    const p = readPan();
+                    livePan.current = { x: p.x - e.deltaX, y: p.y - e.deltaY };
+                } else {
+                    // Mouse scroll wheel = zoom
+                    const factor = 1 - e.deltaY * 0.001;
+                    const z  = readZoom();
+                    const nz = clamp(z * factor, MINZ, MAXZ);
+                    const p  = readPan();
+                    livePan.current  = { x: mx - (mx - p.x) * (nz / z), y: my - (my - p.y) * (nz / z) };
+                    liveZoom.current = nz;
+                }
             }
-            scheduleDOM();
-            clearTimeout(fn._t);
-            fn._t = setTimeout(commitNav, 150);
+            scheduleFlush();
+            // Debounce commit to React state
+            clearTimeout(onWheel._t);
+            onWheel._t = setTimeout(commitTransform, 120);
         };
-        vp.addEventListener('wheel', fn, { passive: false });
-        return () => { vp.removeEventListener('wheel', fn); clearTimeout(fn._t); };
+        vp.addEventListener('wheel', onWheel, { passive: false });
+        return () => vp.removeEventListener('wheel', onWheel);
     }, [tab]);
 
-    // ── Touch (iPhone / iPad / Android) ──────────────────────────
-    // Listeners on the ELEMENT (not window) with passive:false.
-    // Re-registered on [tab] change so vpRef.current is never null.
+    // ── Touch: attach at WINDOW level so child elements don't block it ──────
     useEffect(() => {
         const vp = vpRef.current; if (!vp) return;
-        const THRESH = 8;
-        let pid = null, psx = 0, psy = 0, pMoved = false, pBase = {x:0,y:0};
 
-        const onMove = e => {
-            if (e.touches.length >= 2) return;
-            if (pid === null) return;
-            let t = null;
-            for (let i = 0; i < e.touches.length; i++)
-                if (e.touches[i].identifier === pid) { t = e.touches[i]; break; }
-            if (!t) return;
-            const dx = t.clientX - psx, dy = t.clientY - psy;
-            if (!pMoved && Math.hypot(dx, dy) < THRESH) return;
-            if (!pMoved) { pMoved = true; vp.classList.add('panning'); }
-            e.preventDefault();
-            _p.current = { x: pBase.x + dx, y: pBase.y + dy };
-            scheduleDOM();
+        // Is this touch inside the canvas viewport?
+        const inVp = (touch) => {
+            const r = vp.getBoundingClientRect();
+            return touch.clientX >= r.left && touch.clientX <= r.right &&
+                   touch.clientY >= r.top  && touch.clientY <= r.bottom;
         };
 
-        const onEnd = e => {
-            let stillDown = false;
-            for (let i = 0; i < e.touches.length; i++)
-                if (e.touches[i].identifier === pid) { stillDown = true; break; }
-            if (!stillDown && pid !== null) {
-                if (pMoved) { vp.classList.remove('panning'); commitNav(); }
-                pid = null; pMoved = false;
-            }
-            if (e.touches.length === 0) {
-                vp.classList.remove('panning'); pid = null; pMoved = false;
-            }
-        };
+        let activeTouchId = null; // track single-finger pan
 
-        const onStart = e => {
+        const onTouchStart = e => {
+            // Only handle touches that start inside our viewport
+            if (!inVp(e.touches[0])) return;
+
             if (e.touches.length === 2) {
+                // ── Two fingers: simultaneous pinch + pan ─────────────────
                 e.preventDefault();
-                pid = null; pMoved = false;
-                const a = e.touches[0], b = e.touches[1];
-                const r         = vp.getBoundingClientRect();
-                const startDist = Math.hypot(b.clientX-a.clientX, b.clientY-a.clientY);
-                const startMx   = (a.clientX+b.clientX)/2;
-                const startMy   = (a.clientY+b.clientY)/2;
-                const startZ    = _z.current;
-                const startP    = {..._p.current};
-                const pinchMove = ev => {
+                activeTouchId = null; // cancel any single-finger pan
+                const t0 = e.touches[0], t1 = e.touches[1];
+                const r  = vp.getBoundingClientRect();
+                let startDist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
+                let startMidX = (t0.clientX + t1.clientX) / 2 - r.left;
+                let startMidY = (t0.clientY + t1.clientY) / 2 - r.top;
+                const startZoom = readZoom();
+                const startPan  = { ...readPan() };
+
+                const onMove = ev => {
                     if (ev.touches.length < 2) return;
                     ev.preventDefault();
-                    const c = ev.touches[0], d = ev.touches[1];
-                    const dist = Math.hypot(d.clientX-c.clientX, d.clientY-c.clientY);
-                    const mx   = (c.clientX+d.clientX)/2;
-                    const my   = (c.clientY+d.clientY)/2;
-                    const nz   = clamp(startZ * dist / (startDist||1), MINZ, MAXZ);
-                    const ax   = startMx - r.left;
-                    const ay   = startMy - r.top;
-                    _z.current = nz;
-                    _p.current = {
-                        x: startP.x + (mx - startMx) - ax * (nz/startZ - 1),
-                        y: startP.y + (my - startMy) - ay * (nz/startZ - 1),
+                    const a = ev.touches[0], b = ev.touches[1];
+                    const dist   = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+                    const midX   = (a.clientX + b.clientX) / 2 - r.left;
+                    const midY   = (a.clientY + b.clientY) / 2 - r.top;
+                    const scale  = dist / (startDist || 1);
+                    const nz     = clamp(startZoom * scale, MINZ, MAXZ);
+                    // Pan = follow the midpoint movement + zoom anchor
+                    liveZoom.current = nz;
+                    livePan.current  = {
+                        x: startPan.x + (midX - startMidX) - (startMidX) * (nz/startZoom - 1),
+                        y: startPan.y + (midY - startMidY) - (startMidY) * (nz/startZoom - 1),
                     };
-                    scheduleDOM();
+                    scheduleFlush();
                 };
-                const pinchEnd = () => {
-                    vp.removeEventListener('touchmove', pinchMove);
-                    vp.removeEventListener('touchend',  pinchEnd);
-                    commitNav();
+                const onEnd = () => {
+                    window.removeEventListener('touchmove', onMove);
+                    window.removeEventListener('touchend',  onEnd);
+                    commitTransform();
                 };
-                vp.addEventListener('touchmove', pinchMove, { passive: false });
-                vp.addEventListener('touchend',  pinchEnd,  { passive: true });
+                window.addEventListener('touchmove', onMove, { passive: false });
+                window.addEventListener('touchend',  onEnd);
                 return;
             }
+
             if (e.touches.length === 1) {
+                // ── One finger: pan ────────────────────────────────────────
+                e.preventDefault();
                 const t = e.touches[0];
-                pid    = t.identifier;
-                psx    = t.clientX;
-                psy    = t.clientY;
-                pBase  = {..._p.current};
-                pMoved = false;
+                activeTouchId = t.identifier;
+                const startX  = t.clientX;
+                const startY  = t.clientY;
+                const startPan = { ...readPan() };
+                if (vpRef.current) vpRef.current.classList.add('panning');
+
+                const onMove = ev => {
+                    // Find our tracked touch
+                    let tt = null;
+                    for (let i = 0; i < ev.touches.length; i++) {
+                        if (ev.touches[i].identifier === activeTouchId) { tt = ev.touches[i]; break; }
+                    }
+                    if (!tt) return;
+                    // If a second finger joined → stop panning (pinch will take over)
+                    if (ev.touches.length > 1) return;
+                    ev.preventDefault();
+                    livePan.current = {
+                        x: startPan.x + (tt.clientX - startX),
+                        y: startPan.y + (tt.clientY - startY),
+                    };
+                    scheduleFlush();
+                };
+                const onEnd = ev => {
+                    // Only clean up when our tracked finger lifts
+                    let stillActive = false;
+                    for (let i = 0; i < ev.touches.length; i++) {
+                        if (ev.touches[i].identifier === activeTouchId) { stillActive = true; break; }
+                    }
+                    if (stillActive) return;
+                    activeTouchId = null;
+                    if (vpRef.current) vpRef.current.classList.remove('panning');
+                    window.removeEventListener('touchmove', onMove);
+                    window.removeEventListener('touchend',  onEnd);
+                    commitTransform();
+                };
+                window.addEventListener('touchmove', onMove, { passive: false });
+                window.addEventListener('touchend',  onEnd);
             }
         };
 
-        vp.addEventListener('touchstart', onStart, { passive: false });
-        vp.addEventListener('touchmove',  onMove,  { passive: false });
-        vp.addEventListener('touchend',   onEnd,   { passive: true  });
-        return () => {
-            vp.removeEventListener('touchstart', onStart);
-            vp.removeEventListener('touchmove',  onMove);
-            vp.removeEventListener('touchend',   onEnd);
-        };
+        // Register on the element directly - iOS Safari requires this for preventDefault to work
+        vp.addEventListener('touchstart', onTouchStart, { passive: false });
+        return () => vp.removeEventListener('touchstart', onTouchStart);
     }, [tab]);
+    useLayoutEffect(() => {
+        if (!wrRef.current) return;
+        livePan.current  = { x: pan.x, y: pan.y };
+        liveZoom.current = zoom;
+        wrRef.current.style.transform = `translate(${pan.x}px,${pan.y}px) scale(${zoom})`;
+        wrRef.current.dataset.zoom = zoom;
+    }, [zoom, pan]);
     useEffect(() => { const kd = e => { var _a; if (e.code === 'Space' && !e.target.matches('input,textarea,select')) {
         e.preventDefault();
         spRef.current = true;
@@ -2731,24 +2763,9 @@ useEffect(() => {
         spRef.current = false;
         (_a = vpRef.current) === null || _a === void 0 ? void 0 : _a.classList.remove('space-mode');
     } }; window.addEventListener('keydown', kd); window.addEventListener('keyup', ku); return () => { window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); }; }, []);
-    const hVpMd = useCallback(e => {
-        if (!(e.button === 1 || e.button === 2 || spRef.current)) return;
-        e.preventDefault();
-        const sx = e.clientX, sy = e.clientY, bx = _p.current.x, by = _p.current.y;
-        vpRef.current && vpRef.current.classList.add('panning');
-        const mv = ev => {
-            _p.current = { x: bx + ev.clientX - sx, y: by + ev.clientY - sy };
-            scheduleDOM();
-        };
-        const up = () => {
-            vpRef.current && vpRef.current.classList.remove('panning');
-            commitNav();
-            window.removeEventListener('mousemove', mv);
-            window.removeEventListener('mouseup', up);
-        };
-        window.addEventListener('mousemove', mv);
-        window.addEventListener('mouseup', up);
-    }, []);
+    const hVpMd = useCallback(e => { var _a; if (!(e.button === 1 || e.button === 2 || spRef.current))
+        return; e.preventDefault(); panRef.current = { sx: e.clientX, sy: e.clientY, px: pan.x, py: pan.y }; (_a = vpRef.current) === null || _a === void 0 ? void 0 : _a.classList.add('panning'); const mv = e => { if (!panRef.current)
+        return; setPan({ x: panRef.current.px + (e.clientX - panRef.current.sx), y: panRef.current.py + (e.clientY - panRef.current.sy) }); }; const up = () => { var _a; panRef.current = null; (_a = vpRef.current) === null || _a === void 0 ? void 0 : _a.classList.remove('panning'); window.removeEventListener('mousemove', mv); window.removeEventListener('mouseup', up); }; window.addEventListener('mousemove', mv); window.addEventListener('mouseup', up); }, [pan]);
     
     const fitRoom = useCallback(() => { if (!aGh || !vpRef.current)
         return; const r = vpRef.current.getBoundingClientRect(); if (r.width < 50 || r.height < 50)
