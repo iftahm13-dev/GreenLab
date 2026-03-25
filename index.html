@@ -2642,127 +2642,79 @@ useEffect(() => {
         };
         vp.addEventListener('wheel', onWheel, { passive: false });
         return () => vp.removeEventListener('wheel', onWheel);
-    }, [tab]);
+    }, [scheduleFlush, commitTransform]);
 
-    // ── Touch: attach at WINDOW level so child elements don't block it ──────
-    useEffect(() => {
+    // ── Touch handler: defined as a ref so it can be passed as React prop ──
+    // Using a React prop (onTouchStart on the cvp div) guarantees the listener
+    // is on the exact element, always current, no useEffect timing issues.
+    // The ref wrapper lets us call the latest closure without stale captures.
+    const touchHandlerRef = useRef(null);
+    touchHandlerRef.current = useCallback((e) => {
         const vp = vpRef.current; if (!vp) return;
+        e.preventDefault(); // Must be called here - iOS decides preventability on touchstart
 
-        // Is this touch inside the canvas viewport?
-        const inVp = (touch) => {
-            const r = vp.getBoundingClientRect();
-            return touch.clientX >= r.left && touch.clientX <= r.right &&
-                   touch.clientY >= r.top  && touch.clientY <= r.bottom;
-        };
-
-        let activeTouchId = null; // track single-finger pan
-
-        const onTouchStart = e => {
-            // Only handle touches that start inside our viewport
-            if (!inVp(e.touches[0])) return;
-
-            if (e.touches.length === 2) {
-                // ── Two fingers: simultaneous pinch + pan ─────────────────
-                e.preventDefault();
-                activeTouchId = null; // cancel any single-finger pan
-                const t0 = e.touches[0], t1 = e.touches[1];
-                const r  = vp.getBoundingClientRect();
-                let startDist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
-                let startMidX = (t0.clientX + t1.clientX) / 2 - r.left;
-                let startMidY = (t0.clientY + t1.clientY) / 2 - r.top;
-                const startZoom = readZoom();
-                const startPan  = { ...readPan() };
-
-                const onMove = ev => {
-                    if (ev.touches.length < 2) return;
-                    ev.preventDefault();
-                    const a = ev.touches[0], b = ev.touches[1];
-                    const dist   = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
-                    const midX   = (a.clientX + b.clientX) / 2 - r.left;
-                    const midY   = (a.clientY + b.clientY) / 2 - r.top;
-                    const scale  = dist / (startDist || 1);
-                    const nz     = clamp(startZoom * scale, MINZ, MAXZ);
-                    // Pan = follow the midpoint movement + zoom anchor
-                    liveZoom.current = nz;
-                    livePan.current  = {
-                        x: startPan.x + (midX - startMidX) - (startMidX) * (nz/startZoom - 1),
-                        y: startPan.y + (midY - startMidY) - (startMidY) * (nz/startZoom - 1),
-                    };
-                    scheduleFlush();
-                };
-                const onEnd = () => {
-                    window.removeEventListener('touchmove', onMove);
-                    window.removeEventListener('touchend',  onEnd);
-                    commitTransform();
-                };
-                window.addEventListener('touchmove', onMove, { passive: false });
-                window.addEventListener('touchend',  onEnd);
-                return;
-            }
-
-            if (e.touches.length === 1) {
-                // ── One finger: pan ────────────────────────────────────────
-                e.preventDefault();
-                const t = e.touches[0];
-                activeTouchId = t.identifier;
-                const startX  = t.clientX;
-                const startY  = t.clientY;
-                const startPan = { ...readPan() };
-                if (vpRef.current) vpRef.current.classList.add('panning');
-
-                const onMove = ev => {
-                    // Find our tracked touch
-                    let tt = null;
-                    for (let i = 0; i < ev.touches.length; i++) {
-                        if (ev.touches[i].identifier === activeTouchId) { tt = ev.touches[i]; break; }
-                    }
-                    if (!tt) return;
-                    // If a second finger joined → stop panning (pinch will take over)
-                    if (ev.touches.length > 1) return;
-                    ev.preventDefault();
-                    livePan.current = {
-                        x: startPan.x + (tt.clientX - startX),
-                        y: startPan.y + (tt.clientY - startY),
-                    };
-                    scheduleFlush();
-                };
-                const onEnd = ev => {
-                    // Only clean up when our tracked finger lifts
-                    let stillActive = false;
-                    for (let i = 0; i < ev.touches.length; i++) {
-                        if (ev.touches[i].identifier === activeTouchId) { stillActive = true; break; }
-                    }
-                    if (stillActive) return;
-                    activeTouchId = null;
-                    if (vpRef.current) vpRef.current.classList.remove('panning');
-                    window.removeEventListener('touchmove', onMove);
-                    window.removeEventListener('touchend',  onEnd);
-                    commitTransform();
-                };
-                window.addEventListener('touchmove', onMove, { passive: false });
-                window.addEventListener('touchend',  onEnd);
-            }
-        };
-
-        // iOS Safari CRITICAL: listeners must be on the element (not window).
-        // If touchstart is on window, iOS marks the whole gesture as non-preventable
-        // and all subsequent preventDefault() calls (even on element listeners) are ignored.
-        // By putting touchstart on the element with passive:false, iOS allows preventDefault
-        // on all events in that gesture.
-        vp.addEventListener('touchstart', onTouchStart, { passive: false });
-        // touchmove must also be on the element for preventDefault to work on iOS
-        // We use a blocking wrapper that prevents scroll whenever a canvas touch is active
-        const blockScroll = ev => {
-            if (activeTouchId !== null || ev.touches.length === 2) {
+        if (e.touches.length === 2) {
+            // ── Two fingers: pinch-zoom + pan ────────────────────────────
+            const t0 = e.touches[0], t1 = e.touches[1];
+            const r  = vp.getBoundingClientRect();
+            const startDist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
+            const startMidX = (t0.clientX + t1.clientX) / 2 - r.left;
+            const startMidY = (t0.clientY + t1.clientY) / 2 - r.top;
+            const startZoom = readZoom();
+            const startPan  = { ...readPan() };
+            const onMove = ev => {
+                if (ev.touches.length < 2) return;
                 ev.preventDefault();
-            }
-        };
-        vp.addEventListener('touchmove', blockScroll, { passive: false });
-        return () => {
-            vp.removeEventListener('touchstart', onTouchStart);
-            vp.removeEventListener('touchmove', blockScroll);
-        };
-    }, [tab]);
+                const a = ev.touches[0], b = ev.touches[1];
+                const dist  = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+                const midX  = (a.clientX + b.clientX) / 2 - r.left;
+                const midY  = (a.clientY + b.clientY) / 2 - r.top;
+                const nz    = clamp(startZoom * (dist / (startDist || 1)), MINZ, MAXZ);
+                liveZoom.current = nz;
+                livePan.current  = {
+                    x: startPan.x + (midX - startMidX) - startMidX * (nz / startZoom - 1),
+                    y: startPan.y + (midY - startMidY) - startMidY * (nz / startZoom - 1),
+                };
+                scheduleFlush();
+            };
+            const onEnd = () => {
+                window.removeEventListener('touchmove', onMove);
+                window.removeEventListener('touchend', onEnd);
+                commitTransform();
+            };
+            window.addEventListener('touchmove', onMove, { passive: false });
+            window.addEventListener('touchend', onEnd);
+            return;
+        }
+
+        if (e.touches.length === 1) {
+            // ── One finger: pan ───────────────────────────────────────────
+            const t = e.touches[0];
+            const startX = t.clientX, startY = t.clientY;
+            const startPan = { ...readPan() };
+            vp.classList.add('panning');
+            const onMove = ev => {
+                ev.preventDefault();
+                const tt = ev.touches[0];
+                livePan.current = {
+                    x: startPan.x + (tt.clientX - startX),
+                    y: startPan.y + (tt.clientY - startY),
+                };
+                scheduleFlush();
+            };
+            const onEnd = () => {
+                vp.classList.remove('panning');
+                window.removeEventListener('touchmove', onMove);
+                window.removeEventListener('touchend', onEnd);
+                commitTransform();
+            };
+            window.addEventListener('touchmove', onMove, { passive: false });
+            window.addEventListener('touchend', onEnd);
+        }
+    }, []);
+    const hVpTouch = useCallback((e) => {
+        if (touchHandlerRef.current) touchHandlerRef.current(e);
+    }, []);
     useLayoutEffect(() => {
         if (!wrRef.current) return;
         livePan.current  = { x: pan.x, y: pan.y };
@@ -3147,7 +3099,7 @@ useEffect(() => {
                     React.createElement("button", { className: "btn btnp bsm", onClick: () => { var _a; setAssExpFm({ mode: 'existing', newName: '', newOwner: (user === null || user === void 0 ? void 0 : user.name) || '', newDesc: '', newUntilDate: '', existId: ((_a = data.experiments[0]) === null || _a === void 0 ? void 0 : _a.id) || '' }); setShowAssExp(true); } }, "Assign experiment"),
                     React.createElement("button", { className: "btn bsm", style: { background: 'rgba(255,255,255,.15)', color: '#fff', border: 'none' }, onClick: () => { setSelPots([]); setSelMode(false); } }, "Cancel")),
                 tab === 'layout' && React.createElement(React.Fragment, null,
-                    React.createElement("div", { ref: vpRef, className: "cvp", onMouseDown: hVpMd, onContextMenu: e => e.preventDefault(), onClick: e => { if (e.target === e.currentTarget) {
+                    React.createElement("div", { ref: el => { vpRef.current = el; if (el) { el.removeEventListener('touchstart', hVpTouch); el.addEventListener('touchstart', hVpTouch, { passive: false }); } }, className: "cvp", onMouseDown: hVpMd, onContextMenu: e => e.preventDefault(), onClick: e => { if (e.target === e.currentTarget) {
                             setSelTbl(null);
                             setPopup(null);
                         } } },
