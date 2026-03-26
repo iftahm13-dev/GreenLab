@@ -800,10 +800,20 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
   /* Hide top tab bar on mobile — bottom nav replaces it */
   .tab-bar{display:none!important}
 
-  /* Hide sidebar on mobile — bottom nav + sheet replaces it */
-  .sb{display:none!important}
-  .sb-overlay{display:none!important}
+  /* Sidebar: slide-in drawer on mobile (properties panel still needed) */
+  /* .sb already gets position:fixed + translateX(-100%) from the rule at line ~587 */
+  /* Just ensure sb-nav and sb-bottom are hidden inside the drawer */
+  .sb .sb-nav{display:none!important}
+  .sb .sb-setting-btn{display:none!important}
+  .sb .sb-logo{display:none!important}
+  .sb .sb-lab{display:none!important}
+  /* sb-bottom user strip also hidden — user info is in the More sheet */
+  .sb .sb-bottom{display:none!important}
+  /* sb-overlay already shown from the original rule above */
+  /* mob-menu-btn shown only when on Layout tab — handled via inline style in JSX */
   .mob-menu-btn{display:none!important}
+  /* The properties panel (sb-sc) is still accessible via hamburger on Layout tab */
+  .sb-sc{padding:0 10px 80px}  /* extra bottom padding so content clears bottom nav */
 
   /* Bottom sheet overlay */
   .mob-sheet-overlay{
@@ -3969,6 +3979,10 @@ useEffect(() => {
                         React.createElement("span", { className: "mob-top-labname" }, activeLab.name)
                     ),
                     React.createElement("div", { className: "mob-top-r" },
+                        tab === 'layout' && React.createElement("button", {
+                            onClick: () => setMenuOpen(m => !m),
+                            style: { background: menuOpen ? '#edf7e3' : '#F3F4F6', border: '1.5px solid ' + (menuOpen ? '#c3e6a8' : '#E5E7EB'), borderRadius: 10, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: menuOpen ? '#3a7d28' : '#6B7280', fontSize: 14 }
+                        }, "⊞"),
                         React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, onClick: syncStatus==='error' ? ()=>{saveData(data,activeLab?.id);setSyncStatus('saved');} : ()=>setShowFbPanel(true) }),
                         React.createElement("button", { className: `lkbtn${!locked?' edit':''}`, onClick: togLock, style:{fontSize:11,padding:'5px 12px'} }, locked ? '🔒' : '✏️')
                     )
