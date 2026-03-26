@@ -547,7 +547,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .ndot{width:6px;height:6px;border-radius:50%;background:#78C043;flex-shrink:0}
 .empty-st{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--i4);padding:40px}
 .ac-wrap{position:relative;width:100%}
-.ac-drop{position:fixed;background:#fff;border:1.5px solid var(--bo);border-radius:var(--r2);box-shadow:var(--sh2);z-index:9999;max-height:160px;overflow-y:auto;margin-top:2px;min-width:200px}
+.ac-drop{background:#fff;border:1.5px solid var(--bo);border-radius:var(--r2);box-shadow:var(--sh2);z-index:9999;max-height:160px;overflow-y:auto;min-width:0;box-sizing:border-box}
 .ac-item{padding:9px 12px;font-size:12px;color:var(--i2);cursor:pointer;border-bottom:1px solid var(--bo)}
 .ac-item:last-child{border-bottom:none}
 .ac-item:hover,.ac-item.hi{background:var(--ll);color:#166534}
@@ -879,6 +879,12 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .alert-legend-item { display: flex; align-items: center; gap: 5px; }
 .alert-legend-dot  { width: 10px; height: 10px; border-radius: 50%; }
 
+
+@media (max-width:768px){
+  .pills{ gap:6px; }
+  .pill{ padding:8px 14px; font-size:12px; }
+  .ac-item{ padding:13px 16px; font-size:14px; }
+}
 </style>
 </head>
 <body>
@@ -1595,46 +1601,89 @@ function Modal({ title, sub, onClose, onConfirm, confirmLabel = 'Create', wide, 
                 React.createElement("button", { className: "btn btns", onClick: onClose }, "Cancel"),
                 React.createElement("button", { className: "btn btnp", onClick: onConfirm }, confirmLabel)))));
 }
-/* Autocomplete input — shows suggestions from existing values */
+/* Autocomplete input — touch + mouse compatible */
 function Autocomplete({ value, onChange, onKeyDown, suggestions, placeholder, className, inputRef, big }) {
     const [open, setOpen] = useState(false);
     const [hi, setHi] = useState(-1);
     const wrap = useRef();
-    const filtered = useMemo(() => { const lv = (value||"").toLowerCase(); if (!lv) return suggestions.slice(0,10); return suggestions.filter(s => s.toLowerCase().includes(lv)).slice(0, 10); }, [value, suggestions]);
+    const isMobile = () => window.matchMedia('(max-width:768px)').matches || ('ontouchstart' in window);
+
+    const filtered = useMemo(() => {
+        const lv = (value||"").toLowerCase();
+        if (!lv) return suggestions.slice(0, 10);
+        return suggestions.filter(s => s.toLowerCase().includes(lv)).slice(0, 10);
+    }, [value, suggestions]);
+
     useEffect(() => { setHi(-1); }, [filtered.length]);
-    useEffect(() => { const fn = e => { if (wrap.current && !wrap.current.contains(e.target))
-        setOpen(false); }; document.addEventListener('mousedown', fn); return () => document.removeEventListener('mousedown', fn); }, []);
+
+    // Close on outside click/touch
+    useEffect(() => {
+        const fn = e => {
+            if (wrap.current && !wrap.current.contains(e.target) && !e.target.closest('.ac-drop'))
+                setOpen(false);
+        };
+        document.addEventListener('mousedown', fn);
+        document.addEventListener('touchstart', fn, { passive: true });
+        return () => {
+            document.removeEventListener('mousedown', fn);
+            document.removeEventListener('touchstart', fn);
+        };
+    }, []);
+
     const pick = v => { onChange(v); setOpen(false); setHi(-1); };
+
     const hKey = e => {
-        if (!open || !filtered.length) {
-            if (onKeyDown)
-                onKeyDown(e);
-            return;
-        }
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            setHi(h => Math.min(h + 1, filtered.length - 1));
-        }
-        else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            setHi(h => Math.max(h - 1, -1));
-        }
-        else if (e.key === 'Enter' && hi >= 0) {
-            e.preventDefault();
-            pick(filtered[hi]);
-        }
-        else if (e.key === 'Escape') {
-            setOpen(false);
-        }
-        else if (onKeyDown) {
-            onKeyDown(e);
+        if (!open || !filtered.length) { if (onKeyDown) onKeyDown(e); return; }
+        if (e.key === 'ArrowDown') { e.preventDefault(); setHi(h => Math.min(h + 1, filtered.length - 1)); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); setHi(h => Math.max(h - 1, -1)); }
+        else if (e.key === 'Enter' && hi >= 0) { e.preventDefault(); pick(filtered[hi]); }
+        else if (e.key === 'Escape') { setOpen(false); }
+        else if (onKeyDown) { onKeyDown(e); }
+    };
+
+    // On mobile: render dropdown inline (position:relative) so it's inside
+    // the scrollable popup and not affected by keyboard/viewport shifts.
+    // On desktop: use position:fixed with getBoundingClientRect.
+    const [dropRect, setDropRect] = React.useState(null);
+    const updateRect = () => {
+        if (!isMobile() && wrap.current) {
+            const r = wrap.current.getBoundingClientRect();
+            // Flip upward if too close to bottom
+            const spaceBelow = window.innerHeight - r.bottom;
+            const top = spaceBelow < 170 ? r.top - 170 : r.bottom + 2;
+            setDropRect({ top, left: r.left, width: r.width });
+        } else {
+            setDropRect(null); // mobile: inline mode
         }
     };
-    const [dropRect, setDropRect] = React.useState(null);
-    const updateRect = () => { if(wrap.current){const r=wrap.current.getBoundingClientRect();setDropRect({top:r.bottom+2,left:r.left,width:r.width});} };
-    return (React.createElement("div", { className: "ac-wrap", ref: wrap },
-        React.createElement("input", { ref: inputRef, className: className || (big ? 'fi big' : 'fi'), value: value, onChange: e => { onChange(e.target.value); setOpen(true); updateRect(); }, onFocus: () => { updateRect(); setOpen(true); }, onKeyDown: hKey, placeholder: placeholder || '', autoComplete: "off" }),
-        open && filtered.length > 0 && (React.createElement("div", { className: "ac-drop", style: dropRect ? {top:dropRect.top,left:dropRect.left,width:dropRect.width} : {} }, filtered.map((s, i) => React.createElement("div", { key: s, className: `ac-item${hi === i ? ' hi' : ''}`, onMouseDown: e => { e.preventDefault(); pick(s); } }, s))))));
+
+    const dropStyle = dropRect
+        ? { position: 'fixed', top: dropRect.top, left: dropRect.left, width: dropRect.width }
+        : { position: 'relative', top: 'unset', left: 'unset', width: '100%', marginTop: 2 };
+
+    return React.createElement("div", { className: "ac-wrap", ref: wrap },
+        React.createElement("input", {
+            ref: inputRef,
+            className: className || (big ? 'fi big' : 'fi'),
+            value: value,
+            onChange: e => { onChange(e.target.value); setOpen(true); updateRect(); },
+            onFocus: () => { updateRect(); setOpen(true); },
+            onKeyDown: hKey,
+            placeholder: placeholder || '',
+            autoComplete: "off"
+        }),
+        open && filtered.length > 0 && React.createElement("div", {
+            className: "ac-drop",
+            style: dropStyle
+        }, filtered.map((item, i) => React.createElement("div", {
+            key: item,
+            className: `ac-item${hi === i ? ' hi' : ''}`,
+            // onMouseDown for desktop (prevents blur before pick)
+            onMouseDown: e => { e.preventDefault(); pick(item); },
+            // onTouchEnd for mobile (fires after touch without triggering blur issues)
+            onTouchEnd: e => { e.preventDefault(); pick(item); }
+        }, item)))
+    );
 }
 /* Stock tab */
 function StockView({ stock, onAdd, onEdit, onRemove, onQty }) {
