@@ -582,7 +582,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 }
 .sb-overlay{display:none}
 
-@media (max-width:768px){
+@media (max-width:1024px){
   #root{overflow:hidden}
   .sb{
     position:fixed;top:0;left:0;bottom:0;z-index:300;
@@ -763,10 +763,10 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
    MOBILE BOTTOM NAVIGATION BAR
    Only visible on ≤768px. Desktop layout unchanged.
 ══════════════════════════════════════════════════════ */
-.mob-bottom-nav{display:none}  /* hidden on desktop */
+.mob-bottom-nav{display:none}  /* hidden on large desktop */
 
-@media (max-width:768px){
-  /* Show bottom nav */
+@media (max-width:1024px){
+  /* Show bottom nav on phones AND tablets (iPad) */
   .mob-bottom-nav{
     display:flex;align-items:stretch;
     position:fixed;bottom:0;left:0;right:0;z-index:400;
@@ -794,9 +794,9 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 
   /* Pad main content above bottom nav */
   .main{padding-bottom:60px}
-
-  /* Hide top tab bar on mobile — bottom nav replaces it */
   .tab-bar{display:none!important}
+
+  /* tab-bar hidden handled above */
 
   /* Sidebar: slide-in drawer on mobile (properties panel still needed) */
   /* .sb already gets position:fixed + translateX(-100%) from the rule at line ~587 */
@@ -818,7 +818,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 
 /* ── Mobile top header (replaces tab-bar on mobile) ── */
 .mob-top-bar{display:none}
-@media (max-width:768px){
+@media (max-width:1024px){
   .mob-top-bar{
     display:flex;align-items:center;justify-content:space-between;
     padding:10px 16px;background:#fff;border-bottom:1px solid #EBEBEB;
@@ -880,7 +880,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .alert-legend-dot  { width: 10px; height: 10px; border-radius: 50%; }
 
 
-@media (max-width:768px){
+@media (max-width:1024px){
   .pills{ gap:6px; }
   .pill{ padding:8px 14px; font-size:12px; }
   .ac-item{ padding:13px 16px; font-size:14px; }
@@ -1606,7 +1606,7 @@ function Autocomplete({ value, onChange, onKeyDown, suggestions, placeholder, cl
     const [open, setOpen] = useState(false);
     const [hi, setHi] = useState(-1);
     const wrap = useRef();
-    const isMobile = () => window.matchMedia('(max-width:768px)').matches || ('ontouchstart' in window);
+    const isMobile = () => window.matchMedia('(max-width:1024px)').matches || ('ontouchstart' in window);
 
     const filtered = useMemo(() => {
         const lv = (value||"").toLowerCase();
@@ -2038,7 +2038,7 @@ function SearchView({ plants, tables, ghs, exps, onSel }) {
             React.createElement("div", { style: { display: 'flex', gap: 8, alignItems: 'center' } },
                 React.createElement("div", { className: "svbox" },
                     React.createElement("span", { style: { fontSize: 14, color: 'var(--i4)' } }, "\uD83D\uDD0D"),
-                    React.createElement("input", { className: "svinp", placeholder: "Genotype, treatment, notes...", value: q, onChange: e => setQ(e.target.value), autoFocus: true }),
+                    React.createElement("input", { className: "svinp", placeholder: "Genotype, treatment, notes...", value: q, onChange: e => setQ(e.target.value) }),
                     q && React.createElement("span", { style: { cursor: 'pointer', color: 'var(--i4)' }, onClick: () => setQ('') }, "x")),
                 React.createElement("span", { className: "svcnt" },
                     res.length,
@@ -3177,24 +3177,24 @@ useEffect(() => {
         var pollId = setInterval(fetchLabData, 8000);
         return function() { clearInterval(pollId); };
     }, [activeLab ? activeLab.id : null]);
-    /* Write to Firestore on local changes only — skip if data came from Firestore */
+    /* Write on every local data change — skip only if this exact update came from remote */
     useEffect(() => {
         if (!activeLab) return;
+        if (!data.users || data.users.length === 0) return; // not loaded yet
         if (remoteUpdateRef.current && !forceWriteRef.current) {
-            remoteUpdateRef.current = false; // reset flag, do NOT write back
+            remoteUpdateRef.current = false;
             return;
         }
         remoteUpdateRef.current = false;
         forceWriteRef.current = false;
         setSyncStatus('saving');
         try {
-            console.log('[PHOTO] Writer effect firing. Writing main doc (photos stored separately).');
             saveData(data, activeLab ? activeLab.id : null);
             setTimeout(function() {
                 setSyncStatus('synced');
                 setLastSaved(new Date());
                 if (user) setLastBy(user.name);
-            }, 600);
+            }, 800);
         }
         catch(e) {
             setSyncStatus('error');
@@ -3842,6 +3842,13 @@ useEffect(() => {
                         React.createElement("span", { className: "mob-top-labname" }, activeLab.name)
                     ),
                     React.createElement("div", { className: "mob-top-r" },
+                        onlineUsers.length > 0 && React.createElement("div", { className: "online-bar", title: onlineUsers.map(u=>u.name).join(', ') + ' online', style:{marginRight:4} },
+                            React.createElement("span", { className: "online-bar-lbl" }, "● Online"),
+                            onlineUsers.slice(0,3).map(u => React.createElement("div", { key: u.name, className: "online-av", style: { background: u.color }, title: u.name },
+                                u.photo ? React.createElement("img", { src: u.photo, alt: u.name }) : u.name.charAt(0),
+                                React.createElement("div", { className: "online-dot" })
+                            ))
+                        ),
                         tab === 'layout' && React.createElement("button", {
                             onClick: () => setMenuOpen(m => !m),
                             style: { background: menuOpen ? '#edf7e3' : '#F3F4F6', border: '1.5px solid ' + (menuOpen ? '#c3e6a8' : '#E5E7EB'), borderRadius: 10, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: menuOpen ? '#3a7d28' : '#6B7280', fontSize: 14 }
