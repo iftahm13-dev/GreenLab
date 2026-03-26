@@ -310,7 +310,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .pill.pest{background:#fff7ed;border-color:#f97316;color:#9a3412}
 .pw{background:#fffbeb;border-color:#fcd34d;color:#92400e}
 .pd{background:#fef2f2;border-color:#fca5a5;color:#991b1b}
-.stylgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.stylgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .stopt{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 3px;border-radius:var(--r);cursor:pointer;border:1.5px solid var(--bo);background:#fff;transition:all .12s}
 .stopt:hover{border-color:var(--ld)}
 .stopt.on{border-color:#78C043;background:#edf7e3}
@@ -547,7 +547,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .ndot{width:6px;height:6px;border-radius:50%;background:#78C043;flex-shrink:0}
 .empty-st{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--i4);padding:40px}
 .ac-wrap{position:relative;width:100%}
-.ac-drop{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--lf);border-radius:var(--r);z-index:900;box-shadow:var(--sh2);max-height:140px;overflow-y:auto;margin-top:3px}
+.ac-drop{position:fixed;background:#fff;border:1.5px solid var(--bo);border-radius:var(--r2);box-shadow:var(--sh2);z-index:9999;max-height:160px;overflow-y:auto;margin-top:2px;min-width:200px}
 .ac-item{padding:9px 12px;font-size:12px;color:var(--i2);cursor:pointer;border-bottom:1px solid var(--bo)}
 .ac-item:last-child{border-bottom:none}
 .ac-item:hover,.ac-item.hi{background:var(--ll);color:#166534}
@@ -830,6 +830,55 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
   .mob-top-r{display:flex;align-items:center;gap:8px}
 }
 
+
+/* ═══ SICK / PEST ALERT RINGS ════════════════════════
+   Visible directly in the greenhouse layout grid.
+   Sick  = red-purple pulsing ring + ⚠ badge
+   Pests = orange pulsing ring (stronger) + 🐛 badge
+══════════════════════════════════════════════════════ */
+@keyframes sick-pulse {
+  0%,100%{ box-shadow: 0 0 0 2px #a855f7, 0 0 6px 3px rgba(168,85,247,.35); }
+  50%{     box-shadow: 0 0 0 2.5px #9333ea, 0 0 12px 5px rgba(147,51,234,.5); }
+}
+@keyframes pest-pulse {
+  0%,100%{ box-shadow: 0 0 0 2.5px #f97316, 0 0 8px 4px rgba(249,115,22,.4); }
+  50%{     box-shadow: 0 0 0 3px #ea580c,   0 0 14px 6px rgba(234,88,12,.6); }
+}
+.pcw.alert-sick {
+  border-radius: 8px;
+  animation: sick-pulse 2s ease-in-out infinite;
+  background: rgba(168,85,247,.07) !important;
+}
+.pcw.alert-pest {
+  border-radius: 8px;
+  animation: pest-pulse 1.6s ease-in-out infinite;
+  background: rgba(249,115,22,.08) !important;
+}
+/* Alert badge — top right corner of the pot cell */
+.pot-alert-badge {
+  position: absolute;
+  top: -4px; right: -4px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; line-height: 1;
+  border: 1.5px solid #fff;
+  z-index: 25; pointer-events: none;
+  box-shadow: 0 1px 4px rgba(0,0,0,.25);
+}
+.pot-alert-badge.sick-badge  { background: #9333ea; color: #fff; }
+.pot-alert-badge.pest-badge  { background: #ea580c; color: #fff; }
+/* Legend strip above greenhouse grid */
+.alert-legend {
+  display: flex; align-items: center; gap: 12px;
+  padding: 5px 16px; font-size: 10px; font-weight: 600;
+  background: rgba(255,255,255,.85); backdrop-filter: blur(4px);
+  border-bottom: 1px solid #F0F0F0; flex-shrink: 0;
+  font-family: 'Poppins', sans-serif; color: #6B7280;
+}
+.alert-legend-item { display: flex; align-items: center; gap: 5px; }
+.alert-legend-dot  { width: 10px; height: 10px; border-radius: 50%; }
+
 </style>
 </head>
 <body>
@@ -931,11 +980,38 @@ const now = () => new Date().toISOString();
    PS defines all selectable pot types shown in the pot picker.
    PotSVG renders each as a realistic SVG.
    ────────────────────────────────────────────────────────────── */
+/* Spray 24h countdown timer component */
+function SprayCountdown({ sprayedAt }) {
+    const [rem, setRem] = React.useState(0);
+    React.useEffect(() => {
+        const update = () => {
+            const elapsed = Date.now() - new Date(sprayedAt).getTime();
+            const remaining = Math.max(0, 86400000 - elapsed);
+            setRem(remaining);
+        };
+        update();
+        const t = setInterval(update, 1000);
+        return () => clearInterval(t);
+    }, [sprayedAt]);
+    if (rem <= 0) return React.createElement("span", {style:{color:'#6B7280',fontSize:10}}, "Cleared");
+    const h = Math.floor(rem/3600000);
+    const m = Math.floor((rem%3600000)/60000);
+    const ss = Math.floor((rem%60000)/1000);
+    const pct = rem/86400000;
+    const col = pct > 0.5 ? '#ef4444' : pct > 0.25 ? '#f97316' : '#eab308';
+    return React.createElement("div", {style:{display:'flex',alignItems:'center',gap:6,marginTop:3}},
+        React.createElement("div", {style:{flex:1,height:4,background:'#F3F4F6',borderRadius:2,overflow:'hidden'}},
+            React.createElement("div", {style:{width:(pct*100)+'%',height:'100%',background:col,borderRadius:2,transition:'width 1s linear'}})
+        ),
+        React.createElement("span", {style:{fontSize:10,fontWeight:700,color:col,fontFamily:'Inter',flexShrink:0}},
+            String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0')
+        )
+    );
+}
+
 const PS = [
-    { id: 'conic',   lbl: 'Classic' },
-    { id: 'wide',    lbl: 'Wide' },
-    { id: 'nursery', lbl: 'Nursery' },
-    { id: 'tray',    lbl: 'Tray' },
+    { id: 'conic',  lbl: 'Classic' },
+    { id: 'tray',   lbl: 'Tray' },
 ];
 // Pot color presets
 const POT_COLORS = [
@@ -1097,142 +1173,6 @@ function PotSVG({ sid = 'round', sz = 40, sc = null, hi = false, iu = null, colo
                 r:"2.5", fill:sf, stroke:"#fff", strokeWidth:"1"})
         );
     }
-    // ── WIDE — wide shallow pot (image 1: flat cartoon style) ─────────
-    if (sid === 'wide') {
-        // Image 1: flat vector style, very wide relative to height,
-        // prominent thick flat rim, wide open top with dark interior,
-        // smooth body, tiny base ring
-        const VW=72, VH=48;
-        const CX=VW/2;
-        const rimY=9, rimH=8;      // thick flat rim
-        const bodyTop=rimY+rimH;   // 17
-        const bodyBot=VH-5;        // 43
-        const TW=32, BW=24;        // wide proportions
-
-        return React.createElement("svg",{viewBox:`0 0 ${VW} ${VH}`,width:sz*1.1,height:sz*1.1*VH/VW,className:"psvg"},
-            // Shadow
-            React.createElement("ellipse",{cx:CX,cy:bodyBot+2,rx:BW,ry:1.8,fill:"rgba(0,0,0,.15)"}),
-            // Body
-            React.createElement("path",{
-                d:`M${CX-TW} ${bodyTop} L${CX-BW} ${bodyBot} Q${CX} ${bodyBot+1} ${CX+BW} ${bodyBot} L${CX+TW} ${bodyTop} Z`,
-                fill:PC.body
-            }),
-            // Right shading
-            React.createElement("path",{
-                d:`M${CX+10} ${bodyTop} L${CX+TW} ${bodyTop} L${CX+BW} ${bodyBot+1} L${CX+6} ${bodyBot+1} Z`,
-                fill:"rgba(0,0,0,.15)"
-            }),
-            // Left highlight
-            React.createElement("path",{
-                d:`M${CX-TW+2} ${bodyTop+2} Q${CX-TW+3} ${bodyTop+12} ${CX-BW+2} ${bodyBot-2}`,
-                stroke:"rgba(255,255,255,.3)",strokeWidth:"6",fill:"none",strokeLinecap:"round"
-            }),
-            // Thick flat rim (image 1 has a very prominent flat rim)
-            React.createElement("path",{
-                d:`M${CX-TW-1.5} ${bodyTop} Q${CX} ${bodyTop+2.5} ${CX+TW+1.5} ${bodyTop}`,
-                stroke:PC.rim,strokeWidth:"9",fill:"none",strokeLinecap:"round"
-            }),
-            // Rim top highlight
-            React.createElement("path",{
-                d:`M${CX-TW-1} ${bodyTop-.5} Q${CX} ${bodyTop+.5} ${CX+TW+1} ${bodyTop-.5}`,
-                stroke:"rgba(255,255,255,.28)",strokeWidth:"2.5",fill:"none",strokeLinecap:"round"
-            }),
-            // Rim right-side shadow
-            React.createElement("path",{
-                d:`M${CX+12} ${bodyTop} Q${CX+TW} ${bodyTop+1} ${CX+TW+1.5} ${bodyTop+2}`,
-                stroke:"rgba(0,0,0,.18)",strokeWidth:"3",fill:"none",strokeLinecap:"round"
-            }),
-            // Wide dark opening interior
-            React.createElement("ellipse",{cx:CX,cy:bodyTop,rx:TW-3,ry:5,fill:PC.rimI,opacity:".9"}),
-            React.createElement("ellipse",{cx:CX,cy:bodyTop+1,rx:TW-8,ry:3.2,fill:"rgba(0,0,0,.4)"}),
-            // Inner rim highlight ring (image 1 has a clear inner ring)
-            React.createElement("ellipse",{cx:CX,cy:bodyTop,rx:TW-3,ry:5,fill:"none",stroke:"rgba(255,255,255,.18)",strokeWidth:"1"}),
-            // Soil/image
-            hi&&iu
-              ? React.createElement(React.Fragment,null,
-                  React.createElement("defs",null,React.createElement("clipPath",{id:cid},React.createElement("ellipse",{cx:CX,cy:bodyTop,rx:TW-4,ry:4.5}))),
-                  React.createElement("image",{href:iu,x:CX-(TW-4),y:bodyTop-4.5,width:(TW-4)*2,height:9,clipPath:"url(#"+cid+")",preserveAspectRatio:"xMidYMid slice"}))
-              : null,
-            // Base ring
-            React.createElement("ellipse",{cx:CX,cy:bodyBot+1,rx:BW+1,ry:1.8,fill:"none",stroke:PC.rim,strokeWidth:"2",opacity:".6"}),
-            sf&&React.createElement("circle",{cx:CX+TW,cy:bodyTop+2,r:"3.2",fill:sf,stroke:"#fff",strokeWidth:"1.2"})
-        );
-    }
-
-    // ── NURSERY — tall nursery container pot (image 2) ───────────────
-    if (sid === 'nursery') {
-        // Image 2: taller than wide, thick structural rim with inner ridge,
-        // smooth body with slight taper, small drainage feet at base,
-        // 3D shading with highlight on left and darker right side
-        const VW=60, VH=64;
-        const CX=VW/2;
-        const rimY=7, rimH=10;    // tall thick rim
-        const bodyTop=rimY+rimH;  // 17
-        const bodyBot=VH-6;       // 58
-        const BH=bodyBot-bodyTop; // 41 — tall
-        const TW=24, BW=18;       // slightly tapered
-
-        return React.createElement("svg",{viewBox:`0 0 ${VW} ${VH}`,width:sz*0.95,height:sz*0.95*VH/VW,className:"psvg"},
-            // Shadow
-            React.createElement("ellipse",{cx:CX,cy:bodyBot+3,rx:BW-.5,ry:1.8,fill:"rgba(0,0,0,.17)"}),
-            // Body
-            React.createElement("path",{
-                d:`M${CX-TW} ${bodyTop} L${CX-BW} ${bodyBot} Q${CX-BW} ${bodyBot+.8} ${CX} ${bodyBot+.8} Q${CX+BW} ${bodyBot+.8} ${CX+BW} ${bodyBot} L${CX+TW} ${bodyTop} Z`,
-                fill:PC.body
-            }),
-            // Right-side darker zone
-            React.createElement("path",{
-                d:`M${CX+6} ${bodyTop} L${CX+TW} ${bodyTop} L${CX+BW} ${bodyBot+.8} L${CX+3} ${bodyBot+.8} Z`,
-                fill:"rgba(0,0,0,.18)"
-            }),
-            // Left highlight
-            React.createElement("path",{
-                d:`M${CX-TW+2} ${bodyTop+2} Q${CX-TW+3} ${bodyTop+BH*.5} ${CX-BW+2} ${bodyBot-3}`,
-                stroke:"rgba(255,255,255,.3)",strokeWidth:"4",fill:"none",strokeLinecap:"round"
-            }),
-            // Structural ridge below rim (image 2 has this clearly)
-            React.createElement("path",{
-                d:`M${CX-TW+.5} ${bodyTop+3} Q${CX} ${bodyTop+3.8} ${CX+TW-.5} ${bodyTop+3}`,
-                stroke:PC.ridge,strokeWidth:"1.8",fill:"none",opacity:".75"
-            }),
-            React.createElement("path",{
-                d:`M${CX-TW+.5} ${bodyTop+5} Q${CX} ${bodyTop+5.7} ${CX+TW-.5} ${bodyTop+5}`,
-                stroke:PC.ridge,strokeWidth:".7",fill:"none",opacity:".35"
-            }),
-            // Thick outer rim
-            React.createElement("path",{
-                d:`M${CX-TW-2} ${bodyTop} Q${CX} ${bodyTop+2.5} ${CX+TW+2} ${bodyTop}`,
-                stroke:PC.rim,strokeWidth:"11",fill:"none",strokeLinecap:"round"
-            }),
-            // Rim top highlight
-            React.createElement("path",{
-                d:`M${CX-TW-1} ${bodyTop-.5} Q${CX} ${bodyTop+.8} ${CX+TW+1} ${bodyTop-.5}`,
-                stroke:"rgba(255,255,255,.28)",strokeWidth:"3",fill:"none",strokeLinecap:"round"
-            }),
-            // Rim right shadow
-            React.createElement("path",{
-                d:`M${CX+8} ${bodyTop-.5} Q${CX+TW} ${bodyTop+.5} ${CX+TW+2} ${bodyTop+2}`,
-                stroke:"rgba(0,0,0,.18)",strokeWidth:"2.5",fill:"none",strokeLinecap:"round"
-            }),
-            // Inner rim opening (image 2 shows deep interior)
-            React.createElement("ellipse",{cx:CX,cy:bodyTop,rx:TW-2.5,ry:5.5,fill:PC.rimI,opacity:".88"}),
-            React.createElement("ellipse",{cx:CX,cy:bodyTop+.5,rx:TW-6,ry:3.8,fill:"rgba(0,0,0,.38)"}),
-            // Inner rim ring (the secondary inner ridge visible in image 2)
-            React.createElement("ellipse",{cx:CX,cy:bodyTop,rx:TW-2.5,ry:5.5,fill:"none",stroke:"rgba(255,255,255,.18)",strokeWidth:"1"}),
-            React.createElement("ellipse",{cx:CX,cy:bodyTop+1,rx:TW-4.5,ry:4.2,fill:"none",stroke:PC.rimI,strokeWidth:"1.5",opacity:".6"}),
-            // Soil/image
-            hi&&iu
-              ? React.createElement(React.Fragment,null,
-                  React.createElement("defs",null,React.createElement("clipPath",{id:cid},React.createElement("ellipse",{cx:CX,cy:bodyTop,rx:TW-3,ry:5}))),
-                  React.createElement("image",{href:iu,x:CX-(TW-3),y:bodyTop-5,width:(TW-3)*2,height:10,clipPath:"url(#"+cid+")",preserveAspectRatio:"xMidYMid slice"}))
-              : null,
-            // Base drainage feet (image 2 shows feet)
-            React.createElement("rect",{x:CX-BW,y:bodyBot,width:BW*2,height:2,rx:".8",fill:PC.base,opacity:".5"}),
-            ...[CX-8,CX,CX+8].map((fx,i)=>React.createElement("rect",{key:i,x:fx-2.5,y:bodyBot+1,width:5,height:2.5,rx:".8",fill:PC.base,opacity:".7"})),
-            sf&&React.createElement("circle",{cx:CX+TW-.5,cy:bodyTop+2,r:"3.2",fill:sf,stroke:"#fff",strokeWidth:"1.2"})
-        );
-    }
-
     // ── CONIC — front-facing flat nursery pot (matches reference images) ──
     if (sid === 'conic') {
         // Geometry — front-facing truncated cone
@@ -1293,129 +1233,6 @@ function PotSVG({ sid = 'round', sz = 40, sc = null, hi = false, iu = null, colo
         );
     }
 
-    // ── SQUARE ────────────────────────────────────────────────────
-    if (sid === 'sq') {
-        return React.createElement("svg", { viewBox:"0 0 32 34", width:sz, height:sz*34/32, className:"psvg" },
-            React.createElement("path",{d:"M4 8 L3 31 Q3 32 4.5 32 L27.5 32 Q29 32 29 31 L28 8 Z",fill:PC.body}),
-            React.createElement("path",{d:"M4 10 Q4.2 20 4.5 30",stroke:PC.shine,strokeWidth:"2",fill:"none",strokeLinecap:"round"}),
-            React.createElement("path",{d:"M3.5 14 Q15.5 14.5 28.5 14",stroke:PC.ridge,strokeWidth:".8",fill:"none",opacity:".5"}),
-            React.createElement("path",{d:"M3.5 21 Q15.5 21.4 28.5 21",stroke:PC.ridge,strokeWidth:".7",fill:"none",opacity:".35"}),
-            React.createElement("rect",{x:"2",y:"5",width:"28",height:"5",rx:"1.5",fill:PC.rim}),
-            React.createElement("rect",{x:"4",y:"6",width:"24",height:"2.5",rx:"1",fill:PC.rimI,opacity:".5"}),
-            React.createElement("rect",{x:"2",y:"6",width:"4",height:"2",rx:".8",fill:PC.rimI,opacity:".4"}),
-            React.createElement("rect",{x:"26",y:"6",width:"4",height:"2",rx:".8",fill:PC.rimI,opacity:".3"}),
-            React.createElement("rect",{x:"3",y:"31",width:"26",height:"2",rx:"1",fill:PC.base,opacity:".5"}),
-            [6,14,22].map((_,i)=>React.createElement("rect",{key:i,x:6+i*8,y:"31.5",width:"4",height:"1.5",rx:".5",fill:PC.base,opacity:".6"})),
-            hi && iu
-              ? React.createElement(React.Fragment,null, React.createElement("defs",null, React.createElement("clipPath",{id:cid}, React.createElement("rect",{x:"3",y:"5",width:"26",height:"5"}))), React.createElement("image",{href:iu,x:"3",y:"5",width:"26",height:"5",clipPath:"url(#"+cid+")",preserveAspectRatio:"xMidYMid slice"}))
-              : React.createElement("rect",{x:"3",y:"5.5",width:"26",height:"4",rx:".8",fill:PC.soil,opacity:".85"}),
-            sf && React.createElement("circle",{cx:"28",cy:"7",r:"3",fill:sf,stroke:"#fff",strokeWidth:"1.2"})
-        );
-    }
-
-    // ── ROUND — wide shallow nursery pot (image 3 reference) ──────
-    // Front-facing view, wider than tall, thick rim, two ridges,
-    // wide dark opening, left highlight, small base saucer
-
-        const VW=70, VH=56;          // viewBox — wider than tall
-        const CX=VW/2;               // 35
-        const rimY=8;                // top of rim
-        const rimH=10;               // rim band height
-        const bodyTop=rimY+rimH;     // 18
-        const bodyBot=VH-8;          // 48
-        const BH=bodyBot-bodyTop;    // 30
-        const TW=30;                 // half-width at top of body
-        const BW=21;                 // half-width at base
-
-        return React.createElement("svg", { viewBox:`0 0 ${VW} ${VH}`, width:sz*1.1, height:sz*1.1*VH/VW, className:"psvg" },
-
-            // — Ground shadow
-            React.createElement("ellipse",{cx:CX,cy:bodyBot+3,rx:BW,ry:2,fill:"rgba(0,0,0,.15)"}),
-
-            // — Main body (tapered trapezoid, front view)
-            React.createElement("path",{
-                d:`M${CX-TW} ${bodyTop} L${CX-BW} ${bodyBot} Q${CX-BW} ${bodyBot+1} ${CX} ${bodyBot+1} Q${CX+BW} ${bodyBot+1} ${CX+BW} ${bodyBot} L${CX+TW} ${bodyTop} Z`,
-                fill:PC.body
-            }),
-
-            // — Right-side darker zone (3D shading like image 3)
-            React.createElement("path",{
-                d:`M${CX+8} ${bodyTop} L${CX+TW} ${bodyTop} L${CX+BW} ${bodyBot+1} L${CX+4} ${bodyBot+1} Z`,
-                fill:"rgba(0,0,0,.18)"
-            }),
-
-            // — Left-side highlight (lighter strip, like image 3)
-            React.createElement("path",{
-                d:`M${CX-TW+2} ${bodyTop+2} Q${CX-TW+3} ${bodyTop+BH*.5} ${CX-BW+2} ${bodyBot-2}`,
-                stroke:"rgba(255,255,255,.35)", strokeWidth:"5", fill:"none", strokeLinecap:"round"
-            }),
-
-            // — Ridge 1 — just below rim (visible in image 3)
-            React.createElement("path",{
-                d:`M${CX-TW+1} ${bodyTop+4} Q${CX} ${bodyTop+4.8} ${CX+TW-1} ${bodyTop+4}`,
-                stroke:PC.ridge, strokeWidth:"2", fill:"none", opacity:".8"
-            }),
-            // Ridge 1 lower shadow
-            React.createElement("path",{
-                d:`M${CX-TW+1} ${bodyTop+6} Q${CX} ${bodyTop+6.7} ${CX+TW-1} ${bodyTop+6}`,
-                stroke:PC.ridge, strokeWidth:".8", fill:"none", opacity:".4"
-            }),
-
-            // — Ridge 2 — mid body (image 3 has two)
-            React.createElement("path",{
-                d:`M${CX-TW+4} ${bodyTop+BH*.5} Q${CX} ${bodyTop+BH*.51} ${CX+TW-4} ${bodyTop+BH*.5}`,
-                stroke:PC.ridge, strokeWidth:"1.5", fill:"none", opacity:".65"
-            }),
-            React.createElement("path",{
-                d:`M${CX-TW+4} ${bodyTop+BH*.5+1.8} Q${CX} ${bodyTop+BH*.51+1.8} ${CX+TW-4} ${bodyTop+BH*.5+1.8}`,
-                stroke:PC.ridge, strokeWidth:".6", fill:"none", opacity:".3"
-            }),
-
-            // — Thick outer rim (rounded top, like image 3)
-            React.createElement("path",{
-                d:`M${CX-TW-2} ${bodyTop} Q${CX} ${bodyTop+3} ${CX+TW+2} ${bodyTop}`,
-                stroke:PC.rim, strokeWidth:"12", fill:"none", strokeLinecap:"round"
-            }),
-            // Rim top highlight
-            React.createElement("path",{
-                d:`M${CX-TW-1} ${bodyTop-.5} Q${CX} ${bodyTop+.8} ${CX+TW+1} ${bodyTop-.5}`,
-                stroke:"rgba(255,255,255,.3)", strokeWidth:"3", fill:"none", strokeLinecap:"round"
-            }),
-            // Rim right-side darker shadow
-            React.createElement("path",{
-                d:`M${CX+10} ${bodyTop-.5} Q${CX+TW} ${bodyTop+.5} ${CX+TW+2} ${bodyTop+2}`,
-                stroke:"rgba(0,0,0,.2)", strokeWidth:"3", fill:"none", strokeLinecap:"round"
-            }),
-
-            // — Inner rim opening ellipse (the dark interior visible in image 3)
-            React.createElement("ellipse",{cx:CX, cy:bodyTop, rx:TW-3, ry:5.5,
-                fill:PC.rimI, opacity:".85"}),
-            // Inner opening highlight ring
-            React.createElement("ellipse",{cx:CX, cy:bodyTop, rx:TW-3, ry:5.5,
-                fill:"none", stroke:"rgba(255,255,255,.2)", strokeWidth:"1"}),
-            // Deep interior dark center
-            React.createElement("ellipse",{cx:CX, cy:bodyTop+1, rx:TW-7, ry:3.8,
-                fill:"rgba(0,0,0,.35)"}),
-
-            // — Soil/image inside opening
-            hi && iu
-              ? React.createElement(React.Fragment,null,
-                  React.createElement("defs",null,
-                      React.createElement("clipPath",{id:cid},
-                          React.createElement("ellipse",{cx:CX,cy:bodyTop,rx:TW-4,ry:5}))),
-                  React.createElement("image",{href:iu,x:CX-(TW-4),y:bodyTop-5,width:(TW-4)*2,height:10,
-                      clipPath:"url(#"+cid+")",preserveAspectRatio:"xMidYMid slice"}))
-              : null,
-
-            // — Base saucer ring (image 3 has a small footing ring at base)
-            React.createElement("ellipse",{cx:CX,cy:bodyBot+1,rx:BW+1,ry:2,
-                fill:"none",stroke:PC.rim,strokeWidth:"2",opacity:".7"}),
-            React.createElement("ellipse",{cx:CX,cy:bodyBot+1,rx:BW-1,ry:1.2,
-                fill:PC.base,opacity:".5"}),
-
-            // — Status dot
-            sf && React.createElement("circle",{cx:CX+TW,cy:bodyTop+2,r:"3.5",fill:sf,stroke:"#fff",strokeWidth:"1.3"})
-        );
 
 }
 /* PotCell: always shows label below pot icon. Never shifts on delete. */
@@ -1436,7 +1253,8 @@ function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onD
             React.createElement("div", { style: { height: LBH, display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: fs - 1, color: '#c0ccc4', fontFamily: 'Inter,sans-serif', userSelect: 'none' } }, teMode ? '+' : '')));
     }
-    return (React.createElement("div", { className: 'pcw' + (isActive ? ' active' : '') + (isSel ? ' pot-sel' : '') + (selMode ? ' sel-mode' : '') + (teMode ? ' temode' : ''), style: { width: ppx, height: ppx + LBH, position: 'relative', background: expBg || undefined, borderRadius: expBg ? 6 : undefined }, title: lbl + (plant.treatment ? ' | ' + plant.treatment : ''), onClick: e => { e.stopPropagation(); if (selMode || !teMode)
+    const alertCls = sc === 'pests' ? ' alert-pest' : sc === 'sick' ? ' alert-sick' : '';
+    return (React.createElement("div", { className: 'pcw' + (isActive ? ' active' : '') + (isSel ? ' pot-sel' : '') + (selMode ? ' sel-mode' : '') + (teMode ? ' temode' : '') + alertCls, style: { width: ppx, height: ppx + LBH, position: 'relative', background: expBg || undefined, borderRadius: expBg ? 6 : undefined }, title: lbl + (plant.treatment ? ' | ' + plant.treatment : '') + (sc === 'sick' ? ' ⚠ SICK' : sc === 'pests' ? ' 🐛 PESTS' : ''), onClick: e => { e.stopPropagation(); if (selMode || !teMode)
             onPotClick(e, plant); },
         onMouseEnter: expInitials && onExpHover ? e => onExpHover(e.clientX, e.clientY) : undefined,
         onMouseMove:  expInitials && onExpHover ? e => onExpHover(e.clientX, e.clientY) : undefined,
@@ -1445,6 +1263,8 @@ function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onD
             React.createElement(PotSVG, { sid: plant.pot_style || 'conic', sz: svgSz, sc: sc, hi: !!plant.image, iu: plant.image, colorId: plant.pot_color || 'terra' }),
             React.createElement("span", { className: "plbl", style: { fontSize: fs, width: ppx + 4, marginTop: 1, height: LBH - 1 } }, disp || '')),
         teMode && React.createElement("button", { className: "pdel", onClick: e => { e.stopPropagation(); onDel(plant.id); } }, "x"),
+        sc === 'pests' && React.createElement("div", { className: "pot-alert-badge pest-badge" }, "🐛"),
+        sc === 'sick'  && React.createElement("div", { className: "pot-alert-badge sick-badge"  }, "⚠"),
         plant.image && React.createElement("div", { style: { position: 'absolute', top: 1, right: 1, width: 6, height: 6, borderRadius: '50%', background: var_amber, border: '1px solid #fff' } }),
         expInitials && React.createElement("div", { style: {
             position: 'absolute', top: 2, left: 2,
@@ -1760,8 +1580,12 @@ function ago(iso) { if (!iso)
     return Math.floor(s / 60) + 'm ago'; if (s < 86400)
     return Math.floor(s / 3600) + 'h ago'; return Math.floor(s / 86400) + 'd ago'; }
 function Modal({ title, sub, onClose, onConfirm, confirmLabel = 'Create', wide, children }) {
-    useEffect(() => { const fn = e => { if (e.key === 'Escape')
-        onClose(); }; window.addEventListener('keydown', fn); return () => window.removeEventListener('keydown', fn); }, [onClose]);
+    useEffect(() => { const fn = e => {
+        if (e.key === 'Escape') { onClose(); return; }
+        if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
+            e.preventDefault(); onConfirm();
+        }
+    }; window.addEventListener('keydown', fn); return () => window.removeEventListener('keydown', fn); }, [onClose, onConfirm]);
     return (React.createElement("div", { className: "mov", onClick: e => e.target === e.currentTarget && onClose() },
         React.createElement("div", { className: `mo${wide ? ' wide' : ''}` },
             React.createElement("div", { className: "motit" }, title),
@@ -1776,8 +1600,7 @@ function Autocomplete({ value, onChange, onKeyDown, suggestions, placeholder, cl
     const [open, setOpen] = useState(false);
     const [hi, setHi] = useState(-1);
     const wrap = useRef();
-    const filtered = useMemo(() => { if (!value.trim())
-        return []; const lv = value.toLowerCase(); return suggestions.filter(s => s.toLowerCase().includes(lv) && s.toLowerCase() !== lv).slice(0, 8); }, [value, suggestions]);
+    const filtered = useMemo(() => { const lv = (value||"").toLowerCase(); if (!lv) return suggestions.slice(0,10); return suggestions.filter(s => s.toLowerCase().includes(lv)).slice(0, 10); }, [value, suggestions]);
     useEffect(() => { setHi(-1); }, [filtered.length]);
     useEffect(() => { const fn = e => { if (wrap.current && !wrap.current.contains(e.target))
         setOpen(false); }; document.addEventListener('mousedown', fn); return () => document.removeEventListener('mousedown', fn); }, []);
@@ -1807,9 +1630,11 @@ function Autocomplete({ value, onChange, onKeyDown, suggestions, placeholder, cl
             onKeyDown(e);
         }
     };
+    const [dropRect, setDropRect] = React.useState(null);
+    const updateRect = () => { if(wrap.current){const r=wrap.current.getBoundingClientRect();setDropRect({top:r.bottom+2,left:r.left,width:r.width});} };
     return (React.createElement("div", { className: "ac-wrap", ref: wrap },
-        React.createElement("input", { ref: inputRef, className: className || (big ? 'fi big' : 'fi'), value: value, onChange: e => { onChange(e.target.value); setOpen(true); }, onFocus: () => setOpen(true), onKeyDown: hKey, placeholder: placeholder || '', autoComplete: "off" }),
-        open && filtered.length > 0 && (React.createElement("div", { className: "ac-drop" }, filtered.map((s, i) => React.createElement("div", { key: s, className: `ac-item${hi === i ? ' hi' : ''}`, onMouseDown: e => { e.preventDefault(); pick(s); } }, s))))));
+        React.createElement("input", { ref: inputRef, className: className || (big ? 'fi big' : 'fi'), value: value, onChange: e => { onChange(e.target.value); setOpen(true); updateRect(); }, onFocus: () => { updateRect(); setOpen(true); }, onKeyDown: hKey, placeholder: placeholder || '', autoComplete: "off" }),
+        open && filtered.length > 0 && (React.createElement("div", { className: "ac-drop", style: dropRect ? {top:dropRect.top,left:dropRect.left,width:dropRect.width} : {} }, filtered.map((s, i) => React.createElement("div", { key: s, className: `ac-item${hi === i ? ' hi' : ''}`, onMouseDown: e => { e.preventDefault(); pick(s); } }, s))))));
 }
 /* Stock tab */
 function StockView({ stock, onAdd, onEdit, onRemove, onQty }) {
@@ -1989,7 +1814,7 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
         l = 8; if (t + ph > vh - 8)
         t = Math.max(8, vh - ph - 8); if (t < 8)
         t = 8; return { top: t, left: l }; }, [rect]);
-    useEffect(() => { const fn = e => { if (ref.current && !ref.current.contains(e.target))
+    useEffect(() => { const fn = e => { if (ref.current && !ref.current.contains(e.target) && !e.target.closest('.ac-drop'))
         onClose(); }; setTimeout(() => window.addEventListener('mousedown', fn), 100); return () => window.removeEventListener('mousedown', fn); }, [onClose]);
     const doSave = () => onSave(Object.assign(Object.assign({}, plant), f));
     const onKey = e => { if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
@@ -2028,7 +1853,7 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
                     "C",
                     plant.col + 1)),
             React.createElement("button", { className: "ppx", onClick: onClose }, "x")),
-        React.createElement("div", { className: "ppb" },
+        React.createElement("div", { className: "ppb", onKeyDown: e => { if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT' && !e.target.closest('.ac-drop')) { e.preventDefault(); doSave(); } } },
             React.createElement("div", null,
                 React.createElement("label", { className: "fl" }, "Genotype"),
                 React.createElement(Autocomplete, { value: f.genotype, onChange: v => set('genotype', v), onKeyDown: onKey, suggestions: allGenos, placeholder: "e.g. Col-0, wrky33...", inputRef: gref, big: true })),
@@ -3258,10 +3083,12 @@ useEffect(() => {
                         setData(seeded);
                         if (seeded.greenhouses.length > 0) setGhId(seeded.greenhouses[0].id);
                     } else {
-                        remoteUpdateRef.current = true;
-                        setData(loadImages(remote));
-                        if (remote.greenhouses && remote.greenhouses.length > 0) {
-                            setGhId(function(cur) { return cur || remote.greenhouses[0].id; });
+                        if (!forceWriteRef.current) {
+                            remoteUpdateRef.current = true;
+                            setData(loadImages(remote));
+                            if (remote.greenhouses && remote.greenhouses.length > 0) {
+                                setGhId(function(cur) { return cur || remote.greenhouses[0].id; });
+                            }
                         }
                         setSyncStatus('synced');
                         setLastSaved(new Date());
@@ -3303,7 +3130,6 @@ useEffect(() => {
     }, [activeLab ? activeLab.id : null]);
     /* Write to Firestore on local changes only — skip if data came from Firestore */
     useEffect(() => {
-        if (!data.greenhouses.length) return;
         if (!activeLab) return;
         if (remoteUpdateRef.current && !forceWriteRef.current) {
             remoteUpdateRef.current = false; // reset flag, do NOT write back
@@ -3350,7 +3176,7 @@ useEffect(() => {
     const aStructs = useMemo(() => (data.structs || []).filter(s => s.greenhouse_id === ghId), [data, ghId]);
     const sTbl = useMemo(() => data.tables.find(t => t.id === selTbl), [data, selTbl]);
     const swarn = useMemo(() => !aGh || dimSpray[ghId] ? null : sprayedRecently(aGh) ? aGh : null, [aGh, ghId, dimSpray]);
-    const stats = useMemo(() => { const ps = aPlants.filter(p => p.genotype); return { total: ps.length, h: ps.filter(p => p.status === 'healthy').length, w: ps.filter(p => p.status === 'wilting').length, d: ps.filter(p => p.status === 'dead').length }; }, [aPlants]);
+    const stats = useMemo(() => { const ps = aPlants.filter(p => p.genotype); return { total: ps.length, h: ps.filter(p => p.status === 'healthy').length, w: ps.filter(p => p.status === 'wilting').length, d: ps.filter(p => p.status === 'dead').length, sick: ps.filter(p => p.status === 'sick').length, pests: ps.filter(p => p.status === 'pests').length }; }, [aPlants]);
     /* zoom */
     // ── Live pan/zoom stored in refs for RAF-based smooth updates ──────────
     // panRef doubles as the live {x,y} pan state (separate from React pan state)
@@ -3549,18 +3375,43 @@ useEffect(() => {
         return; const g = { id: uid(), name: ghFm.name.trim(), width: +ghFm.width || 400, length: +ghFm.length || 300, notes: '', last_sprayed_at: null, spray_material: '', spray_category: '', spray_notes: '', created_by: (user === null || user === void 0 ? void 0 : user.id) || 'u', created_at: now() }; setData(d => (Object.assign(Object.assign({}, d), { greenhouses: [...d.greenhouses, g] }))); setGhId(g.id); setShowAGH(false); setGhFm({ name: '', width: 600, length: 400 }); notify(`"${g.name}" created`); logActivity(`Created greenhouse: ${g.name}`); };
     const delGH = id => {
         const g = data.greenhouses.find(x => x.id === id);
-        setDelConfirm({ type: 'gh', id, name: (g === null || g === void 0 ? void 0 : g.name) || 'this greenhouse',
-            onConfirm: () => {
-                var _a;
-                setData(d => (Object.assign(Object.assign({}, d), { greenhouses: d.greenhouses.filter(g => g.id !== id), tables: d.tables.filter(t => t.greenhouse_id !== id), plants: d.plants.filter(p => p.greenhouse_id !== id), structs: (d.structs || []).filter(s => s.greenhouse_id !== id) })));
-                if (ghId === id)
-                    setGhId(((_a = data.greenhouses.find(g => g.id !== id)) === null || _a === void 0 ? void 0 : _a.id) || null);
-                notify('Greenhouse deleted');
-            }
+        if (!window.confirm('Delete "' + ((g && g.name) || 'this greenhouse') + '"? All tables and pots inside will be permanently deleted.')) return;
+        forceWriteRef.current = true;
+        setData(d => {
+            const remaining = d.greenhouses.filter(gh => gh.id !== id);
+            return Object.assign(Object.assign({}, d), {
+                greenhouses: remaining,
+                tables: d.tables.filter(t => t.greenhouse_id !== id),
+                plants: d.plants.filter(p => p.greenhouse_id !== id),
+                structs: (d.structs || []).filter(s => s.greenhouse_id !== id)
+            });
         });
+        if (ghId === id) {
+            const remaining = data.greenhouses.filter(gh => gh.id !== id);
+            setGhId(remaining.length > 0 ? remaining[0].id : null);
+        }
+        notify('Greenhouse deleted');
+        logActivity('Deleted greenhouse');
     };
-    const recSpray = () => { if (!spFm.material.trim())
-        return; setData(d => (Object.assign(Object.assign({}, d), { greenhouses: d.greenhouses.map(g => g.id === ghId ? Object.assign(Object.assign({}, g), { last_sprayed_at: now(), spray_material: spFm.material, spray_category: spFm.category, spray_notes: spFm.notes, spray_sprayer: spFm.sprayer }) : g) }))); setShowSpray(false); setSpFm({ material: '', category: 'fungicide', notes: '', sprayer: '' }); setDimSpray(s => (Object.assign(Object.assign({}, s), { [ghId]: false }))); notify(`Spray: ${spFm.material}`); logActivity(`Recorded spray: ${spFm.material}`); };
+    const recSpray = () => { if (!spFm.material.trim()) return;
+        const entry = {id:uid(), at:now(), material:spFm.material, category:spFm.category, notes:spFm.notes, sprayer:spFm.sprayer||''};
+        setData(d => (Object.assign(Object.assign({}, d), { greenhouses: d.greenhouses.map(g => g.id === ghId ? Object.assign(Object.assign({}, g), { last_sprayed_at: entry.at, spray_material: entry.material, spray_category: entry.category, spray_notes: entry.notes, spray_sprayer: entry.sprayer, spray_history: [...(g.spray_history||[]), entry] }) : g) })));
+        setShowSpray(false); setSpFm({ material: '', category: 'fungicide', notes: '', sprayer: '' });
+        setDimSpray(s => (Object.assign(Object.assign({}, s), { [ghId]: false }))); notify(`Spray: ${spFm.material}`); logActivity(`Recorded spray: ${spFm.material}`); };
+    const delSprayEntry = (gId, entryId) => {
+        setData(d => (Object.assign(Object.assign({}, d), { greenhouses: d.greenhouses.map(g => {
+            if (g.id !== gId) return g;
+            const hist = (g.spray_history||[]).filter(e => e.id !== entryId);
+            const last = hist.length > 0 ? hist[hist.length-1] : null;
+            return Object.assign(Object.assign({}, g), {
+                spray_history: hist,
+                last_sprayed_at: last ? last.at : null,
+                spray_material: last ? last.material : '',
+                spray_category: last ? last.category : '',
+                spray_sprayer: last ? last.sprayer : ''
+            });
+        })})));
+    };
     const createTbl = () => { if (!tFm.name.trim() || !ghId)
         return; const rows = clamp(+tFm.rows || 3, 1, 20), cols = clamp(+tFm.cols || 6, 1, 20); const t = { id: uid(), greenhouse_id: ghId, name: tFm.name.trim(), width: +tFm.width || 230, length: +tFm.length || 125, x_position: 20, y_position: 20, rows, cols }; const ps = []; for (let r = 0; r < rows; r++)
         for (let c = 0; c < cols; c++)
@@ -3642,7 +3493,7 @@ useEffect(() => {
         const oldP = data.plants.find(function(p){return p.id===upd.id;}) || {};
         const newEvents = tlDiff(oldP, upd, user && user.name, data.experiments);
         const existingTimeline = (oldP.timeline || []);
-        const w = Object.assign(Object.assign({}, upd), { pot_color: upd.pot_color || plant.pot_color || 'terra',
+        const w = Object.assign(Object.assign({}, upd), { pot_color: upd.pot_color || 'terra',
             updated_by: (user === null || user === void 0 ? void 0 : user.id) || 'u',
             updated_at: now(),
             timeline: newEvents.length > 0 ? [...existingTimeline, ...newEvents] : existingTimeline
@@ -3814,16 +3665,26 @@ useEffect(() => {
                         React.createElement("div", { className: "pgt" }, "Notes"),
                         React.createElement("textarea", { className: "pta", rows: 3, value: aGh.notes || '', placeholder: "General notes...", onChange: e => updGh('notes', e.target.value) })),
                     aGh && React.createElement("div", { className: "pg", style: { borderTop: '1px solid var(--bo)', paddingTop: 11 } },
-                        React.createElement("div", { className: "pgt" }, "Spray"),
-                        aGh.last_sprayed_at ? React.createElement("div", { style: { fontSize: 11, fontFamily: 'Inter', lineHeight: 1.6 } },
-                            React.createElement("div", { style: { color: sprayedRecently(aGh) ? '#dc2626' : 'var(--i2)', fontWeight: 600 } }, aGh.spray_material),
-                            React.createElement("div", { style: { fontSize: 10, color: 'var(--i4)' } },
-                                aGh.spray_category,
-                                " \u00B7 ",
-                                ago(aGh.last_sprayed_at),
-                                aGh.spray_sprayer ? ' · ' + aGh.spray_sprayer : ''))
-                            : React.createElement("div", { style: { fontSize: 11, color: 'var(--i5)', fontFamily: 'Inter' } }, "No spray recorded"),
-                        React.createElement("button", { className: "btn bamb btnw bsm", style: { marginTop: 6 }, onClick: () => { setSpFm({ material: '', category: 'fungicide', notes: '' }); setShowSpray(true); } }, "Record Spray")),
+                        React.createElement("div", { className: "pgt", style:{display:'flex',justifyContent:'space-between',alignItems:'center'} },
+                            "Spray",
+                            React.createElement("button", { className: "btn bamb bxs", onClick: () => { setSpFm({ material: '', category: 'fungicide', notes: '', sprayer:'' }); setShowSpray(true); } }, "+ Record")
+                        ),
+                        aGh.last_sprayed_at && sprayedRecently(aGh) && React.createElement("div", {style:{marginBottom:8}},
+                            React.createElement("div", {style:{fontSize:10,color:'#ef4444',fontWeight:700,marginBottom:2}}, "⚠ 24h re-entry countdown"),
+                            React.createElement(SprayCountdown, {sprayedAt: aGh.last_sprayed_at})
+                        ),
+                        (aGh.spray_history||[]).length === 0 && React.createElement("div", { style: { fontSize: 11, color: 'var(--i5)', fontFamily: 'Inter' } }, "No spray recorded"),
+                        React.createElement("div", {style:{display:'flex',flexDirection:'column',gap:4}},
+                            [...(aGh.spray_history||[])].reverse().map(e => React.createElement("div", {key:e.id,
+                                style:{background:'var(--cr2)',borderRadius:'var(--r)',padding:'6px 8px',display:'flex',alignItems:'flex-start',gap:6,fontSize:10,fontFamily:'Inter'}},
+                                React.createElement("div", {style:{flex:1,minWidth:0}},
+                                    React.createElement("div", {style:{fontWeight:600,color:'var(--i2)',fontSize:11,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}, e.material),
+                                    React.createElement("div", {style:{color:'var(--i4)',marginTop:1}}, e.category+(e.sprayer?' · '+e.sprayer:'')+" · "+ago(e.at))
+                                ),
+                                React.createElement("button", {onClick:(ev)=>{ev.stopPropagation();delSprayEntry(aGh.id,e.id);},
+                                    style:{background:'none',border:'none',cursor:'pointer',color:'var(--to)',fontSize:13,padding:'0 2px',flexShrink:0,lineHeight:1}}, "×")
+                            ))
+                        )),
                     aGh && !locked && React.createElement("div", { className: "pg", style: { borderTop: '1px solid var(--bo)', paddingTop: 11 } },
                         React.createElement("div", { className: "pgt" }, "Room"),
                         React.createElement("div", { className: "pr" },
@@ -3871,6 +3732,12 @@ useEffect(() => {
                                 React.createElement("div", { className: "scard", style: { borderColor: '#f5d88a', background: '#fef9e7' } },
                                     React.createElement("div", { className: "sv", style: { color: 'var(--am)' } }, stats.w),
                                     React.createElement("div", { className: "sk" }, "Wilting")),
+                                stats.pests > 0 && React.createElement("div", { className: "scard", style: { borderColor: '#fed7aa', background: '#fff7ed', gridColumn: '1/-1' } },
+                                    React.createElement("div", { className: "sv", style: { color: '#ea580c' } }, "🐛 "+stats.pests),
+                                    React.createElement("div", { className: "sk" }, "Pests")),
+                                stats.sick > 0 && React.createElement("div", { className: "scard", style: { borderColor: '#e9d5ff', background: '#fdf4ff', gridColumn: '1/-1' } },
+                                    React.createElement("div", { className: "sv", style: { color: '#9333ea' } }, "⚠ "+stats.sick),
+                                    React.createElement("div", { className: "sk" }, "Sick")),
                                 stats.d > 0 && React.createElement("div", { className: "scard", style: { borderColor: '#f0b8b8', background: '#fdf0ef', gridColumn: '1/-1' } },
                                     React.createElement("div", { className: "sv", style: { color: 'var(--to)' } }, stats.d),
                                     React.createElement("div", { className: "sk" }, "Dead")))),
@@ -3913,18 +3780,7 @@ useEffect(() => {
                                     React.createElement("button", { className: "eli-btn del", onClick: () => deleteExp(ex.id) }, "Del"))));
                         }))),
                 React.createElement("div", { className: "sb-bottom" },
-                    React.createElement("button", { className: "sb-setting-btn", onClick: () => setShowFbPanel(true) },
-                        React.createElement("div", { className: "nav-icon", style: { background: '#6B728014', color: '#6B7280' } },
-                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>' } })
-                        ),
-                        React.createElement("span", { className: "nav-label" }, "Settings")
-                    ),
-                    React.createElement("button", { className: "sb-setting-btn", onClick: () => setUser(null) },
-                        React.createElement("div", { className: "nav-icon", style: { background: '#ef44441A', color: '#ef4444' } },
-                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>' } })
-                        ),
-                        React.createElement("span", { className: "nav-label", style: { color: '#ef4444' } }, "Log Out")
-                    ),
+
                     React.createElement("div", { className: "sb-user", onClick: () => setUser(null) },
                         React.createElement("div", { className: "uav", style: { background: user.color } }, user.photo ? React.createElement("img", { src: user.photo, alt: user.name }) : user.name.charAt(0)),
                         React.createElement("div", { style: { flex: 1, minWidth: 0 } },
@@ -4071,6 +3927,27 @@ useEffect(() => {
                     React.createElement("button", { className: "btn btnp bsm", onClick: () => { var _a; setAssExpFm({ mode: 'existing', newName: '', newOwner: (user === null || user === void 0 ? void 0 : user.name) || '', newDesc: '', newUntilDate: '', existId: ((_a = data.experiments[0]) === null || _a === void 0 ? void 0 : _a.id) || '' }); setShowAssExp(true); } }, "Assign experiment"),
                     React.createElement("button", { className: "btn bsm", style: { background: 'rgba(255,255,255,.15)', color: '#fff', border: 'none' }, onClick: () => { setSelPots([]); setSelMode(false); } }, "Cancel")),
                 tab === 'layout' && React.createElement(React.Fragment, null,
+                    React.createElement("div", { className: "alert-legend" },
+                        React.createElement("span", { style:{color:'#9CA3AF',marginRight:6,flexShrink:0} }, "Alerts:"),
+                        React.createElement("div", { className: "alert-legend-item" },
+                            React.createElement("div", { className: "alert-legend-dot", style:{background:'#ea580c',boxShadow:'0 0 4px rgba(234,88,12,.5)',animation:'pest-pulse 1.6s ease-in-out infinite'} }),
+                            React.createElement("span", { style:{color:'#ea580c'} }, "Pests")
+                        ),
+                        React.createElement("div", { className: "alert-legend-item" },
+                            React.createElement("div", { className: "alert-legend-dot", style:{background:'#9333ea',boxShadow:'0 0 4px rgba(147,51,234,.4)',animation:'sick-pulse 2s ease-in-out infinite'} }),
+                            React.createElement("span", { style:{color:'#9333ea'} }, "Sick")
+                        ),
+                        (() => {
+                            const sickCount = aPlants.filter(p => p.status === 'sick').length;
+                            const pestCount = aPlants.filter(p => p.status === 'pests').length;
+                            return (sickCount + pestCount) > 0
+                                ? React.createElement("span", { style:{marginLeft:'auto',display:'flex',gap:12} },
+                                    pestCount > 0 && React.createElement("span", {style:{color:'#ea580c',fontWeight:700}}, "🐛 "+pestCount+" pest"+(pestCount>1?"s":"")),
+                                    sickCount > 0  && React.createElement("span", {style:{color:'#9333ea',fontWeight:700}}, "⚠ "+sickCount+" sick")
+                                  )
+                                : React.createElement("span", {style:{marginLeft:'auto',color:'#78C043',fontSize:10}}, "✓ All clear");
+                        })()
+                    ),
                     React.createElement("div", { ref: el => { vpRef.current = el; if (el) { el.removeEventListener('touchstart', hVpTouch); el.addEventListener('touchstart', hVpTouch, { passive: false }); } }, className: "cvp", onMouseDown: hVpMd, onContextMenu: e => e.preventDefault(), onClick: e => { if (e.target === e.currentTarget) {
                             setSelTbl(null);
                             setPopup(null);
