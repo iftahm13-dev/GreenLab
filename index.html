@@ -659,12 +659,12 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .sched-page{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
 .sched-head{flex-shrink:0;padding:20px 24px;border-bottom:1px solid #F0F0F0;background:#fff;display:flex;align-items:center;justify-content:space-between}
 .sched-list{flex:1;min-height:0;overflow-y:auto;padding:16px 24px;display:flex;flex-direction:column;gap:8px}
-.sched-item{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#fff;border:1px solid var(--bo);border-radius:var(--r2);box-shadow:var(--sh);transition:all .13s}
+.sched-item{display:flex;align-items:flex-start;flex-wrap:wrap;gap:8px;padding:12px 16px;background:#fff;border:1px solid var(--bo);border-radius:var(--r2);box-shadow:var(--sh);transition:all .13s}
 .sched-item:hover{border-color:#c3e6a8}
-.sched-item-date{font-size:11px;font-weight:700;color:var(--fo2);min-width:70px;flex-shrink:0}
-.sched-item-tbl{font-size:13px;font-weight:600;color:var(--i1);flex:1;min-width:0}
+.sched-item-date{font-size:11px;font-weight:700;color:var(--fo2);min-width:80px;flex-shrink:0}
+.sched-item-tbl{font-size:13px;font-weight:600;color:var(--i1);flex:1;min-width:120px;word-break:break-word}
 .sched-item-who{font-size:11px;color:var(--i4)}
-.sched-item-note{font-size:11px;color:var(--i4);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px}
+.sched-item-note{font-size:11px;color:var(--i4);font-style:italic;word-break:break-word;width:100%}
 .sched-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--i4);padding:40px}
 /* ── Greenhouse tab bar ── */
 .gh-tab-bar{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:10px 24px;background:#fff;border-bottom:1px solid #F0F0F0;overflow-x:auto;scrollbar-width:none;min-height:50px;box-shadow:0 1px 4px rgba(0,0,0,.03)}
@@ -837,12 +837,16 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
    Pests = orange pulsing ring (stronger) + 🐛 badge
 ══════════════════════════════════════════════════════ */
 @keyframes sick-pulse {
-  0%,100%{ box-shadow: 0 0 0 2px #a855f7, 0 0 6px 3px rgba(168,85,247,.35); }
-  50%{     box-shadow: 0 0 0 2.5px #9333ea, 0 0 12px 5px rgba(147,51,234,.5); }
+  0%,100%{ box-shadow: 0 0 0 2px #a855f7, 0 0 6px 3px rgba(168,85,247,.3); opacity:1; }
+  40%{     box-shadow: 0 0 0 4px #9333ea, 0 0 16px 6px rgba(147,51,234,.7); opacity:.85; }
+  50%{     box-shadow: 0 0 0 4px #9333ea, 0 0 16px 6px rgba(147,51,234,.7); opacity:.85; }
+  60%{     box-shadow: 0 0 0 4px #9333ea, 0 0 16px 6px rgba(147,51,234,.7); opacity:.85; }
 }
 @keyframes pest-pulse {
-  0%,100%{ box-shadow: 0 0 0 2.5px #f97316, 0 0 8px 4px rgba(249,115,22,.4); }
-  50%{     box-shadow: 0 0 0 3px #ea580c,   0 0 14px 6px rgba(234,88,12,.6); }
+  0%,100%{ box-shadow: 0 0 0 2.5px #f97316, 0 0 8px 4px rgba(249,115,22,.3); opacity:1; }
+  35%{     box-shadow: 0 0 0 5px #ea580c,  0 0 18px 7px rgba(234,88,12,.75); opacity:.8; }
+  50%{     box-shadow: 0 0 0 5px #ea580c,  0 0 18px 7px rgba(234,88,12,.75); opacity:.8; }
+  65%{     box-shadow: 0 0 0 5px #ea580c,  0 0 18px 7px rgba(234,88,12,.75); opacity:.8; }
 }
 .pcw.alert-sick {
   border-radius: 8px;
@@ -885,6 +889,61 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
   .pill{ padding:8px 14px; font-size:12px; }
   .ac-item{ padding:13px 16px; font-size:14px; }
 }
+
+.stk-drag-over{ border-color:#78C043!important; box-shadow:0 0 0 2px rgba(120,192,67,.3)!important; }
+.stk-item{ cursor:default; }
+
+
+/* ═══════════ MESSAGES ════════════ */
+.msgs-page{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.msgs-head{flex-shrink:0;padding:16px 20px;border-bottom:1px solid var(--bo);background:#fff}
+.msgs-list{flex:1;min-height:0;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px}
+.msg-item{display:flex;align-items:flex-start;gap:10px}
+.msg-me{flex-direction:row-reverse}
+.msg-av{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff}
+.msg-body{max-width:75%;display:flex;flex-direction:column}
+.msg-me .msg-body{align-items:flex-end}
+.msg-meta{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.msg-author{font-size:11px;font-weight:700;color:var(--i2)}
+.msg-time{font-size:10px;color:var(--i5)}
+.msg-text{background:#fff;border:1px solid var(--bo);border-radius:16px;border-bottom-left-radius:4px;padding:9px 13px;font-size:13px;color:var(--i1);line-height:1.4;word-break:break-word}
+.msg-me .msg-text{background:#78C043;color:#fff;border-color:#78C043;border-bottom-left-radius:16px;border-bottom-right-radius:4px}
+.msg-acts{display:flex;gap:8px;margin-top:3px}
+.msg-acts button{background:none;border:none;font-size:10px;cursor:pointer;color:var(--i4);padding:0}
+.msg-acts button:hover{color:var(--i2)}
+.msgs-input{flex-shrink:0;padding:12px 16px;border-top:1px solid var(--bo);background:#fff;display:flex;gap:8px;align-items:center}
+
+
+/* ═══════════════════════════════════
+   MEASURES TAB
+═══════════════════════════════════ */
+.meas-page{flex:1;min-height:0;display:flex;overflow:hidden;background:var(--bg)}
+.meas-sidebar{width:220px;flex-shrink:0;background:#fff;border-right:1px solid var(--bo);display:flex;flex-direction:column;overflow:hidden}
+.meas-sidebar-head{flex-shrink:0;padding:14px 12px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--bo)}
+.meas-sess-item{position:relative;padding:10px 28px 10px 12px;cursor:pointer;border-bottom:1px solid var(--bo);transition:background .12s}
+.meas-sess-item:hover{background:var(--cr2)}
+.meas-sess-item.active{background:var(--ll);border-left:3px solid var(--lf)}
+.meas-main{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.meas-main-head{flex-shrink:0;padding:14px 20px;border-bottom:1px solid var(--bo);background:#fff;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.meas-table{flex:1;min-height:0;overflow-y:auto;padding:0}
+.meas-table-head{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--cr2);border-bottom:1px solid var(--bo);font-size:10px;font-weight:700;color:var(--i4);text-transform:uppercase;letter-spacing:.06em;position:sticky;top:0}
+.meas-row{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--bo);background:#fff;transition:background .12s}
+.meas-row:hover{background:var(--cr2)}
+.meas-row-plant{flex:1;min-width:0;display:flex;align-items:center;flex-wrap:wrap;gap:3}
+.meas-row-pos{width:80px;flex-shrink:0}
+.meas-row-input{width:180px;flex-shrink:0}
+@media(max-width:1024px){
+  .meas-sidebar{width:180px}
+  .meas-row{flex-wrap:wrap;gap:6px}
+  .meas-row-pos{width:auto}
+  .meas-row-input{width:100%}
+  .meas-table-head{display:none}
+}
+@media(max-width:600px){
+  .meas-page{flex-direction:column}
+  .meas-sidebar{width:100%;max-height:160px;border-right:none;border-bottom:1px solid var(--bo)}
+}
+
 </style>
 </head>
 <body>
@@ -971,7 +1030,7 @@ function loadLabData(labId) { try {
     if (r)
         return JSON.parse(r);
 }
-catch (_a) { } return { greenhouses: [], tables: [], plants: [], experiments: [], users: [], structs: [], stock: [], locked: true }; }
+catch (_a) { } return { greenhouses: [], tables: [], plants: [], experiments: [], users: [], structs: [], stock: [], orders: [], schedules: [], messages: [], measures: [], locked: true }; }
 function saveLabData(labId, d) { try {
     localStorage.setItem(labDataKey(labId), JSON.stringify(d));
 }
@@ -1486,7 +1545,7 @@ function loadData(labId) {
             return JSON.parse(r);
     }
     catch (_a) { }
-    return { greenhouses: [], tables: [], plants: [], experiments: [], users: [], structs: [], stock: [], locked: true };
+    return { greenhouses: [], tables: [], plants: [], experiments: [], users: [], structs: [], stock: [], orders: [], schedules: [], messages: [], measures: [], locked: true };
 }
 /* ── Photo subcollection helpers ──────────────────────────────
    User photos stored at: labs/{labId}/users/{userId}/private/photo
@@ -1575,7 +1634,7 @@ function saveData(d, labId) {
 }
 function seedIfEmpty(d) {
     if (d.greenhouses.length > 0)
-        return Object.assign(Object.assign({ structs: [], stock: [], schedules: [] }, d), { users: d.users.map(u => (Object.assign({ position: '', photo: null }, u))), greenhouses: d.greenhouses.map(g => (Object.assign({ notes: '' }, g))) });
+        return Object.assign(Object.assign({ structs: [], stock: [], schedules: [], orders: [], messages: [], measures: [] }, d), { users: d.users.map(u => (Object.assign({ position: '', photo: null }, u))), greenhouses: d.greenhouses.map(g => (Object.assign({ notes: '' }, g))) });
     const g1 = uid(), g2 = uid(), t1 = uid(), t2 = uid(), t3 = uid(), e1 = uid(), e2 = uid();
     const GN = ['Col-0', 'Col-0', 'wrky33', 'wrky33', 'npr1-1', 'sid2'], TR = ['Control', '+SA', '+JA', 'Mock', 'Control', '+SA'], ST = ['healthy', 'healthy', 'healthy', 'wilting', 'healthy', 'dead'];
     const plants = [];
@@ -1590,6 +1649,9 @@ function seedIfEmpty(d) {
     });
     return {
         locked: true,
+        messages: [],
+        measures: [],
+        schedules: [],
         users: [{ id: 'u1', name: 'Alice Chen', email: 'alice@lab.edu', role: 'admin', position: 'PI', color: '#4e9e72', photo: null }, { id: 'u2', name: 'Ben Levi', email: 'ben@lab.edu', role: 'member', position: 'PhD student', color: '#3b82f6', photo: null }, { id: 'u3', name: 'Sara Park', email: 'sara@lab.edu', role: 'member', position: 'Postdoc', color: '#ec4899', photo: null }],
         experiments: [{ id: e1, name: 'SA Treatment', owner_name: 'Alice Chen', description: 'SA response', created_at: '2025-03-01', color_index: 0 }, { id: e2, name: 'JA Response', owner_name: 'Ben Levi', description: 'JA pathway', created_at: '2025-03-05', color_index: 1 }],
         greenhouses: [
@@ -1718,12 +1780,274 @@ function Autocomplete({ value, onChange, onKeyDown, suggestions, placeholder, cl
         )))
     );
 }
+
+
+/* ═══════════════════════════════════
+   MEASURES TAB  (iPad-optimised data collection)
+═══════════════════════════════════ */
+function MeasuresView({ measures, experiments, plants, tables, users, onSave, currentUser }) {
+    const [sessions, setSessions] = React.useState(measures || []);
+    const [activeSession, setActiveSession] = React.useState(null);
+    const [showNew, setShowNew] = React.useState(false);
+    const [fm, setFm] = React.useState({ name:'', experiment_id:'', trait:'', unit:'', notes:'' });
+    const [emailAddr, setEmailAddr] = React.useState('');
+    const [savedEmails, setSavedEmails] = React.useState(() => { try { return JSON.parse(localStorage.getItem('gl_emails')||'[]'); } catch(e){ return []; } });
+    const [showEmail, setShowEmail] = React.useState(false);
+    const set = (k,v) => setFm(p=>({...p,[k]:v}));
+
+    // Sync with parent
+    React.useEffect(() => { setSessions(measures||[]); }, [measures]);
+
+    const createSession = () => {
+        if (!fm.name.trim()) return;
+        const sess = { id: Math.random().toString(36).slice(2,9), name:fm.name.trim(), experiment_id:fm.experiment_id, trait:fm.trait, unit:fm.unit, notes:fm.notes, created_by:currentUser?.name||'', created_at:new Date().toISOString(), rows:[] };
+        const updated = [...sessions, sess];
+        setSessions(updated);
+        onSave(updated);
+        setActiveSession(sess.id);
+        setShowNew(false);
+        setFm({ name:'', experiment_id:'', trait:'', unit:'', notes:'' });
+    };
+
+    const addRow = (sessId, potId, value) => {
+        const updated = sessions.map(s => s.id!==sessId ? s : {...s, rows:[...s.rows, { id:Math.random().toString(36).slice(2,9), pot_id:potId, value, measured_by:currentUser?.name||'', at:new Date().toISOString() }]});
+        setSessions(updated);
+        onSave(updated);
+    };
+
+    const delRow = (sessId, rowId) => {
+        const updated = sessions.map(s => s.id!==sessId ? s : {...s, rows:s.rows.filter(r=>r.id!==rowId)});
+        setSessions(updated);
+        onSave(updated);
+    };
+
+    const delSession = (sessId) => {
+        if (!window.confirm('Delete this measurement session?')) return;
+        const updated = sessions.filter(s=>s.id!==sessId);
+        setSessions(updated);
+        onSave(updated);
+        if (activeSession===sessId) setActiveSession(null);
+    };
+
+    const exportCSV = (sess) => {
+        const header = 'Pot ID,Genotype,Treatment,Table,Value ('+sess.unit+'),Measured By,Time\n';
+        const rows = sess.rows.map(r => {
+            const p = plants.find(x=>x.id===r.pot_id)||{};
+            const t = tables.find(x=>x.id===p.table_id)||{};
+            return [r.pot_id, p.genotype||'', p.treatment||'', t.name||'', r.value, r.measured_by, r.at].map(x=>'"'+(x||'').toString().replace(/"/g,'""')+'"').join(',');
+        }).join('\n');
+        return 'data:text/csv;charset=utf-8,' + encodeURIComponent(header+rows);
+    };
+
+    const sendEmail = (sess) => {
+        const addr = emailAddr.trim();
+        if (!addr) return;
+        // Save email
+        if (!savedEmails.includes(addr)) {
+            const updated = [addr, ...savedEmails].slice(0,10);
+            setSavedEmails(updated);
+            try { localStorage.setItem('gl_emails', JSON.stringify(updated)); } catch(e) {}
+        }
+        const csv = exportCSV(sess);
+        const subject = encodeURIComponent('GreenLab Measures: ' + sess.name);
+        const body = encodeURIComponent('Please find the measurement data for session \"' + sess.name + '\" attached.\n\nNote: CSV data is in the link below (copy and save as .csv):\n\n' + decodeURIComponent(csv.replace('data:text/csv;charset=utf-8,','')));
+        window.open('mailto:' + addr + '?subject=' + subject + '&body=' + body);
+        setShowEmail(false);
+    };
+
+    const sess = sessions.find(s=>s.id===activeSession);
+    const sessPlants = sess ? plants.filter(p => {
+        if (sess.experiment_id) return p.experiment_id === sess.experiment_id && p.genotype;
+        return p.genotype;
+    }) : [];
+
+    return React.createElement('div', {className:'meas-page'},
+        // Sidebar: session list
+        React.createElement('div', {className:'meas-sidebar'},
+            React.createElement('div', {className:'meas-sidebar-head'},
+                React.createElement('span', {style:{fontWeight:700,fontSize:13}}, 'Sessions'),
+                React.createElement('button', {className:'btn btnp bsm', onClick:()=>setShowNew(true)}, '+ New')
+            ),
+            sessions.length===0 && React.createElement('div', {style:{padding:'16px 12px',fontSize:12,color:'var(--i4)',textAlign:'center'}}, 'No sessions yet'),
+            sessions.map(s => React.createElement('div', {key:s.id,
+                className:'meas-sess-item'+(activeSession===s.id?' active':''),
+                onClick:()=>setActiveSession(s.id)},
+                React.createElement('div', {style:{fontWeight:600,fontSize:13,color:'var(--i1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}, s.name),
+                React.createElement('div', {style:{fontSize:10,color:'var(--i4)',marginTop:2}}, (s.trait||'')+(s.unit?' ('+s.unit+')':'')+(s.rows?.length?' · '+s.rows.length+' rows':'')),
+                React.createElement('button', {onClick:e=>{e.stopPropagation();delSession(s.id);}, style:{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',color:'var(--to)',fontSize:14,cursor:'pointer',opacity:.6}}, '×')
+            ))
+        ),
+
+        // Main area: data entry
+        React.createElement('div', {className:'meas-main'},
+            !sess && React.createElement('div', {style:{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',gap:16,color:'var(--i4)'}},
+                React.createElement('div', {style:{fontSize:40,opacity:.3}}, '📊'),
+                React.createElement('div', {style:{fontSize:14}}, 'Select a session or create a new one')
+            ),
+            sess && React.createElement(React.Fragment, null,
+                React.createElement('div', {className:'meas-main-head'},
+                    React.createElement('div', null,
+                        React.createElement('div', {style:{fontSize:18,fontWeight:700,color:'var(--i1)'}}, sess.name),
+                        React.createElement('div', {style:{fontSize:11,color:'var(--i4)',marginTop:2}}, (sess.trait||'')+(sess.unit?' · unit: '+sess.unit:'')+(sess.experiment_id?' · Experiment':' · All plants')+(sess.rows.length?' · '+sess.rows.length+' measurements':''))
+                    ),
+                    React.createElement('div', {style:{display:'flex',gap:8}},
+                        React.createElement('a', {href:exportCSV(sess), download:sess.name.replace(/\s+/g,'_')+'.csv', className:'btn btns bsm'}, '⬇ CSV'),
+                        React.createElement('button', {className:'btn btns bsm', onClick:()=>setShowEmail(true)}, '✉ Email')
+                    )
+                ),
+                // Email modal
+                showEmail && React.createElement('div', {style:{padding:'12px 16px',background:'var(--ll)',borderBottom:'1px solid var(--bo)',display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}},
+                    React.createElement('span', {style:{fontSize:12,fontWeight:600,color:'var(--i3)',flexShrink:0}}, 'Send to:'),
+                    React.createElement(Autocomplete, {value:emailAddr, onChange:setEmailAddr, suggestions:savedEmails, placeholder:'Email address...', className:'fi', big:false}),
+                    React.createElement('button', {className:'btn btnp bsm', onClick:()=>sendEmail(sess)}, 'Send'),
+                    React.createElement('button', {className:'btn btns bsm', onClick:()=>setShowEmail(false)}, 'Cancel')
+                ),
+                // Data entry grid
+                React.createElement('div', {className:'meas-table'},
+                    React.createElement('div', {className:'meas-table-head'},
+                        React.createElement('div', {style:{flex:1}}, 'Plant'),
+                        React.createElement('div', {style:{width:80}}, 'Table · Pos'),
+                        React.createElement('div', {style:{width:120}}, sess.trait||'Value'+(sess.unit?' ('+sess.unit+')':'')),
+                        React.createElement('div', {style:{width:60}}, '')
+                    ),
+                    sessPlants.map(p => {
+                        const tbl = tables.find(t=>t.id===p.table_id);
+                        const existing = sess.rows.filter(r=>r.pot_id===p.id);
+                        return React.createElement(MeasureRow, {key:p.id, plant:p, table:tbl, existing, unit:sess.unit, trait:sess.trait, onAdd:v=>addRow(sess.id,p.id,v), onDel:rowId=>delRow(sess.id,rowId)});
+                    }),
+                    sessPlants.length===0 && React.createElement('div', {style:{padding:'24px',textAlign:'center',color:'var(--i4)',fontSize:13}}, sess.experiment_id?'No plants assigned to this experiment':'No plants with genotype data')
+                )
+            )
+        ),
+
+        // New session modal
+        showNew && React.createElement(Modal, {title:'New Measurement Session', onClose:()=>setShowNew(false), onConfirm:createSession, confirmLabel:'Create'},
+            React.createElement('div', {className:'mof'},
+                React.createElement('label', {className:'mol'}, 'Session name'),
+                React.createElement('input', {className:'moi', placeholder:'e.g. Week 3 Height', value:fm.name, onChange:e=>set('name',e.target.value), autoFocus:true})
+            ),
+            React.createElement('div', {className:'morow'},
+                React.createElement('div', {className:'mof'},
+                    React.createElement('label', {className:'mol'}, 'Trait / Measurement'),
+                    React.createElement('input', {className:'moi', placeholder:'e.g. Plant height', value:fm.trait, onChange:e=>set('trait',e.target.value)})
+                ),
+                React.createElement('div', {className:'mof'},
+                    React.createElement('label', {className:'mol'}, 'Unit'),
+                    React.createElement('input', {className:'moi', placeholder:'e.g. cm, g, score', value:fm.unit, onChange:e=>set('unit',e.target.value)})
+                )
+            ),
+            React.createElement('div', {className:'mof'},
+                React.createElement('label', {className:'mol'}, 'Experiment (optional)'),
+                React.createElement('select', {className:'mosel', value:fm.experiment_id, onChange:e=>set('experiment_id',e.target.value)},
+                    React.createElement('option', {value:''}, '— All plants —'),
+                    experiments.map(ex=>React.createElement('option',{key:ex.id,value:ex.id},ex.name))
+                )
+            ),
+            React.createElement('div', {className:'mof'},
+                React.createElement('label', {className:'mol'}, 'Notes'),
+                React.createElement('textarea', {className:'mota', rows:2, value:fm.notes, onChange:e=>set('notes',e.target.value), placeholder:'Protocol notes...'})
+            )
+        )
+    );
+}
+
+function MeasureRow({ plant, table, existing, unit, trait, onAdd, onDel }) {
+    const [val, setVal] = React.useState('');
+    const add = () => { if (!val.trim()) return; onAdd(val.trim()); setVal(''); };
+    return React.createElement('div', {className:'meas-row'},
+        React.createElement('div', {className:'meas-row-plant'},
+            React.createElement('span', {style:{fontWeight:600,fontSize:13,color:'var(--i1)'}}, plant.genotype),
+            plant.treatment && React.createElement('span', {style:{fontSize:11,color:'var(--i4)',marginLeft:4}}, '/ '+plant.treatment)
+        ),
+        React.createElement('div', {className:'meas-row-pos', style:{fontSize:11,color:'var(--i4)'}},
+            (table?.name||'?')+' R'+(plant.row+1)+'C'+(plant.col+1)
+        ),
+        React.createElement('div', {className:'meas-row-input'},
+            existing.length > 0
+                ? React.createElement('div', {style:{display:'flex',flexDirection:'column',gap:3}},
+                    existing.map(r => React.createElement('div', {key:r.id, style:{display:'flex',alignItems:'center',gap:6}},
+                        React.createElement('span', {style:{fontWeight:700,fontSize:14,color:'#78C043',minWidth:50}}, r.value+(unit?' '+unit:'')),
+                        React.createElement('span', {style:{fontSize:10,color:'var(--i5)'}}, r.measured_by),
+                        React.createElement('button', {onClick:()=>onDel(r.id), style:{background:'none',border:'none',color:'var(--to)',cursor:'pointer',fontSize:13,lineHeight:1}}, '×')
+                    )),
+                    React.createElement('div', {style:{display:'flex',gap:4,marginTop:2}},
+                        React.createElement('input', {className:'fi', type:'number', step:'any', placeholder:'Add another...', value:val, onChange:e=>setVal(e.target.value), onKeyDown:e=>{if(e.key==='Enter'){e.preventDefault();add();}}, style:{width:90,fontSize:13}}),
+                        React.createElement('button', {className:'btn btns bxs', onClick:add}, '+')
+                    )
+                  )
+                : React.createElement('div', {style:{display:'flex',gap:4}},
+                    React.createElement('input', {className:'fi', type:'number', step:'any', placeholder:trait||'value', value:val, onChange:e=>setVal(e.target.value), onKeyDown:e=>{if(e.key==='Enter'){e.preventDefault();add();}}, style:{width:90,fontSize:14,fontWeight:600}}),
+                    React.createElement('button', {className:'btn btnp bxs', onClick:add}, '✓')
+                  )
+        )
+    );
+}
+
+/* ═══════════════════════════════════
+   MESSAGES TAB
+═══════════════════════════════════ */
+function MessagesView({ messages, onAdd, onEdit, onDel, currentUser, users }) {
+    const [text, setText] = React.useState('');
+    const [editId, setEditId] = React.useState(null);
+    const [editText, setEditText] = React.useState('');
+    const endRef = React.useRef();
+    React.useEffect(() => { if(endRef.current) endRef.current.scrollIntoView({behavior:'smooth'}); }, [messages]);
+    const send = () => {
+        if (!text.trim()) return;
+        onAdd({ id: Math.random().toString(36).slice(2,9), text: text.trim(), author: currentUser?.name||'?', author_color: currentUser?.color||'#999', created_at: new Date().toISOString(), edited: false });
+        setText('');
+    };
+    const saveEdit = (id) => {
+        if (!editText.trim()) return;
+        onEdit(id, editText.trim());
+        setEditId(null);
+    };
+    const fmtTime = iso => { const d=new Date(iso); return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); };
+    return React.createElement('div', {className:'msgs-page'},
+        React.createElement('div', {className:'msgs-head'},
+            React.createElement('div', {style:{fontSize:20,fontWeight:700,color:'var(--i1)'}}, '💬 Messages')
+        ),
+        React.createElement('div', {className:'msgs-list'},
+            (messages||[]).length === 0 && React.createElement('div', {style:{textAlign:'center',padding:40,color:'var(--i4)',fontSize:13}}, 'No messages yet. Say something!'),
+            (messages||[]).map(m => {
+                const isMe = m.author === currentUser?.name;
+                return React.createElement('div', {key:m.id, className:'msg-item'+(isMe?' msg-me':'')},
+                    React.createElement('div', {className:'msg-av', style:{background:m.author_color||'#999'}}, m.author?.charAt(0)||'?'),
+                    React.createElement('div', {className:'msg-body'},
+                        React.createElement('div', {className:'msg-meta'},
+                            React.createElement('span', {className:'msg-author'}, m.author),
+                            React.createElement('span', {className:'msg-time'}, fmtTime(m.created_at)+(m.edited?' (edited)':''))
+                        ),
+                        editId === m.id
+                            ? React.createElement('div', {style:{display:'flex',gap:6,marginTop:4}},
+                                React.createElement('input', {className:'moi',style:{flex:1,fontSize:13}, value:editText, onChange:e=>setEditText(e.target.value), onKeyDown:e=>{if(e.key==='Enter'){e.preventDefault();saveEdit(m.id);}if(e.key==='Escape')setEditId(null);}  }),
+                                React.createElement('button', {className:'btn btnp bsm', onClick:()=>saveEdit(m.id)}, 'Save'),
+                                React.createElement('button', {className:'btn btns bsm', onClick:()=>setEditId(null)}, 'Cancel')
+                              )
+                            : React.createElement('div', {className:'msg-text'}, m.text),
+                        isMe && editId !== m.id && React.createElement('div', {className:'msg-acts'},
+                            React.createElement('button', {onClick:()=>{setEditId(m.id);setEditText(m.text);}}, 'Edit'),
+                            React.createElement('button', {onClick:()=>window.confirm('Delete this message?')&&onDel(m.id), style:{color:'var(--to)'}}, 'Delete')
+                        )
+                    )
+                );
+            }),
+            React.createElement('div', {ref:endRef})
+        ),
+        React.createElement('div', {className:'msgs-input'},
+            React.createElement('input', {className:'moi', style:{flex:1,fontSize:14}, placeholder:'Write a message...', value:text, onChange:e=>setText(e.target.value),
+                onKeyDown:e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}}),
+            React.createElement('button', {className:'btn btnp', style:{flexShrink:0}, onClick:send}, 'Send')
+        )
+    );
+}
+
 /* Stock tab */
 function StockView({ stock, onAdd, onEdit, onRemove, onQty }) {
     const [showAdd, setShowAdd] = useState(false);
     const [editId, setEditId] = useState(null);
     const [fm, setFm] = useState({ name: '', category: 'Pots', quantity: 1, notes: '', image: null });
-    const CATS = ['Pots', 'Trays', 'Labels', 'Soil', 'Fertilizer', 'Clips', 'Other'];
+    const CATS = ['Pots', 'Trays', 'Labels', 'Soil', 'Fertilizer', 'Watering', 'Pipes', 'Clips', 'Chemicals', 'Tools', 'Other'];
     const fref = useRef();
     const set = (k, v) => setFm(p => (Object.assign(Object.assign({}, p), { [k]: v })));
     const EMPTY = { name: '', category: 'Pots', quantity: 1, notes: '', image: null };
@@ -1746,6 +2070,26 @@ function StockView({ stock, onAdd, onEdit, onRemove, onQty }) {
         };
         si.src = sou;
     };
+    // Group stock by category, sorted by sort_order within each
+    const grouped = useMemo(() => {
+        const sorted = [...stock].sort((a,b) => (a.sort_order||0) - (b.sort_order||0));
+        const cats = [...new Set(sorted.map(s=>s.category||'Other'))];
+        return cats.map(cat => ({ cat, items: sorted.filter(s=>(s.category||'Other')===cat) }));
+    }, [stock]);
+    const [dragId, setDragId] = useState(null);
+    const [dragOver, setDragOver] = useState(null);
+    const onDragStart = (id) => setDragId(id);
+    const onDragOverItem = (id) => { if(id!==dragId) setDragOver(id); };
+    const onDrop = (targetId) => {
+        if(!dragId || dragId===targetId) { setDragId(null); setDragOver(null); return; }
+        const ids = stock.map(s=>s.id);
+        const fromIdx = ids.indexOf(dragId), toIdx = ids.indexOf(targetId);
+        const reordered = [...stock];
+        const [removed] = reordered.splice(fromIdx,1);
+        reordered.splice(toIdx,0,removed);
+        reordered.forEach((item,i) => onEdit(item.id, {...item, sort_order:i}));
+        setDragId(null); setDragOver(null);
+    };
     return (React.createElement("div", { className: "stk" },
         React.createElement("div", { className: "stk-head" },
             React.createElement("div", { className: "stk-tit" }, "Stock"),
@@ -1754,19 +2098,33 @@ function StockView({ stock, onAdd, onEdit, onRemove, onQty }) {
             stock.length === 0 && React.createElement("div", { className: "stk-empty" },
                 React.createElement("div", { style: { fontSize: 30, opacity: .3 } }, "\uD83D\uDCE6"),
                 React.createElement("div", { style: { fontSize: 12 } }, "No stock items yet")),
-            stock.map(item => React.createElement("div", { key: item.id, className: "stk-item" },
-                React.createElement("div", { className: "stk-img", onClick: () => { setEditId(item.id); setFm({ name: item.name, category: item.category, quantity: item.quantity, notes: item.notes || '', image: item.image || null }); } }, item.image ? React.createElement("img", { src: item.image, alt: item.name }) : '📦'),
-                React.createElement("div", { style: { flex: 1, minWidth: 0 } },
-                    React.createElement("div", { className: "stk-nm" }, item.name),
-                    React.createElement("div", { className: "stk-cat" },
-                        item.category,
-                        item.notes ? ` · ${item.notes}` : '')),
-                React.createElement("div", { className: "stk-qty" },
-                    React.createElement("button", { className: "stk-qbtn", onClick: () => onQty(item.id, -1) }, "-"),
-                    React.createElement("span", { className: "stk-qval" }, item.quantity),
-                    React.createElement("button", { className: "stk-qbtn", onClick: () => onQty(item.id, 1) }, "+")),
-                React.createElement("button", { className: "stk-del", onClick: () => onRemove(item.id) }, "Del"),
-                React.createElement("button", { className: "medbtn", onClick: () => { setEditId(item.id); setFm({ name: item.name, category: item.category, quantity: item.quantity, notes: item.notes || '', image: item.image || null }); } }, "Edit")))),
+            grouped.map(({ cat, items }) => React.createElement("div", { key: cat },
+                React.createElement("div", { style:{fontSize:10,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--i4)',padding:'8px 4px 4px',display:'flex',alignItems:'center',gap:6} },
+                    React.createElement("span", null, cat),
+                    React.createElement("span", {style:{background:'var(--cr2)',borderRadius:20,padding:'1px 8px',fontSize:10,color:'var(--i3)',fontWeight:600}}, items.length)
+                ),
+                items.map(item => React.createElement("div", { key: item.id, className: "stk-item" + (dragOver===item.id?' stk-drag-over':''),
+                    draggable: true,
+                    onDragStart: () => onDragStart(item.id),
+                    onDragOver: e => { e.preventDefault(); onDragOverItem(item.id); },
+                    onDrop: () => onDrop(item.id),
+                    onDragEnd: () => { setDragId(null); setDragOver(null); },
+                    style: { opacity: dragId===item.id ? 0.5 : 1 }
+                },
+                    React.createElement("div", { style:{cursor:'grab',color:'var(--i5)',fontSize:16,flexShrink:0,padding:'0 4px',display:'flex',alignItems:'center'} }, "⠿"),
+                    React.createElement("div", { className: "stk-img", onClick: () => { setEditId(item.id); setFm({ name: item.name, category: item.category, quantity: item.quantity, notes: item.notes || '', image: item.image || null }); } }, item.image ? React.createElement("img", { src: item.image, alt: item.name }) : '📦'),
+                    React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+                        React.createElement("div", { style:{fontSize:14,fontWeight:600,color:'var(--i1)',wordBreak:'break-word',lineHeight:1.3} }, item.name),
+                        item.notes && React.createElement("div", { style:{fontSize:11,color:'var(--i4)',marginTop:2} }, item.notes)),
+                    React.createElement("div", { className: "stk-qty", style:{flexShrink:0} },
+                        React.createElement("button", { className: "stk-qbtn", onClick: () => onQty(item.id, -1) }, "-"),
+                        React.createElement("span", { className: "stk-qval" }, item.quantity),
+                        React.createElement("button", { className: "stk-qbtn", onClick: () => onQty(item.id, 1) }, "+")),
+                    React.createElement("div", {style:{display:'flex',flexDirection:'column',gap:4,flexShrink:0}},
+                        React.createElement("button", { className: "medbtn", onClick: () => { setEditId(item.id); setFm({ name: item.name, category: item.category, quantity: item.quantity, notes: item.notes || '', image: item.image || null }); } }, "Edit"),
+                        React.createElement("button", { className: "stk-del", onClick: () => onRemove(item.id) }, "Del"))
+                ))
+            ))),
         (showAdd || editId) && React.createElement(Modal, { title: editId ? 'Edit Item' : 'Add Stock Item', onClose: () => { setShowAdd(false); setEditId(null); }, onConfirm: editId ? doEdit : doAdd, confirmLabel: editId ? 'Save' : 'Add' },
             React.createElement("div", { className: "mof" },
                 React.createElement("label", { className: "mol" }, "Item photo"),
@@ -1880,7 +2238,8 @@ function PlannedGenotypesEditor({ value, onChange }) {
 
 /* Pot popup */
 function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, users }) {
-    const CROPS = ['Tomato', 'Cucumber', 'Eggplant', 'Basil', 'Arabidopsis', 'Other'];
+    const CROPS = ['Tomato', 'Cucumber', 'Eggplant', 'Basil', 'Arabidopsis', 'Pepper', 'Lettuce', 'Strawberry', 'Wheat', 'Maize', 'Other'];
+    const CROP_ICONS = {'Tomato':'🍅','Cucumber':'🥒','Eggplant':'🍆','Basil':'🌿','Arabidopsis':'🌱','Pepper':'🫑','Lettuce':'🥬','Strawberry':'🍓','Wheat':'🌾','Maize':'🌽','Other':'🪴'};
     const [f, setF] = useState({ genotype: plant.genotype || '', treatment: plant.treatment || '', planting_date: plant.planting_date || '', status: plant.status || 'empty', disease_name: plant.disease_name || '', pest_name: plant.pest_name || '', crop: plant.crop || 'Tomato', owner: plant.owner || '', date_moved_in: plant.date_moved_in || '', date_until: plant.date_until || '', notes: plant.notes || '', pot_style: plant.pot_style || 'conic', pot_color: plant.pot_color || 'terra', image: plant.image || null, experiment_id: plant.experiment_id || null });
     const allGenos = useMemo(() => [...new Set((allPlants || []).map(p => p.genotype).filter(Boolean))], [allPlants]);
     const allTrts = useMemo(() => [...new Set((allPlants || []).map(p => p.treatment).filter(Boolean))], [allPlants]);
@@ -2010,7 +2369,10 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
             )),
             React.createElement("div", null,
                 React.createElement("label", { className: "fl" }, "Crop"),
-                React.createElement("select", { className: "fi", value: CROPS.includes(f.crop) && f.crop !== 'Other' ? f.crop : (f.crop && f.crop !== 'Other' ? 'Other' : f.crop || 'Tomato'), onChange: e => set('crop', e.target.value) }, CROPS.map(c => React.createElement("option", { key: c, value: c }, c))),
+                React.createElement("div", {style:{display:'flex',alignItems:'center',gap:8}},
+                    React.createElement("select", { className: "fi", style:{flex:1}, value: CROPS.includes(f.crop) && f.crop !== 'Other' ? f.crop : (f.crop && f.crop !== 'Other' ? 'Other' : f.crop || 'Tomato'), onChange: e => set('crop', e.target.value) }, CROPS.map(c => React.createElement("option", { key: c, value: c }, (CROP_ICONS[c]||'🪴')+' '+c))),
+                    React.createElement("span", {style:{fontSize:28,lineHeight:1}}, CROP_ICONS[f.crop] || '🪴')
+                ),
                 (!CROPS.slice(0, -1).includes(f.crop) && f.crop) && (React.createElement("input", { className: "fi", style: { marginTop: 5 }, value: f.crop === 'Other' ? '' : f.crop, onChange: e => set('crop', e.target.value), placeholder: "Enter crop name..." }))),
             React.createElement("div", null,
                 React.createElement("label", { className: "fl" }, "Experiment"),
@@ -2080,7 +2442,13 @@ function SearchView({ plants, tables, ghs, exps, onSel }) {
                     " found"))),
         React.createElement("div", { className: "svfil" },
             React.createElement("div", { className: `fc${!sf && !gf ? ' on' : ''}`, onClick: () => { setSf(null); setGf(null); } }, "All"),
-            ['healthy', 'wilting', 'dead'].map(s => React.createElement("div", { key: s, className: `fc${sf === s ? ' on' : ''}`, onClick: () => setSf(sf === s ? null : s) }, s[0].toUpperCase() + s.slice(1))),
+            ['healthy', 'wilting', 'dead', 'sick', 'pests'].map(st => React.createElement("div", { key: st, className: `fc${sf === st ? ' on' : ''}`,
+                style: sf===st && st==='sick' ? {background:'#9333ea',borderColor:'#9333ea',color:'#fff'} :
+                       sf===st && st==='pests'? {background:'#ea580c',borderColor:'#ea580c',color:'#fff'} :
+                       st==='sick' ? {color:'#9333ea',borderColor:'#e9d5ff'} :
+                       st==='pests'? {color:'#ea580c',borderColor:'#fed7aa'} : {},
+                onClick: () => setSf(sf === st ? null : st)
+            }, st==='pests'?'🐛 Pests':st==='sick'?'⚠ Sick':st[0].toUpperCase()+st.slice(1))),
             React.createElement("div", { style: { width: 1, height: 16, background: 'var(--bo)', margin: '0 2px' } }),
             ghs.map(g => React.createElement("div", { key: g.id, className: `fc${gf === g.id ? ' on' : ''}`, onClick: () => setGf(gf === g.id ? null : g.id) },
                 "\uD83C\uDF3F ",
@@ -2099,7 +2467,10 @@ function SearchView({ plants, tables, ghs, exps, onSel }) {
                             p.planting_date ? ' · ' + p.planting_date : '')),
                     ex && React.createElement("div", { style: { fontSize: 9, padding: '2px 5px', borderRadius: 10, background: EC[ex.color_index % 8] + '22', color: EC[ex.color_index % 8], fontWeight: 600, flexShrink: 0 } }, ex.name.slice(0, 8)),
                     p.treatment && React.createElement("div", { style: { fontSize: 10, color: 'var(--i3)', fontFamily: 'Inter', flexShrink: 0, maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis' } }, p.treatment),
-                    React.createElement("div", { className: `rcst ${p.status || 'empty'}` }, p.status && p.status !== 'empty' ? p.status : '')));
+                    React.createElement("div", { className: `rcst ${p.status || 'empty'}`,
+                        style: p.status==='sick'?{background:'#fdf4ff',color:'#9333ea',border:'1px solid #e9d5ff',fontWeight:700}:
+                               p.status==='pests'?{background:'#fff7ed',color:'#ea580c',border:'1px solid #fed7aa',fontWeight:700}:{} },
+                        p.status==='pests'?'🐛 Pests':p.status==='sick'?'⚠ Sick':p.status && p.status !== 'empty' ? p.status : '')));
             }))));
 }
 
@@ -3051,7 +3422,7 @@ function App() {
         } catch(e) {}
         return null;
     }); // null = lab not chosen yet
-    const [data, setData] = useState({ greenhouses:[], tables:[], plants:[], experiments:[], users:[], structs:[], stock:[], orders:[], schedules:[], locked:true });
+    const [data, setData] = useState({ greenhouses:[], tables:[], plants:[], experiments:[], users:[], structs:[], stock:[], orders:[], schedules:[], messages:[], measures:[], locked:true });
     const [user, setUser] = useState(null);
     const [tab, setTab] = useState('layout');
     const [ghId, setGhId] = useState(null);
@@ -3098,6 +3469,7 @@ function App() {
     const [colorByExp, setColorByExp] = useState(false); // toggle experiment color overlay
     const [tblSelMode, setTblSelMode] = useState(false); // multi-table selection mode
     const [onlineUsers, setOnlineUsers] = useState([]);
+    const [lastMsgRead, setLastMsgRead] = useState({});
 
     // ── Online presence via localStorage heartbeat ──────────────────────
     useEffect(() => {
@@ -3376,10 +3748,11 @@ useEffect(() => {
     const touchHandlerRef = useRef(null);
     touchHandlerRef.current = useCallback((e) => {
         const vp = vpRef.current; if (!vp) return;
-        // NOTE: we call preventDefault() here so iOS marks this gesture as
-        // preventable — but for single-finger we only ACTUALLY prevent scrolling
-        // once the finger moves enough to be a pan. For taps we fire a synthetic
-        // click so buttons still work.
+        // If touching a table header (for drag), let TableBlock handle it
+        if (e.touches.length === 1 && e.target.closest && e.target.closest('.tbl') &&
+            !e.target.closest('.pcw') && !e.target.closest('.pslot') && !e.target.closest('.thedit')) {
+            return; // let table handle its own drag
+        }
         e.preventDefault();
 
         if (e.touches.length === 2) {
@@ -3684,6 +4057,10 @@ useEffect(() => {
     /* stock */
     const addStockItem = it => setData(d => (Object.assign(Object.assign({}, d), { stock: [...(d.stock || []), it] })));
     const addOrder    = o  => setData(d => ({...d, orders: [...(d.orders||[]), o]}));
+    const addMessage  = m  => { setData(d => ({...d, messages:[...(d.messages||[]),m]})); setLastMsgRead(r => ({...r, [activeLab?.id]: new Date().toISOString()})); };
+    const editMessage = (id,text) => setData(d => ({...d, messages:(d.messages||[]).map(m=>m.id===id?{...m,text,edited:true}:m)}));
+    const saveMeasures = (updated) => setData(d => ({...d, measures:updated}));
+    const delMessage  = id => setData(d => ({...d, messages:(d.messages||[]).filter(m=>m.id!==id)}));
     const updOrder    = (id, fm) => setData(d => ({...d, orders: (d.orders||[]).map(o => o.id===id ? {...o,...fm, updated_at:now()} : o)}));
     const delOrder    = id => setData(d => ({...d, orders: (d.orders||[]).filter(o => o.id!==id)}));
     const editStockItem = (id, fm) => setData(d => (Object.assign(Object.assign({}, d), { stock: (d.stock || []).map(s => s.id === id ? Object.assign(Object.assign(Object.assign({}, s), fm), { quantity: +fm.quantity || 0, image: fm.image !== undefined ? fm.image : s.image }) : s) })));
@@ -3784,6 +4161,19 @@ useEffect(() => {
                         ),
                         React.createElement("span", { className: "nav-label" }, "Dashboard")
                     ),
+                    React.createElement("button", { className: `nav-btn${tab === 'messages' ? ' on' : ''}`, onClick: () => { setTab('messages'); setMenuOpen(false); setLastMsgRead(r=>({...r,[activeLab?.id]:new Date().toISOString()})); } },
+                        React.createElement("div", { className: "nav-icon", style: { background: tab === 'messages' ? 'rgba(255,255,255,.22)' : '#F59E0B1A', color: tab === 'messages' ? '#fff' : '#F59E0B', position:'relative' } },
+                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' } }),
+                            (() => { const lastRead = lastMsgRead[activeLab?.id]; const unread = (data.messages||[]).filter(m=>!lastRead||m.created_at>lastRead).length; return unread>0 ? React.createElement("span",{style:{position:'absolute',top:-4,right:-4,background:'#ef4444',color:'#fff',borderRadius:'50%',width:16,height:16,fontSize:9,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',border:'2px solid #fff'}},unread>9?'9+':unread) : null; })()
+                        ),
+                        React.createElement("span", { className: "nav-label" }, "Messages")
+                    ),
+                    React.createElement("button", { className: `nav-btn${tab === 'measures' ? ' on' : ''}`, onClick: () => { setTab('measures'); setMenuOpen(false); } },
+                        React.createElement("div", { className: "nav-icon", style: { background: tab === 'measures' ? 'rgba(255,255,255,.22)' : '#10B9811A', color: tab === 'measures' ? '#fff' : '#10B981' } },
+                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18"/></svg>' } })
+                        ),
+                        React.createElement("span", { className: "nav-label" }, "Measures")
+                    ),
                 ),
                 React.createElement("div", { className: "sb-sc" },
                     aGh && React.createElement("div", { className: "pg" },
@@ -3793,6 +4183,16 @@ useEffect(() => {
                         React.createElement("div", { className: "pgt", style:{display:'flex',justifyContent:'space-between',alignItems:'center'} },
                             "Spray",
                             React.createElement("button", { className: "btn bamb bxs", onClick: () => { setSpFm({ material: '', category: 'fungicide', notes: '', sprayer:'' }); setShowSpray(true); } }, "+ Record")
+                        ),
+                        React.createElement("div", {style:{marginTop:8}},
+                            React.createElement("div", {style:{fontSize:9,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--i5)',marginBottom:4}}, "Recommendations"),
+                            React.createElement("textarea", {
+                                className:"pta", rows:3,
+                                placeholder:"e.g. For powdery mildew: use Previcur + Ridomil. For pests: Confidor works well with Vertimec...",
+                                value: aGh.spray_recommendations || '',
+                                onChange: e => updGh('spray_recommendations', e.target.value),
+                                style:{fontSize:11,lineHeight:1.5}
+                            })
                         ),
                         aGh.last_sprayed_at && sprayedRecently(aGh) && React.createElement("div", {style:{marginBottom:8}},
                             React.createElement("div", {style:{fontSize:10,color:'#ef4444',fontWeight:700,marginBottom:2}}, "⚠ 24h re-entry countdown"),
@@ -3815,6 +4215,10 @@ useEffect(() => {
                         React.createElement("div", { className: "pr" },
                             React.createElement("span", { className: "pla" }, "Name"),
                             React.createElement("input", { className: "pi", value: aGh.name, onChange: e => updGh('name', e.target.value) })),
+                        React.createElement("div", { className: "pr", style:{marginTop:6} },
+                            React.createElement("span", { className: "pla", style:{fontSize:10} }, "Last cleaned"),
+                            React.createElement("input", { className: "pi", type:"date", value: aGh.last_cleaned || '', onChange: e => updGh('last_cleaned', e.target.value) })),
+                        aGh.last_cleaned && React.createElement("div", {style:{fontSize:10,color:'var(--i4)',marginTop:2,marginLeft:52}}, (() => { const days = Math.floor((Date.now()-new Date(aGh.last_cleaned).getTime())/86400000); return days===0?'Cleaned today':days===1?'1 day ago':days+' days ago'; })()),
                         
                         React.createElement("button", { className: "btn btns btnw bsm", style: { marginTop: 6 }, onClick: () => setShowAStr(true) }, "+ Add object")),
                     sTbl && !locked && React.createElement("div", { className: "pg", style: { borderTop: '1px solid var(--bo)', paddingTop: 11 } },
@@ -3972,6 +4376,19 @@ useEffect(() => {
                         ),
                         "Orders"
                     ),
+                    React.createElement("button", { key: 'measures', className: `tab-btn${tab === 'measures' ? ' on' : ''}`, onClick: () => { setTab('measures'); setMenuOpen(false); } },
+                        React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='measures' ? 'rgba(255,255,255,.22)' : '#10B9811A', color: tab==='measures' ? '#fff' : '#10B981', marginRight:1 } },
+                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18\"/></svg>' } })
+                        ),
+                        "Measures"
+                    ),
+                    React.createElement("button", { key: 'messages', className: `tab-btn${tab === 'messages' ? ' on' : ''}`, onClick: () => { setTab('messages'); setMenuOpen(false); setLastMsgRead(r=>({...r,[activeLab?.id]:new Date().toISOString()})); } },
+                        React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='messages' ? 'rgba(255,255,255,.22)' : '#F59E0B1A', color: tab==='messages' ? '#fff' : '#F59E0B', marginRight:1, position:'relative' } },
+                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\"/></svg>' } }),
+                            (() => { const lastRead = lastMsgRead[activeLab?.id]; const unread = (data.messages||[]).filter(m=>!lastRead||m.created_at>lastRead).length; return unread>0 && React.createElement("span",{style:{position:'absolute',top:-5,right:-5,background:'#ef4444',color:'#fff',borderRadius:'50%',width:14,height:14,fontSize:8,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',border:'1.5px solid #fff'}},unread>9?'9+':unread); })()
+                        ),
+                        "Messages"
+                    ),
                     React.createElement("button", { key: 'dash', className: `tab-btn${tab === 'dash' ? ' on' : ''}`, onClick: () => { setTab('dash'); setMenuOpen(false); if ('dash' !== 'layout') { setTblSelMode(false); setSelTbls(new Set()); } } },
                         React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='dash' ? 'rgba(255,255,255,.22)' : '#4DB6AC1A', color: tab==='dash' ? '#fff' : '#4DB6AC', marginRight:1 } },
                             React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"18\" y1=\"20\" x2=\"18\" y2=\"10\"/><line x1=\"12\" y1=\"20\" x2=\"12\" y2=\"4\"/><line x1=\"6\" y1=\"20\" x2=\"6\" y2=\"14\"/></svg>' } })
@@ -4119,6 +4536,8 @@ useEffect(() => {
                 tab === 'search' && React.createElement(SearchView, { plants: data.plants, tables: data.tables, ghs: data.greenhouses, exps: data.experiments, onSel: hSearchSel }),
                 tab === 'team' && React.createElement(TeamPage, { users: data.users, curUser: user, onUpdate: updUser, onDel: delUser, onAdd: () => setShowAMem(true) }),
                 tab === 'stock' && React.createElement(StockView, { stock: data.stock || [], onAdd: addStockItem, onEdit: editStockItem, onRemove: removeStockItem, onQty: qtyStockItem }),
+                tab === 'measures' && React.createElement(MeasuresView, { measures:data.measures||[], experiments:data.experiments||[], plants:data.plants||[], tables:data.tables||[], users:data.users||[], onSave:saveMeasures, currentUser:user }),
+                tab === 'messages' && React.createElement(MessagesView, { messages:data.messages||[], onAdd:addMessage, onEdit:editMessage, onDel:delMessage, currentUser:user, users:data.users }),
                 tab === 'orders' && React.createElement(OrdersView, { orders: data.orders||[], users: data.users, curUser: user, exps: data.experiments||[], onAdd: addOrder, onUpd: updOrder, onDel: delOrder }),
                 tab === 'schedule' && React.createElement(ScheduleView, { tables: data.tables, users: data.users, schedules: data.schedules||[], onAdd: addSchedule, onDel: delSchedule, currentUser: user ? user.name : '' }),
                 tab === 'dash' && React.createElement(DashView, { greenhouses: data.greenhouses, tables: data.tables, structs: data.structs || [], plants: data.plants || [], experiments: data.experiments || [] }))),
@@ -4140,13 +4559,16 @@ useEffect(() => {
                     React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z\"/></svg>'} })),
                     "Stock"
                 ),
-                React.createElement("button", { className: `mbn-btn${tab==='dash'?' on':''}`, onClick: ()=>{ setTab('dash'); } },
-                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"18\" y1=\"20\" x2=\"18\" y2=\"10\"/><line x1=\"12\" y1=\"20\" x2=\"12\" y2=\"4\"/><line x1=\"6\" y1=\"20\" x2=\"6\" y2=\"14\"/></svg>'} })),
-                    "Dashboard"
+                React.createElement("button", { className: `mbn-btn${tab==='orders'?' on':''}`, onClick: ()=>{ setTab('orders'); } },
+                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"9\" cy=\"21\" r=\"1\"/><circle cx=\"20\" cy=\"21\" r=\"1\"/><path d=\"M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6\"/></svg>'} })),
+                    "Orders"
                 ),
-                React.createElement("button", { className: `mbn-btn${tab==='team'?' on':''}`, onClick: ()=>{ setTab('team'); } },
-                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M23 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/></svg>'} })),
-                    "Team"
+                React.createElement("button", { className: `mbn-btn${tab==='messages'?' on':''}`, onClick: ()=>{ setTab('messages'); setLastMsgRead(r=>({...r,[activeLab?.id]:new Date().toISOString()})); } },
+                    React.createElement("div", { className:"mbn-ic", style:{position:'relative'} },
+                        React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\"/></svg>'} }),
+                        (() => { const lastRead = lastMsgRead[activeLab?.id]; const unread=(data.messages||[]).filter(m=>!lastRead||m.created_at>lastRead).length; return unread>0?React.createElement("span",{style:{position:'absolute',top:-4,right:-4,background:'#ef4444',color:'#fff',borderRadius:'50%',width:14,height:14,fontSize:8,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',border:'1.5px solid #fff'}},unread>9?'9+':unread):null;})()
+                    ),
+                    "Messages"
                 )
             ),
 
