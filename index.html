@@ -1337,26 +1337,50 @@ function TableBlock({ table, plants, locked, isSel, activePotId, selMode, selPot
     const GAP = 5, avW = ww - 10, avH = wh - HDR - 10;
     const ppx = Math.max(MINP, Math.min(Math.floor((avW - GAP * (table.cols - 1)) / table.cols), Math.floor((avH - LBH * table.rows - GAP * (table.rows - 1)) / table.rows), 80));
     const te = editTblId === table.id;
+    const startDrag = useCallback((clientX, clientY, isMulti) => {
+        if (locked) return;
+        onSel(table.id, isMulti);
+        const ox = table.x_position, oy = table.y_position;
+        dr.current = { sx: clientX, sy: clientY, ox, oy };
+        if (ref.current) ref.current.classList.add('dragging');
+    }, [locked, table, onSel]);
+    const moveDrag = useCallback((clientX, clientY) => {
+        if (!dr.current || !ref.current) return;
+        const nx = Math.max(0, dr.current.ox + (clientX - dr.current.sx) / WS);
+        const ny = Math.max(0, dr.current.oy + (clientY - dr.current.sy) / WS);
+        ref.current.style.left = nx * WS + 'px';
+        ref.current.style.top = ny * WS + 'px';
+        dr.current.cx = nx; dr.current.cy = ny;
+    }, []);
+    const endDrag = useCallback(() => {
+        if (!dr.current) return;
+        const {cx, cy, ox, oy} = dr.current;
+        onDrag(table.id, cx !== undefined ? cx : ox, cy !== undefined ? cy : oy);
+        dr.current = null;
+        if (ref.current) ref.current.classList.remove('dragging');
+    }, [table, onDrag]);
     const hmd = useCallback(e => {
-        if (locked || e.button !== 0)
-            return;
-        if (e.target.closest('.pcw') || e.target.closest('.pslot'))
-            return;
+        if (locked || e.button !== 0) return;
+        if (e.target.closest('.pcw') || e.target.closest('.pslot')) return;
         e.stopPropagation();
-        onSel(table.id, e.ctrlKey || e.metaKey);
-        const sx = e.clientX, sy = e.clientY, ox = table.x_position, oy = table.y_position;
-        dr.current = { sx, sy, ox, oy };
-        ref.current.classList.add('dragging');
-        const mv = e => { if (!dr.current)
-            return; const nx = Math.max(0, dr.current.ox + (e.clientX - dr.current.sx) / WS), ny = Math.max(0, dr.current.oy + (e.clientY - dr.current.sy) / WS); ref.current.style.left = nx * WS + 'px'; ref.current.style.top = ny * WS + 'px'; dr.current.cx = nx; dr.current.cy = ny; };
-        const up = () => { var _a, _b, _c; if (dr.current) {
-            onDrag(table.id, (_a = dr.current.cx) !== null && _a !== void 0 ? _a : ox, (_b = dr.current.cy) !== null && _b !== void 0 ? _b : oy);
-            dr.current = null;
-        } (_c = ref.current) === null || _c === void 0 ? void 0 : _c.classList.remove('dragging'); window.removeEventListener('mousemove', mv); window.removeEventListener('mouseup', up); };
+        startDrag(e.clientX, e.clientY, e.ctrlKey || e.metaKey);
+        const mv = e => moveDrag(e.clientX, e.clientY);
+        const up = () => { endDrag(); window.removeEventListener('mousemove', mv); window.removeEventListener('mouseup', up); };
         window.addEventListener('mousemove', mv);
         window.addEventListener('mouseup', up);
-    }, [locked, table, onSel, onDrag]);
-    return (React.createElement("div", { ref: ref, className: `tbl${isSel ? ' sel' : ''}${locked ? ' locked' : ''}${te ? ' tedit' : ''}`, style: { position: 'absolute', left: wx, top: wy, width: ww, height: wh }, onMouseDown: hmd },
+    }, [locked, startDrag, moveDrag, endDrag]);
+    const htd = useCallback(e => {
+        if (locked) return;
+        if (e.target.closest('.pcw') || e.target.closest('.pslot') || e.target.closest('.thedit')) return;
+        e.stopPropagation();
+        const t0 = e.touches[0];
+        startDrag(t0.clientX, t0.clientY, false);
+        const mv = e => { const t = e.touches[0]; moveDrag(t.clientX, t.clientY); };
+        const up = () => { endDrag(); window.removeEventListener('touchmove', mv); window.removeEventListener('touchend', up); };
+        window.addEventListener('touchmove', mv, { passive: false });
+        window.addEventListener('touchend', up);
+    }, [locked, startDrag, moveDrag, endDrag]);
+    return (React.createElement("div", { ref: ref, className: `tbl${isSel ? ' sel' : ''}${locked ? ' locked' : ''}${te ? ' tedit' : ''}`, style: { position: 'absolute', left: wx, top: wy, width: ww, height: wh }, onMouseDown: hmd, onTouchStart: htd },
         React.createElement("div", { className: "thd" },
             React.createElement("span", { className: "thnm" }, table.name),
             React.createElement("span", { className: "thinfo" },
@@ -1602,7 +1626,7 @@ function Modal({ title, sub, onClose, onConfirm, confirmLabel = 'Create', wide, 
                 React.createElement("button", { className: "btn btnp", onClick: onConfirm }, confirmLabel)))));
 }
 /* Autocomplete input — touch + mouse compatible */
-function Autocomplete({ value, onChange, onKeyDown, suggestions, placeholder, className, inputRef, big }) {
+function Autocomplete({ value, onChange, onKeyDown, suggestions, placeholder, className, inputRef, big, onDeleteSuggestion }) {
     const [open, setOpen] = useState(false);
     const [hi, setHi] = useState(-1);
     const wrap = useRef();
@@ -1678,11 +1702,20 @@ function Autocomplete({ value, onChange, onKeyDown, suggestions, placeholder, cl
         }, filtered.map((item, i) => React.createElement("div", {
             key: item,
             className: `ac-item${hi === i ? ' hi' : ''}`,
-            // onMouseDown for desktop (prevents blur before pick)
-            onMouseDown: e => { e.preventDefault(); pick(item); },
-            // onTouchEnd for mobile (fires after touch without triggering blur issues)
-            onTouchEnd: e => { e.preventDefault(); pick(item); }
-        }, item)))
+            style: { display:'flex', alignItems:'center', justifyContent:'space-between', gap:8 }
+        },
+            React.createElement("span", {
+                style: { flex:1 },
+                onMouseDown: e => { e.preventDefault(); pick(item); },
+                onTouchEnd: e => { e.preventDefault(); pick(item); }
+            }, item),
+            onDeleteSuggestion && React.createElement("span", {
+                title: "Delete this genotype from all pots",
+                style: { color:'#ef4444', fontSize:13, lineHeight:1, padding:'2px 4px', cursor:'pointer', flexShrink:0 },
+                onMouseDown: e => { e.preventDefault(); e.stopPropagation(); onDeleteSuggestion(item); setOpen(false); },
+                onTouchEnd: e => { e.preventDefault(); e.stopPropagation(); onDeleteSuggestion(item); setOpen(false); }
+            }, "×")
+        )))
     );
 }
 /* Stock tab */
@@ -1887,7 +1920,7 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
         };
         img2.src = ou2;
     };
-    return (React.createElement("div", { className: "pop", ref: ref, style: { top: pos.top, left: pos.left, maxHeight: Math.min(Math.round(window.innerHeight * 0.9), 560) } },
+    const mobClass = window.innerWidth <= 1024 ? " mobile-center" : ""; return (React.createElement("div", { className: "pop" + mobClass, ref: ref, style: { top: pos.top, left: pos.left, maxHeight: Math.min(Math.round(window.innerHeight * 0.9), 560) } },
         React.createElement("div", { className: "pph" },
             React.createElement("div", { className: "pppre" },
                 React.createElement(PotSVG, { sid: f.pot_style, sz: 36, sc: f.status !== 'empty' ? f.status : null, colorId: f.pot_color || 'terra' })),
@@ -1905,7 +1938,9 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
         React.createElement("div", { className: "ppb", onKeyDown: e => { if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT' && !e.target.closest('.ac-drop')) { e.preventDefault(); doSave(); } } },
             React.createElement("div", null,
                 React.createElement("label", { className: "fl" }, "Genotype"),
-                React.createElement(Autocomplete, { value: f.genotype, onChange: v => set('genotype', v), onKeyDown: onKey, suggestions: allGenos, placeholder: "e.g. Col-0, wrky33...", inputRef: gref, big: true })),
+                React.createElement(Autocomplete, { value: f.genotype, onChange: v => set('genotype', v), onKeyDown: onKey, suggestions: allGenos, placeholder: "e.g. Col-0, wrky33...", inputRef: gref, big: true,
+                        onDeleteSuggestion: geno => { if (window.confirm('Remove genotype "' + geno + '" from ALL pots? The pots will become empty (not deleted).')) { onSave(null, geno); } }
+                    })),
             React.createElement("div", null,
                 React.createElement("label", { className: "fl" }, "Treatment"),
                 React.createElement(Autocomplete, { value: f.treatment, onChange: v => set('treatment', v), onKeyDown: onKey, suggestions: allTrts, placeholder: "e.g. Control, +SA..." })),
@@ -2694,27 +2729,37 @@ function SpaceDonut({ used, total, size = 170 }) {
 }
 function ScheduleView({ tables, users, schedules, onAdd, onDel, currentUser }) {
     const [showForm, setShowForm] = React.useState(false);
-    const [fm, setFm] = React.useState({ table_id:'', user_name:'', date:'', time:'', note:'' });
+    const EMPTY_FM = { table_ids:[], user_name:'', start_date:'', end_date:'', note:'' };
+    const [fm, setFm] = React.useState(EMPTY_FM);
     const set = (k,v) => setFm(p => ({...p, [k]:v}));
     const today = new Date().toISOString().slice(0,10);
-    const sorted = [...(schedules||[])].sort((a,b)=>a.date.localeCompare(b.date));
-    const upcoming = sorted.filter(r => r.date >= today);
-    const past     = sorted.filter(r => r.date < today);
+    const sorted = [...(schedules||[])].sort((a,b)=>(a.start_date||a.date||'').localeCompare(b.start_date||b.date||''));
+    const upcoming = sorted.filter(r => (r.start_date||r.date||'') >= today);
+    const past     = sorted.filter(r => (r.start_date||r.date||'') < today);
+    const toggleTable = (id) => set('table_ids', fm.table_ids.includes(id) ? fm.table_ids.filter(x=>x!==id) : [...fm.table_ids, id]);
     const save = () => {
-        if (!fm.table_id || !fm.user_name || !fm.date) return;
-        onAdd({ id: Math.random().toString(36).slice(2), ...fm });
-        setFm({ table_id:'', user_name: currentUser||'', date:'', time:'', note:'' });
+        if (!fm.user_name || !fm.start_date) return;
+        const tableIds = fm.table_ids.length > 0 ? fm.table_ids : (tables[0] ? [tables[0].id] : []);
+        onAdd({ id: Math.random().toString(36).slice(2), ...fm, table_ids: tableIds, table_id: tableIds[0] || '' });
+        setFm({...EMPTY_FM, user_name: currentUser||''});
         setShowForm(false);
     };
+    const fmtDateRange = (r) => {
+        const start = r.start_date || r.date || '';
+        const end = r.end_date;
+        if (!end || end === start) return start;
+        return start + ' → ' + end;
+    };
     const renderItem = (r) => {
-        const tbl = tables.find(t=>t.id===r.table_id);
+        const tblIds = r.table_ids || (r.table_id ? [r.table_id] : []);
+        const tblNames = tblIds.map(id => { const t=tables.find(t=>t.id===id); return t?t.name:id; }).join(', ');
         const u = users.find(u=>u.name===r.user_name);
         return React.createElement('div', { key: r.id, className:'sched-item' },
-            React.createElement('div', { className:'sched-item-date' }, r.date + (r.time?' '+r.time:'')),
-            React.createElement('div', { className:'sched-item-tbl' }, tbl ? tbl.name : r.table_id),
+            React.createElement('div', { className:'sched-item-date' }, fmtDateRange(r)),
+            React.createElement('div', { className:'sched-item-tbl' }, tblNames || '—'),
             React.createElement('div', { className:'sched-item-who', style:{ display:'flex', alignItems:'center', gap:5 } },
                 React.createElement('div', { style:{ width:18, height:18, borderRadius:'50%', background: u ? u.color : '#aaa', display:'flex', alignItems:'center', justifyContent:'center', fontSize:8, fontWeight:700, color:'#fff', flexShrink:0 } },
-                    u && u.photo ? React.createElement('img', { src:u.photo, alt:r.user_name, style:{width:'100%',height:'100%',objectFit:'cover',borderRadius:'50%'} }) : r.user_name.charAt(0)
+                    u && u.photo ? React.createElement('img', { src:u.photo, alt:r.user_name, style:{width:'100%',height:'100%',objectFit:'cover',borderRadius:'50%'} }) : (r.user_name||'?').charAt(0)
                 ),
                 r.user_name
             ),
@@ -2725,34 +2770,45 @@ function ScheduleView({ tables, users, schedules, onAdd, onDel, currentUser }) {
     return React.createElement('div', { className:'sched-page' },
         React.createElement('div', { className:'sched-head' },
             React.createElement('div', { style:{fontSize:20,fontWeight:700,color:'var(--i1)'} }, '📅 Schedule'),
-            React.createElement('button', { className:'btn btnp bsm', onClick:()=>{ setFm({table_id:tables[0]?.id||'', user_name:currentUser||'', date:today, time:'', note:''}); setShowForm(true); } }, '+ Reserve')
+            React.createElement('button', { className:'btn btnp bsm', onClick:()=>{ setFm({...EMPTY_FM, user_name:currentUser||'', start_date:today, end_date:today}); setShowForm(true); } }, '+ Reserve')
         ),
-        showForm && React.createElement('div', { style:{padding:'14px 24px',borderBottom:'1px solid var(--bo)',background:'var(--ll)',display:'flex',flexWrap:'wrap',gap:8,alignItems:'flex-end'} },
-            React.createElement('div', { style:{display:'flex',flexDirection:'column',gap:3} },
-                React.createElement('label', { style:{fontSize:10,fontWeight:600,color:'var(--i3)'} }, 'Table'),
-                React.createElement('select', { className:'mosel', style:{width:130}, value:fm.table_id, onChange:e=>set('table_id',e.target.value) },
-                    tables.map(t=>React.createElement('option',{key:t.id,value:t.id},t.name))
+        showForm && React.createElement('div', { style:{padding:'16px 24px',borderBottom:'1px solid var(--bo)',background:'var(--ll)',display:'flex',flexDirection:'column',gap:12} },
+            React.createElement('div', { style:{display:'flex',flexWrap:'wrap',gap:10} },
+                React.createElement('div', { style:{display:'flex',flexDirection:'column',gap:3,flex:'1 1 120px'} },
+                    React.createElement('label', { style:{fontSize:10,fontWeight:600,color:'var(--i3)'} }, 'Start date'),
+                    React.createElement('input', { className:'moi', type:'date', value:fm.start_date, onChange:e=>{ set('start_date',e.target.value); if(!fm.end_date||fm.end_date<e.target.value) set('end_date',e.target.value); } })
+                ),
+                React.createElement('div', { style:{display:'flex',flexDirection:'column',gap:3,flex:'1 1 120px'} },
+                    React.createElement('label', { style:{fontSize:10,fontWeight:600,color:'var(--i3)'} }, 'End date'),
+                    React.createElement('input', { className:'moi', type:'date', value:fm.end_date, min:fm.start_date, onChange:e=>set('end_date',e.target.value) })
+                ),
+                React.createElement('div', { style:{display:'flex',flexDirection:'column',gap:3,flex:'1 1 120px'} },
+                    React.createElement('label', { style:{fontSize:10,fontWeight:600,color:'var(--i3)'} }, 'Who'),
+                    React.createElement('select', { className:'mosel', value:users.find(u=>u.name===fm.user_name)?fm.user_name:'__custom__', onChange:e=>e.target.value!=='__custom__'?set('user_name',e.target.value):set('user_name','') },
+                        React.createElement('option',{value:'__custom__'},'— Type —'),
+                        users.map(u=>React.createElement('option',{key:u.id,value:u.name},u.name))
+                    ),
+                    (!users.find(u=>u.name===fm.user_name)||!fm.user_name) && React.createElement('input',{className:'moi',style:{marginTop:3},placeholder:'Name...',value:fm.user_name,onChange:e=>set('user_name',e.target.value)})
+                ),
+                React.createElement('div', { style:{display:'flex',flexDirection:'column',gap:3,flex:'1 1 200px'} },
+                    React.createElement('label', { style:{fontSize:10,fontWeight:600,color:'var(--i3)'} }, 'Note (optional)'),
+                    React.createElement('input', { className:'moi', placeholder:'Optional note...', value:fm.note, onChange:e=>set('note',e.target.value) })
                 )
             ),
-            React.createElement('div', { style:{display:'flex',flexDirection:'column',gap:3} },
-                React.createElement('label', { style:{fontSize:10,fontWeight:600,color:'var(--i3)'} }, 'Who'),
-                React.createElement('select', { className:'mosel', style:{width:120}, value:users.find(u=>u.name===fm.user_name)?fm.user_name:'__custom__', onChange:e=>e.target.value!=='__custom__'?set('user_name',e.target.value):set('user_name','') },
-                    React.createElement('option',{value:'__custom__'},'— Type —'),
-                    users.map(u=>React.createElement('option',{key:u.id,value:u.name},u.name))
-                ),
-                (!users.find(u=>u.name===fm.user_name)||!fm.user_name) && React.createElement('input',{className:'moi',style:{width:120,marginTop:3},placeholder:'Name...',value:fm.user_name,onChange:e=>set('user_name',e.target.value)})
-            ),
-            React.createElement('div', { style:{display:'flex',flexDirection:'column',gap:3} },
-                React.createElement('label', { style:{fontSize:10,fontWeight:600,color:'var(--i3)'} }, 'Date'),
-                React.createElement('input', { className:'moi', type:'date', style:{width:130}, value:fm.date, onChange:e=>set('date',e.target.value) })
-            ),
-            React.createElement('div', { style:{display:'flex',flexDirection:'column',gap:3} },
-                React.createElement('label', { style:{fontSize:10,fontWeight:600,color:'var(--i3)'} }, 'Time (opt)'),
-                React.createElement('input', { className:'moi', type:'time', style:{width:100}, value:fm.time, onChange:e=>set('time',e.target.value) })
-            ),
-            React.createElement('div', { style:{display:'flex',flexDirection:'column',gap:3,flex:1,minWidth:120} },
-                React.createElement('label', { style:{fontSize:10,fontWeight:600,color:'var(--i3)'} }, 'Note (opt)'),
-                React.createElement('input', { className:'moi', placeholder:'Optional note...', value:fm.note, onChange:e=>set('note',e.target.value) })
+            React.createElement('div', null,
+                React.createElement('label', { style:{fontSize:10,fontWeight:600,color:'var(--i3)',display:'block',marginBottom:6} }, 'Tables (select one or more)'),
+                React.createElement('div', { style:{display:'flex',flexWrap:'wrap',gap:6} },
+                    tables.map(t => React.createElement('div', { key:t.id,
+                        onClick:()=>toggleTable(t.id),
+                        style:{
+                            padding:'6px 14px', borderRadius:50, fontSize:12, cursor:'pointer', fontWeight:500,
+                            background: fm.table_ids.includes(t.id) ? '#78C043' : '#fff',
+                            color: fm.table_ids.includes(t.id) ? '#fff' : '#4B5563',
+                            border: '1.5px solid ' + (fm.table_ids.includes(t.id) ? '#78C043' : '#E5E7EB'),
+                            userSelect:'none'
+                        }
+                    }, t.name))
+                )
             ),
             React.createElement('div', { style:{display:'flex',gap:6} },
                 React.createElement('button', { className:'btn btnp bsm', onClick:save }, 'Save'),
@@ -2988,7 +3044,13 @@ function FirebasePanel({ onClose, activityLog }) {
 /* Main App */
 function App() {
     var _a, _b;
-    const [activeLab, setActiveLab] = useState(null); // null = lab not chosen yet
+    const [activeLab, setActiveLab] = useState(() => {
+        try {
+            const lastId = localStorage.getItem('gl_last_lab');
+            if (lastId) { const labs = loadLabs(); return labs.find(l=>l.id===lastId) || null; }
+        } catch(e) {}
+        return null;
+    }); // null = lab not chosen yet
     const [data, setData] = useState({ greenhouses:[], tables:[], plants:[], experiments:[], users:[], structs:[], stock:[], orders:[], schedules:[], locked:true });
     const [user, setUser] = useState(null);
     const [tab, setTab] = useState('layout');
@@ -3138,6 +3200,15 @@ useEffect(() => {
                             if (remote.greenhouses && remote.greenhouses.length > 0) {
                                 setGhId(function(cur) { return cur || remote.greenhouses[0].id; });
                             }
+                            // Restore last user on refresh
+                            setUser(function(cur) {
+                                if (cur) return cur;
+                                try {
+                                    var lastUid = localStorage.getItem('gl_last_user');
+                                    if (lastUid && remote.users) return remote.users.find(function(u){return u.id===lastUid;})||null;
+                                } catch(e) {}
+                                return null;
+                            });
                         }
                         setSyncStatus('synced');
                         setLastSaved(new Date());
@@ -3209,9 +3280,7 @@ useEffect(() => {
     }, [user]);
     /* Called when user selects a lab from LabSelectScreen */
     const selectLab = useCallback(lab => {
-        // Just set the active lab — the Firestore onSnapshot listener
-        // will fetch the real data and call setData automatically.
-        // We reset to empty so we don't overwrite Firestore with stale localStorage.
+        try { localStorage.setItem('gl_last_lab', lab.id); } catch(e) {}
         setActiveLab(lab);
         setData({ greenhouses:[], tables:[], plants:[], experiments:[],
                   users:[], structs:[], stock:[], locked:true });
@@ -3424,23 +3493,26 @@ useEffect(() => {
         return; const g = { id: uid(), name: ghFm.name.trim(), width: +ghFm.width || 400, length: +ghFm.length || 300, notes: '', last_sprayed_at: null, spray_material: '', spray_category: '', spray_notes: '', created_by: (user === null || user === void 0 ? void 0 : user.id) || 'u', created_at: now() }; setData(d => (Object.assign(Object.assign({}, d), { greenhouses: [...d.greenhouses, g] }))); setGhId(g.id); setShowAGH(false); setGhFm({ name: '', width: 600, length: 400 }); notify(`"${g.name}" created`); logActivity(`Created greenhouse: ${g.name}`); };
     const delGH = id => {
         const g = data.greenhouses.find(x => x.id === id);
-        if (!window.confirm('Delete "' + ((g && g.name) || 'this greenhouse') + '"? All tables and pots inside will be permanently deleted.')) return;
-        forceWriteRef.current = true;
-        setData(d => {
-            const remaining = d.greenhouses.filter(gh => gh.id !== id);
-            return Object.assign(Object.assign({}, d), {
-                greenhouses: remaining,
-                tables: d.tables.filter(t => t.greenhouse_id !== id),
-                plants: d.plants.filter(p => p.greenhouse_id !== id),
-                structs: (d.structs || []).filter(s => s.greenhouse_id !== id)
-            });
+        setDelConfirm({ type: 'gh', id, name: (g && g.name) || 'this greenhouse',
+            onConfirm: () => {
+                forceWriteRef.current = true;
+                setData(d => {
+                    const remaining = d.greenhouses.filter(gh => gh.id !== id);
+                    return Object.assign(Object.assign({}, d), {
+                        greenhouses: remaining,
+                        tables: d.tables.filter(t => t.greenhouse_id !== id),
+                        plants: d.plants.filter(p => p.greenhouse_id !== id),
+                        structs: (d.structs || []).filter(s => s.greenhouse_id !== id)
+                    });
+                });
+                if (ghId === id) {
+                    const remaining = data.greenhouses.filter(gh => gh.id !== id);
+                    setGhId(remaining.length > 0 ? remaining[0].id : null);
+                }
+                notify('Greenhouse deleted');
+                logActivity('Deleted greenhouse');
+            }
         });
-        if (ghId === id) {
-            const remaining = data.greenhouses.filter(gh => gh.id !== id);
-            setGhId(remaining.length > 0 ? remaining[0].id : null);
-        }
-        notify('Greenhouse deleted');
-        logActivity('Deleted greenhouse');
     };
     const recSpray = () => { if (!spFm.material.trim()) return;
         const entry = {id:uid(), at:now(), material:spFm.material, category:spFm.category, notes:spFm.notes, sprayer:spFm.sprayer||''};
@@ -3537,8 +3609,12 @@ useEffect(() => {
     /* pot click */
     const hPotClick = useCallback((e, tblId, row, col, plant) => { if (!plant)
         return; setActPot(plant.id); const rect = e.currentTarget.getBoundingClientRect(); const tbl = data.tables.find(t => t.id === tblId), gh = data.greenhouses.find(g => g.id === (tbl === null || tbl === void 0 ? void 0 : tbl.greenhouse_id)); setPopup({ plant, rect, tblNm: (tbl === null || tbl === void 0 ? void 0 : tbl.name) || '?', ghNm: (gh === null || gh === void 0 ? void 0 : gh.name) || '?' }); }, [data]);
-    const savePlant = upd => {
-        // Build timeline events from diff between old and new plant state
+    const savePlant = (upd, deleteGeno) => {
+        if (deleteGeno) {
+            setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => p.genotype === deleteGeno ? Object.assign(Object.assign({}, p), { genotype:'', treatment:'', status:'empty', planting_date:'', notes:'', image:null, experiment_id:null }) : p) })));
+            setPopup(null); setActPot(null); notify('Genotype "' + deleteGeno + '" removed from all pots');
+            return;
+        }
         const oldP = data.plants.find(function(p){return p.id===upd.id;}) || {};
         const newEvents = tlDiff(oldP, upd, user && user.name, data.experiments);
         const existingTimeline = (oldP.timeline || []);
@@ -3548,7 +3624,7 @@ useEffect(() => {
             timeline: newEvents.length > 0 ? [...existingTimeline, ...newEvents] : existingTimeline
         });
         setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => p.id === w.id ? w : p) })));
-        setPopup(null); setActPot(null); notify('Saved'); logActivity(`Updated pot: ${w.genotype || 'empty'}`);
+        setPopup(null); setActPot(null); notify('Saved'); logActivity('Updated pot: ' + (w.genotype || 'empty'));
     };
     /* delete pot = clear data, keep slot */
     const delPot = id => { setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => p.id !== id ? p : Object.assign(Object.assign({}, p), { genotype: '', treatment: '', planting_date: '', notes: '', status: 'empty', image: null, experiment_id: null })) }))); notify('Pot cleared'); };
@@ -3610,7 +3686,7 @@ useEffect(() => {
     const addOrder    = o  => setData(d => ({...d, orders: [...(d.orders||[]), o]}));
     const updOrder    = (id, fm) => setData(d => ({...d, orders: (d.orders||[]).map(o => o.id===id ? {...o,...fm, updated_at:now()} : o)}));
     const delOrder    = id => setData(d => ({...d, orders: (d.orders||[]).filter(o => o.id!==id)}));
-    const editStockItem = (id, fm) => setData(d => (Object.assign(Object.assign({}, d), { stock: (d.stock || []).map(s => s.id === id ? Object.assign(Object.assign(Object.assign({}, s), fm), { quantity: +fm.quantity || 0 }) : s) })));
+    const editStockItem = (id, fm) => setData(d => (Object.assign(Object.assign({}, d), { stock: (d.stock || []).map(s => s.id === id ? Object.assign(Object.assign(Object.assign({}, s), fm), { quantity: +fm.quantity || 0, image: fm.image !== undefined ? fm.image : s.image }) : s) })));
     const removeStockItem = id => setData(d => (Object.assign(Object.assign({}, d), { stock: (d.stock || []).filter(s => s.id !== id) })));
     const qtyStockItem = (id, delta) => setData(d => (Object.assign(Object.assign({}, d), { stock: (d.stock || []).map(s => s.id === id ? Object.assign(Object.assign({}, s), { quantity: Math.max(0, s.quantity + delta) }) : s) })));
     const togLock = () => { if (!locked) {
@@ -3629,7 +3705,7 @@ useEffect(() => {
         );
     if (!user)
         return React.createElement(LoginScreen, { users: data.users, onLogin: u => { setUser(u); if (!data.users.find(x => x.id === u.id))
-                setData(d => (Object.assign(Object.assign({}, d), { users: [...d.users, u] }))); }, labName: activeLab.name });
+                setData(d => (Object.assign(Object.assign({}, d), { users: [...d.users, u] }))); try { localStorage.setItem('gl_last_user', u.id); } catch(e) {} }, labName: activeLab.name });
     return (React.createElement(React.Fragment, null,
         swarn && React.createElement("div", { className: "swarn" },
             React.createElement("span", { style: { fontSize: 16 } }, "\u26A0\uFE0F"),
@@ -3762,8 +3838,9 @@ useEffect(() => {
                             React.createElement("span", { className: "pla" }, "Cols"),
                             React.createElement("div", { className: "piu" },
                                 React.createElement("input", { type: "number", min: "1", max: "20", value: sTbl.cols, onChange: e => updGrid(sTbl.rows, +e.target.value) }))),
-                        React.createElement("div", { style: { display: 'flex', gap: 5, marginTop: 7 } },
+                        React.createElement("div", { style: { display: 'flex', gap: 5, marginTop: 7, flexWrap: 'wrap' } },
                             React.createElement("button", { className: "btn btns bsm", style: { flex: 1 }, onClick: () => setEditTbl(editTbl === selTbl ? null : selTbl) }, editTbl === selTbl ? 'Done editing' : 'Edit pots'),
+                            React.createElement("button", { className: "btn btns bsm", onClick: () => { if (window.confirm('Clear all pots in this table? Genotypes and data will be erased but the table stays.')) { setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => p.table_id === selTbl ? Object.assign(Object.assign({}, p), { genotype: '', treatment: '', planting_date: '', notes: '', status: 'empty', image: null, experiment_id: null }) : p) }))); notify('All pots cleared'); } } }, "Clear all"),
                             React.createElement("button", { className: "btn btnd bsm", onClick: () => hDrag(selTbl, null, null, true) }, "Delete"))),
                     aGh && locked && React.createElement(React.Fragment, null,
                         React.createElement("div", { className: "pg", style: { borderTop: '1px solid var(--bo)', paddingTop: 11 } },
