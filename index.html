@@ -415,20 +415,22 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
    STOCK TAB
 ═══════════════════════════════════ */
 .stk{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
-.stk-head{flex-shrink:0;padding:20px 24px;border-bottom:1px solid var(--bo);display:flex;align-items:center;justify-content:space-between;background:#fff}
+.stk-head{flex-shrink:0;padding:16px 20px;border-bottom:1px solid var(--bo);display:flex;align-items:center;justify-content:space-between;background:#fff}
 .stk-tit{font-size:20px;color:var(--i1);font-weight:700}
-.stk-list{flex:1;min-height:0;overflow-y:auto;padding:18px 24px;display:flex;flex-direction:column;gap:10px}
-.stk-item{background:#fff;border:1px solid #F0F0F0;border-radius:24px;padding:16px 20px;display:flex;align-items:flex-start;gap:14px;box-shadow:var(--sh-card);transition:all .15s}
-.stk-item:hover{border-color:#c3e6a8;box-shadow:0 8px 20px rgba(120,192,67,.12);transform:translateY(-2px)}
-.stk-img{width:88px;height:88px;border-radius:var(--r2);object-fit:cover;flex-shrink:0;border:1.5px solid var(--bo);cursor:pointer;display:flex;align-items:center;justify-content:center;background:var(--cr2);font-size:32px;overflow:hidden}
+.stk-list{flex:1;min-height:0;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.stk-item{background:#fff;border:1px solid #F0F0F0;border-radius:20px;padding:12px 14px;display:flex;align-items:center;gap:10px;box-shadow:var(--sh-card);transition:all .15s}
+.stk-item:hover{border-color:#c3e6a8;box-shadow:0 6px 18px rgba(120,192,67,.1)}
+.stk-img{width:72px;height:72px;min-width:72px;border-radius:var(--r2);object-fit:cover;flex-shrink:0;border:1.5px solid var(--bo);cursor:pointer;display:flex;align-items:center;justify-content:center;background:var(--cr2);font-size:28px;overflow:hidden}
 .stk-img img{width:100%;height:100%;object-fit:cover}
-.stk-nm{font-size:13px;font-weight:600;color:var(--i1);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.stk-cat{font-size:10px;color:var(--i4);flex-shrink:0;margin-top:2px}
+.stk-info{flex:1;min-width:0;overflow:hidden}
+.stk-nm{font-size:13px;font-weight:600;color:var(--i1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+.stk-cat{font-size:10px;color:var(--i4);margin-top:2px;display:block}
 .stk-qty{display:flex;align-items:center;gap:6px;flex-shrink:0}
-.stk-qbtn{width:28px;height:28px;border-radius:var(--r);border:1.5px solid var(--bo);background:#fff;color:var(--i2);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;font-weight:700;transition:all .12s}
+.stk-qbtn{width:30px;height:30px;border-radius:var(--r);border:1.5px solid var(--bo);background:#fff;color:var(--i2);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;font-weight:700;transition:all .12s;flex-shrink:0}
 .stk-qbtn:hover{background:#edf7e3;border-color:#c3e6a8}
-.stk-qval{font-size:14px;font-weight:700;color:var(--i1);min-width:30px;text-align:center}
-.stk-del{background:none;border:1.5px solid #fca5a5;color:var(--to);border-radius:var(--r);padding:5px 12px;font-size:11px;cursor:pointer;font-weight:600;transition:all .12s}
+.stk-qval{font-size:15px;font-weight:700;color:var(--i1);min-width:32px;text-align:center}
+.stk-acts{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.stk-del{background:none;border:1.5px solid #fca5a5;color:var(--to);border-radius:var(--r);padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600;transition:all .12s}
 .stk-del:hover{background:#fef2f2}
 .stk-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:180px;gap:10px;color:var(--i4)}
 
@@ -556,23 +558,27 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 
 /* ── Horizontal tab bar ── */
 .tab-bar{
-  flex-shrink:0;display:flex;align-items:center;gap:8px;
-  padding:10px 18px;background:#F9FAFB;
+  flex-shrink:0;display:flex;align-items:center;gap:6px;
+  padding:8px 16px;background:#F9FAFB;
   border-bottom:1px solid #EBEBEB;
-  height:56px;position:sticky;top:0;z-index:50;
+  height:52px;position:sticky;top:0;z-index:50;
+  overflow-x:auto;overflow-y:hidden;
+  scrollbar-width:none;
 }
+.tab-bar::-webkit-scrollbar{display:none}
 .tab-btn{
-  display:inline-flex;align-items:center;gap:5px;
-  height:34px;padding:0 12px 0 6px;
+  display:inline-flex;align-items:center;gap:4px;
+  height:32px;padding:0 10px 0 5px;
   border:1.5px solid #E5E7EB;border-radius:50px;
-  background:#fff;font-size:12px;font-weight:500;
+  background:#fff;font-size:11.5px;font-weight:500;
   color:#6B7280;cursor:pointer;
   transition:all .15s;white-space:nowrap;
   font-family:'Poppins',sans-serif;flex-shrink:0;
 }
 .tab-btn:hover{background:#F3F4F6;border-color:#D1D5DB;color:#333333}
 .tab-btn.on{background:#78C043;border-color:#78C043;color:#fff;font-weight:600;box-shadow:0 2px 8px rgba(120,192,67,.3)}
-.tab-bar-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+.tab-btn .tb-ic{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.tab-bar-r{margin-left:auto;display:flex;align-items:center;gap:6px;flex-shrink:0}
 
 /* ── Hamburger button ── */
 .mob-menu-btn{
@@ -597,7 +603,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
   .main{width:100%;min-width:0}
   .tab-bar{padding:0 8px;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;height:52px}
   .tab-bar::-webkit-scrollbar{display:none}
-  .tab-btn{padding:0 14px;font-size:14px;height:52px;flex-shrink:0}
+  .tab-btn{padding:0 12px;font-size:13px;height:44px;flex-shrink:0}
   .tab-bar-r{gap:6px;flex-shrink:0}
   .hbadge{display:none}
   .mob-menu-btn{display:flex}
@@ -773,16 +779,19 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
     background:#fff;border-top:1px solid #EBEBEB;
     height:60px;padding:0;
     box-shadow:0 -4px 16px rgba(0,0,0,.08);
+    overflow-x:auto;overflow-y:hidden;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
   }
+  .mob-bottom-nav::-webkit-scrollbar{display:none}
   .mob-bottom-nav .mbn-btn{
-    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    flex:0 0 auto;min-width:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:3px;border:none;background:none;cursor:pointer;
-    padding:6px 2px 4px;
+    padding:6px 8px 4px;
     font-size:9px;font-weight:500;color:#9CA3AF;
     font-family:'Poppins',sans-serif;
     transition:color .15s;
     -webkit-tap-highlight-color:transparent;
-    min-width:0;
   }
   .mob-bottom-nav .mbn-btn.on{color:#78C043}
   .mob-bottom-nav .mbn-btn.on .mbn-ic{background:#78C04318}
@@ -915,33 +924,81 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 
 
 /* ═══════════════════════════════════
-   MEASURES TAB
+   MEASURES TAB — redesigned
 ═══════════════════════════════════ */
-.meas-page{flex:1;min-height:0;display:flex;overflow:hidden;background:var(--bg)}
-.meas-sidebar{width:220px;flex-shrink:0;background:#fff;border-right:1px solid var(--bo);display:flex;flex-direction:column;overflow:hidden}
-.meas-sidebar-head{flex-shrink:0;padding:14px 12px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--bo)}
-.meas-sess-item{position:relative;padding:10px 28px 10px 12px;cursor:pointer;border-bottom:1px solid var(--bo);transition:background .12s}
+.meas-page{flex:1;min-height:0;display:flex;overflow:hidden;background:#F9FAFB}
+/* Left panel: session list */
+.meas-sidebar{width:240px;flex-shrink:0;background:#fff;border-right:1px solid var(--bo);display:flex;flex-direction:column;overflow:hidden}
+.meas-sidebar-head{flex-shrink:0;padding:16px 14px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--bo)}
+.meas-sidebar-title{font-weight:700;font-size:14px;color:var(--i1)}
+.meas-sess-item{position:relative;padding:12px 36px 12px 14px;cursor:pointer;border-bottom:1px solid #F5F5F5;transition:background .12s}
 .meas-sess-item:hover{background:var(--cr2)}
 .meas-sess-item.active{background:var(--ll);border-left:3px solid var(--lf)}
-.meas-main{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
-.meas-main-head{flex-shrink:0;padding:14px 20px;border-bottom:1px solid var(--bo);background:#fff;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.meas-table{flex:1;min-height:0;overflow-y:auto;padding:0}
-.meas-table-head{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--cr2);border-bottom:1px solid var(--bo);font-size:10px;font-weight:700;color:var(--i4);text-transform:uppercase;letter-spacing:.06em;position:sticky;top:0}
-.meas-row{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--bo);background:#fff;transition:background .12s}
-.meas-row:hover{background:var(--cr2)}
-.meas-row-plant{flex:1;min-width:0;display:flex;align-items:center;flex-wrap:wrap;gap:3}
-.meas-row-pos{width:80px;flex-shrink:0}
-.meas-row-input{width:180px;flex-shrink:0}
+.meas-sess-name{font-weight:600;font-size:13px;color:var(--i1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meas-sess-meta{font-size:10px;color:var(--i4);margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.meas-sess-prog{display:flex;align-items:center;gap:5px;margin-top:5px}
+.meas-sess-bar{flex:1;height:4px;background:#E5E7EB;border-radius:2px;overflow:hidden}
+.meas-sess-bar-fill{height:100%;background:#78C043;border-radius:2px;transition:width .3s}
+.meas-sess-pct{font-size:9px;font-weight:700;color:var(--i4)}
+.meas-sess-del{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--to);font-size:15px;cursor:pointer;opacity:0;padding:4px;line-height:1;border-radius:4px}
+.meas-sess-item:hover .meas-sess-del{opacity:.7}
+/* Right panel: data entry */
+.meas-main{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;background:#F9FAFB}
+.meas-main-head{flex-shrink:0;padding:14px 20px;border-bottom:1px solid var(--bo);background:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.meas-head-info{min-width:0}
+.meas-head-title{font-size:17px;font-weight:700;color:var(--i1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meas-head-sub{font-size:11px;color:var(--i4);margin-top:2px}
+.meas-head-acts{display:flex;gap:7px;flex-shrink:0;flex-wrap:wrap;align-items:center}
+/* Progress bar in main head */
+.meas-progress-bar{flex-shrink:0;background:#fff;border-bottom:1px solid var(--bo);padding:8px 20px;display:flex;align-items:center;gap:14px}
+.meas-prog-track{flex:1;height:6px;background:#E5E7EB;border-radius:3px;overflow:hidden}
+.meas-prog-fill{height:100%;background:linear-gradient(90deg,#78C043,#a8d878);border-radius:3px;transition:width .4s}
+.meas-prog-label{font-size:11px;font-weight:700;color:var(--i2);flex-shrink:0;white-space:nowrap}
+.meas-prog-count{font-size:10px;color:var(--i4);flex-shrink:0}
+/* Table grid */
+.meas-table{flex:1;min-height:0;overflow-y:auto}
+.meas-table-head{display:grid;grid-template-columns:1fr 90px 160px 36px;gap:0;padding:8px 16px;background:#F3F4F6;border-bottom:1px solid var(--bo);font-size:10px;font-weight:700;color:var(--i4);text-transform:uppercase;letter-spacing:.06em;position:sticky;top:0;z-index:5}
+.meas-row{display:grid;grid-template-columns:1fr 90px 160px 36px;gap:0;align-items:center;padding:0 16px;border-bottom:1px solid #F5F5F5;background:#fff;min-height:56px;transition:background .1s}
+.meas-row:hover{background:#FAFFFE}
+.meas-row.has-value{background:linear-gradient(90deg,rgba(120,192,67,.03) 0%,#fff 40%)}
+.meas-row-plant{padding:10px 10px 10px 0;min-width:0}
+.meas-row-geno{font-weight:600;font-size:13px;color:var(--i1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meas-row-treat{font-size:10px;color:#8b5cf6;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meas-row-pos{font-size:11px;color:var(--i4);padding:0 6px}
+.meas-row-input{padding:4px 0}
+.meas-row-check{display:flex;align-items:center;justify-content:center;padding:0}
+/* Input in measure row */
+.meas-val-input{width:100%;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:10px;padding:7px 10px;font-size:15px;font-weight:600;color:var(--i1);outline:none;transition:all .12s;text-align:center}
+.meas-val-input:focus{border-color:#78C043;background:#fff;box-shadow:0 0 0 3px rgba(120,192,67,.12)}
+.meas-val-input.filled{border-color:#c3e6a8;background:#f0fdf4;color:#166534}
+.meas-val-done{display:flex;align-items:center;gap:5px}
+.meas-val-num{font-size:16px;font-weight:800;color:#166534}
+.meas-val-unit{font-size:10px;color:var(--i4)}
+.meas-val-edit{background:none;border:none;color:var(--i5);font-size:12px;cursor:pointer;padding:2px 4px;border-radius:4px;flex-shrink:0}
+.meas-val-edit:hover{background:var(--cr2);color:var(--i2)}
+.meas-check-icon{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px}
+.meas-check-icon.done{background:#edf7e3;color:#166534}
+.meas-check-icon.empty{background:#F3F4F6;color:var(--i5)}
+/* Empty / no session states */
+.meas-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--i4);padding:40px;text-align:center}
+/* Multi-value badge */
+.meas-multi-badge{font-size:9px;font-weight:700;background:#edf7e3;color:#166534;border-radius:20px;padding:2px 7px;margin-left:5px}
+/* Responsive */
 @media(max-width:1024px){
-  .meas-sidebar{width:180px}
-  .meas-row{flex-wrap:wrap;gap:6px}
-  .meas-row-pos{width:auto}
-  .meas-row-input{width:100%}
-  .meas-table-head{display:none}
+  .meas-sidebar{width:200px}
+  .meas-table-head{grid-template-columns:1fr 70px 130px 32px;padding:7px 12px}
+  .meas-row{grid-template-columns:1fr 70px 130px 32px;padding:0 12px}
 }
-@media(max-width:600px){
+@media(max-width:700px){
   .meas-page{flex-direction:column}
-  .meas-sidebar{width:100%;max-height:160px;border-right:none;border-bottom:1px solid var(--bo)}
+  .meas-sidebar{width:100%;max-height:180px;border-right:none;border-bottom:1px solid var(--bo);flex-direction:row;overflow-x:auto;flex-wrap:nowrap}
+  .meas-sidebar-head{flex-shrink:0;border-bottom:none;border-right:1px solid var(--bo);min-width:120px}
+  .meas-sess-item{min-width:140px;border-bottom:none;border-right:1px solid #F5F5F5}
+  .meas-table-head{display:none}
+  .meas-row{grid-template-columns:1fr auto;gap:8px;padding:10px 12px;min-height:auto}
+  .meas-row-pos{display:none}
+  .meas-row-input{width:120px}
+  .meas-row-check{display:none}
 }
 
 </style>
@@ -1783,16 +1840,16 @@ function Autocomplete({ value, onChange, onKeyDown, suggestions, placeholder, cl
 
 
 /* ═══════════════════════════════════
-   MEASURES TAB  (iPad-optimised data collection)
+   MEASURES TAB  (redesigned — easy data collection)
 ═══════════════════════════════════ */
 function MeasuresView({ measures, experiments, plants, tables, users, onSave, currentUser }) {
     const [sessions, setSessions] = React.useState(measures || []);
     const [activeSession, setActiveSession] = React.useState(null);
     const [showNew, setShowNew] = React.useState(false);
     const [fm, setFm] = React.useState({ name:'', experiment_id:'', trait:'', unit:'', notes:'' });
+    const [showExport, setShowExport] = React.useState(false);
     const [emailAddr, setEmailAddr] = React.useState('');
     const [savedEmails, setSavedEmails] = React.useState(() => { try { return JSON.parse(localStorage.getItem('gl_emails')||'[]'); } catch(e){ return []; } });
-    const [showEmail, setShowEmail] = React.useState(false);
     const set = (k,v) => setFm(p=>({...p,[k]:v}));
 
     // Sync with parent
@@ -1802,120 +1859,198 @@ function MeasuresView({ measures, experiments, plants, tables, users, onSave, cu
         if (!fm.name.trim()) return;
         const sess = { id: Math.random().toString(36).slice(2,9), name:fm.name.trim(), experiment_id:fm.experiment_id, trait:fm.trait, unit:fm.unit, notes:fm.notes, created_by:currentUser?.name||'', created_at:new Date().toISOString(), rows:[] };
         const updated = [...sessions, sess];
-        setSessions(updated);
-        onSave(updated);
-        setActiveSession(sess.id);
-        setShowNew(false);
+        setSessions(updated); onSave(updated);
+        setActiveSession(sess.id); setShowNew(false);
         setFm({ name:'', experiment_id:'', trait:'', unit:'', notes:'' });
     };
 
-    const addRow = (sessId, potId, value) => {
-        const updated = sessions.map(s => s.id!==sessId ? s : {...s, rows:[...s.rows, { id:Math.random().toString(36).slice(2,9), pot_id:potId, value, measured_by:currentUser?.name||'', at:new Date().toISOString() }]});
-        setSessions(updated);
-        onSave(updated);
+    const setRowValue = (sessId, potId, value) => {
+        // One value per pot per session — replace if exists
+        const updated = sessions.map(s => {
+            if (s.id !== sessId) return s;
+            const existing = s.rows.findIndex(r => r.pot_id === potId);
+            const newRow = { id: Math.random().toString(36).slice(2,9), pot_id:potId, value, measured_by:currentUser?.name||'', at:new Date().toISOString() };
+            const rows = existing >= 0 ? s.rows.map((r,i) => i===existing ? newRow : r) : [...s.rows, newRow];
+            return {...s, rows};
+        });
+        setSessions(updated); onSave(updated);
     };
 
-    const delRow = (sessId, rowId) => {
-        const updated = sessions.map(s => s.id!==sessId ? s : {...s, rows:s.rows.filter(r=>r.id!==rowId)});
-        setSessions(updated);
-        onSave(updated);
+    const clearRowValue = (sessId, potId) => {
+        const updated = sessions.map(s => s.id!==sessId ? s : {...s, rows:s.rows.filter(r=>r.pot_id!==potId)});
+        setSessions(updated); onSave(updated);
     };
 
     const delSession = (sessId) => {
         if (!window.confirm('Delete this measurement session?')) return;
         const updated = sessions.filter(s=>s.id!==sessId);
-        setSessions(updated);
-        onSave(updated);
+        setSessions(updated); onSave(updated);
         if (activeSession===sessId) setActiveSession(null);
     };
 
-    const exportCSV = (sess) => {
-        const header = 'Pot ID,Genotype,Treatment,Table,Value ('+sess.unit+'),Measured By,Time\n';
-        const rows = sess.rows.map(r => {
-            const p = plants.find(x=>x.id===r.pot_id)||{};
+    const buildCSV = (sess) => {
+        const sessName = sess.name;
+        const traitLabel = sess.trait || 'Value';
+        const unitLabel = sess.unit || '';
+        // Header with metadata
+        const meta = [
+            `"Session","${sessName.replace(/"/g,'""')}"`,
+            `"Trait","${traitLabel.replace(/"/g,'""')}"`,
+            `"Unit","${unitLabel.replace(/"/g,'""')}"`,
+            `"Date","${new Date(sess.created_at).toLocaleDateString('en-GB')}"`,
+            `"Created by","${(sess.created_by||'').replace(/"/g,'""')}"`,
+            sess.notes ? `"Notes","${sess.notes.replace(/"/g,'""')}"` : null,
+            ``
+        ].filter(x=>x!==null).join('\n');
+        // Column headers
+        const colHeaders = ['Pot ID','Genotype','Treatment','Experiment','Table','Row','Col',`${traitLabel}${unitLabel?' ('+unitLabel+')':''}`, 'Measured By','Date/Time'].map(h=>`"${h}"`).join(',');
+        // Data rows — include all plants in session scope, blank if not measured
+        const sessPlants = getSessionPlants(sess);
+        const dataRows = sessPlants.map(p => {
             const t = tables.find(x=>x.id===p.table_id)||{};
-            return [r.pot_id, p.genotype||'', p.treatment||'', t.name||'', r.value, r.measured_by, r.at].map(x=>'"'+(x||'').toString().replace(/"/g,'""')+'"').join(',');
+            const ex = experiments.find(x=>x.id===p.experiment_id)||{};
+            const row = sess.rows.find(r=>r.pot_id===p.id);
+            return [
+                p.id, p.genotype||'', p.treatment||'', ex.name||'', t.name||'',
+                (p.row+1), (p.col+1),
+                row ? row.value : '',
+                row ? (row.measured_by||'') : '',
+                row ? new Date(row.at).toLocaleString('en-GB') : ''
+            ].map(x=>`"${(x||'').toString().replace(/"/g,'""')}"`).join(',');
         }).join('\n');
-        return 'data:text/csv;charset=utf-8,' + encodeURIComponent(header+rows);
+        return 'data:text/csv;charset=utf-8,' + encodeURIComponent(meta + colHeaders + '\n' + dataRows);
     };
 
     const sendEmail = (sess) => {
-        const addr = emailAddr.trim();
-        if (!addr) return;
-        // Save email
+        const addr = emailAddr.trim(); if (!addr) return;
         if (!savedEmails.includes(addr)) {
             const updated = [addr, ...savedEmails].slice(0,10);
             setSavedEmails(updated);
             try { localStorage.setItem('gl_emails', JSON.stringify(updated)); } catch(e) {}
         }
-        const csv = exportCSV(sess);
-        const subject = encodeURIComponent('GreenLab Measures: ' + sess.name);
-        const body = encodeURIComponent('Please find the measurement data for session \"' + sess.name + '\" attached.\n\nNote: CSV data is in the link below (copy and save as .csv):\n\n' + decodeURIComponent(csv.replace('data:text/csv;charset=utf-8,','')));
-        window.open('mailto:' + addr + '?subject=' + subject + '&body=' + body);
-        setShowEmail(false);
+        const subject = encodeURIComponent(`GreenLab: ${sess.name} – ${sess.trait||'Measurements'}`);
+        const measured = sess.rows.length;
+        const total = getSessionPlants(sess).length;
+        const body = encodeURIComponent(
+            `Measurement session: ${sess.name}\nTrait: ${sess.trait||'—'} (${sess.unit||'—'})\nProgress: ${measured}/${total} plants measured\nDate: ${new Date(sess.created_at).toLocaleDateString('en-GB')}\n\nDownload CSV from GreenLab and open as spreadsheet.`
+        );
+        window.open(`mailto:${addr}?subject=${subject}&body=${body}`);
+        setShowExport(false);
+    };
+
+    const getSessionPlants = (sess) => {
+        if (!sess) return [];
+        return plants.filter(p => {
+            if (!p.genotype) return false;
+            if (sess.experiment_id) return p.experiment_id === sess.experiment_id;
+            return true;
+        });
     };
 
     const sess = sessions.find(s=>s.id===activeSession);
-    const sessPlants = sess ? plants.filter(p => {
-        if (sess.experiment_id) return p.experiment_id === sess.experiment_id && p.genotype;
-        return p.genotype;
-    }) : [];
+    const sessPlants = getSessionPlants(sess);
+    const measured = sess ? sess.rows.filter(r=>sessPlants.find(p=>p.id===r.pot_id)).length : 0;
+    const total = sessPlants.length;
+    const pct = total > 0 ? Math.round(measured/total*100) : 0;
 
     return React.createElement('div', {className:'meas-page'},
-        // Sidebar: session list
+        // ── Sidebar ──
         React.createElement('div', {className:'meas-sidebar'},
             React.createElement('div', {className:'meas-sidebar-head'},
-                React.createElement('span', {style:{fontWeight:700,fontSize:13}}, 'Sessions'),
+                React.createElement('span', {className:'meas-sidebar-title'}, 'Sessions'),
                 React.createElement('button', {className:'btn btnp bsm', onClick:()=>setShowNew(true)}, '+ New')
             ),
-            sessions.length===0 && React.createElement('div', {style:{padding:'16px 12px',fontSize:12,color:'var(--i4)',textAlign:'center'}}, 'No sessions yet'),
-            sessions.map(s => React.createElement('div', {key:s.id,
-                className:'meas-sess-item'+(activeSession===s.id?' active':''),
-                onClick:()=>setActiveSession(s.id)},
-                React.createElement('div', {style:{fontWeight:600,fontSize:13,color:'var(--i1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}, s.name),
-                React.createElement('div', {style:{fontSize:10,color:'var(--i4)',marginTop:2}}, (s.trait||'')+(s.unit?' ('+s.unit+')':'')+(s.rows?.length?' · '+s.rows.length+' rows':'')),
-                React.createElement('button', {onClick:e=>{e.stopPropagation();delSession(s.id);}, style:{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',color:'var(--to)',fontSize:14,cursor:'pointer',opacity:.6}}, '×')
-            ))
+            React.createElement('div', {style:{flex:1,overflowY:'auto',overflowX:'hidden'}},
+                sessions.length===0 && React.createElement('div', {style:{padding:'20px 14px',fontSize:12,color:'var(--i4)',textAlign:'center',lineHeight:1.5}},
+                    React.createElement('div',{style:{fontSize:28,marginBottom:8,opacity:.4}},'📊'),
+                    'No sessions yet.',React.createElement('br',null),'Tap + New to start.'
+                ),
+                sessions.map(s => {
+                    const sp = getSessionPlants(s);
+                    const sm = s.rows.filter(r=>sp.find(p=>p.id===r.pot_id)).length;
+                    const spct = sp.length > 0 ? Math.round(sm/sp.length*100) : 0;
+                    return React.createElement('div', {key:s.id,
+                        className:'meas-sess-item'+(activeSession===s.id?' active':''),
+                        onClick:()=>setActiveSession(s.id)},
+                        React.createElement('div', {className:'meas-sess-name'}, s.name),
+                        React.createElement('div', {className:'meas-sess-meta'},
+                            s.trait && React.createElement('span',null, s.trait+(s.unit?' · '+s.unit:'')),
+                            React.createElement('span',null, sm+'/'+sp.length)
+                        ),
+                        sp.length > 0 && React.createElement('div', {className:'meas-sess-prog'},
+                            React.createElement('div', {className:'meas-sess-bar'},
+                                React.createElement('div', {className:'meas-sess-bar-fill', style:{width:spct+'%'}})
+                            ),
+                            React.createElement('span', {className:'meas-sess-pct'}, spct+'%')
+                        ),
+                        React.createElement('button', {className:'meas-sess-del', onClick:e=>{e.stopPropagation();delSession(s.id);}}, '×')
+                    );
+                })
+            )
         ),
 
-        // Main area: data entry
+        // ── Main ──
         React.createElement('div', {className:'meas-main'},
-            !sess && React.createElement('div', {style:{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',gap:16,color:'var(--i4)'}},
-                React.createElement('div', {style:{fontSize:40,opacity:.3}}, '📊'),
-                React.createElement('div', {style:{fontSize:14}}, 'Select a session or create a new one')
+            !sess && React.createElement('div', {className:'meas-empty'},
+                React.createElement('div', {style:{fontSize:48,opacity:.25}}, '📏'),
+                React.createElement('div', {style:{fontSize:16,fontWeight:600,color:'var(--i2)'}},'Select a session'),
+                React.createElement('div', {style:{fontSize:12,maxWidth:240,lineHeight:1.5}},'Choose a session from the left, or create a new one to start collecting data.')
             ),
+
             sess && React.createElement(React.Fragment, null,
+                // Header
                 React.createElement('div', {className:'meas-main-head'},
-                    React.createElement('div', null,
-                        React.createElement('div', {style:{fontSize:18,fontWeight:700,color:'var(--i1)'}}, sess.name),
-                        React.createElement('div', {style:{fontSize:11,color:'var(--i4)',marginTop:2}}, (sess.trait||'')+(sess.unit?' · unit: '+sess.unit:'')+(sess.experiment_id?' · Experiment':' · All plants')+(sess.rows.length?' · '+sess.rows.length+' measurements':''))
+                    React.createElement('div', {className:'meas-head-info'},
+                        React.createElement('div', {className:'meas-head-title'}, sess.name),
+                        React.createElement('div', {className:'meas-head-sub'},
+                            (sess.trait||'Measurements')+(sess.unit?' · '+sess.unit:''),
+                            sess.experiment_id ? ' · '+((experiments.find(e=>e.id===sess.experiment_id)||{}).name||'Experiment') : ' · All plants',
+                            sess.notes ? ' · '+sess.notes : ''
+                        )
                     ),
-                    React.createElement('div', {style:{display:'flex',gap:8}},
-                        React.createElement('a', {href:exportCSV(sess), download:sess.name.replace(/\s+/g,'_')+'.csv', className:'btn btns bsm'}, '⬇ CSV'),
-                        React.createElement('button', {className:'btn btns bsm', onClick:()=>setShowEmail(true)}, '✉ Email')
+                    React.createElement('div', {className:'meas-head-acts'},
+                        React.createElement('a', {href:buildCSV(sess), download:(sess.name.replace(/\s+/g,'_')||'measures')+'.csv', className:'btn btns bsm'}, '⬇ CSV'),
+                        React.createElement('button', {className:'btn btns bsm', onClick:()=>setShowExport(e=>!e)}, '✉ Email')
                     )
                 ),
-                // Email modal
-                showEmail && React.createElement('div', {style:{padding:'12px 16px',background:'var(--ll)',borderBottom:'1px solid var(--bo)',display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}},
+                // Email bar
+                showExport && React.createElement('div', {style:{padding:'10px 16px',background:'var(--ll)',borderBottom:'1px solid var(--bo)',display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}},
                     React.createElement('span', {style:{fontSize:12,fontWeight:600,color:'var(--i3)',flexShrink:0}}, 'Send to:'),
                     React.createElement(Autocomplete, {value:emailAddr, onChange:setEmailAddr, suggestions:savedEmails, placeholder:'Email address...', className:'fi', big:false}),
                     React.createElement('button', {className:'btn btnp bsm', onClick:()=>sendEmail(sess)}, 'Send'),
-                    React.createElement('button', {className:'btn btns bsm', onClick:()=>setShowEmail(false)}, 'Cancel')
+                    React.createElement('button', {className:'btn btns bsm', onClick:()=>setShowExport(false)}, 'Cancel')
                 ),
-                // Data entry grid
-                React.createElement('div', {className:'meas-table'},
-                    React.createElement('div', {className:'meas-table-head'},
-                        React.createElement('div', {style:{flex:1}}, 'Plant'),
-                        React.createElement('div', {style:{width:80}}, 'Table · Pos'),
-                        React.createElement('div', {style:{width:120}}, sess.trait||'Value'+(sess.unit?' ('+sess.unit+')':'')),
-                        React.createElement('div', {style:{width:60}}, '')
+                // Progress bar
+                React.createElement('div', {className:'meas-progress-bar'},
+                    React.createElement('div', {className:'meas-prog-label'}, pct==='100' || pct===100 ? '✅ Complete!' : 'Progress'),
+                    React.createElement('div', {className:'meas-prog-track'},
+                        React.createElement('div', {className:'meas-prog-fill', style:{width:pct+'%'}})
                     ),
-                    sessPlants.map(p => {
+                    React.createElement('span', {className:'meas-prog-count'}, measured+' / '+total+' measured')
+                ),
+                // Column headers
+                React.createElement('div', {className:'meas-table-head'},
+                    React.createElement('div',null, 'Genotype / Treatment'),
+                    React.createElement('div',null, 'Position'),
+                    React.createElement('div',null, sess.trait||(sess.unit?'Value ('+sess.unit+')':'Value')),
+                    React.createElement('div',null, '')
+                ),
+                // Plant rows
+                React.createElement('div', {className:'meas-table'},
+                    sessPlants.map((p,i) => {
                         const tbl = tables.find(t=>t.id===p.table_id);
-                        const existing = sess.rows.filter(r=>r.pot_id===p.id);
-                        return React.createElement(MeasureRow, {key:p.id, plant:p, table:tbl, existing, unit:sess.unit, trait:sess.trait, onAdd:v=>addRow(sess.id,p.id,v), onDel:rowId=>delRow(sess.id,rowId)});
+                        const rowData = sess.rows.find(r=>r.pot_id===p.id);
+                        return React.createElement(MeasureRow2, {
+                            key:p.id, plant:p, table:tbl, rowData,
+                            unit:sess.unit, trait:sess.trait,
+                            autoFocusFirst: i===0,
+                            onSet:v=>setRowValue(sess.id,p.id,v),
+                            onClear:()=>clearRowValue(sess.id,p.id)
+                        });
                     }),
-                    sessPlants.length===0 && React.createElement('div', {style:{padding:'24px',textAlign:'center',color:'var(--i4)',fontSize:13}}, sess.experiment_id?'No plants assigned to this experiment':'No plants with genotype data')
+                    sessPlants.length===0 && React.createElement('div', {style:{padding:'32px',textAlign:'center',color:'var(--i4)',fontSize:13}},
+                        sess.experiment_id ? 'No plants assigned to this experiment' : 'No plants with genotype data found'
+                    )
                 )
             )
         ),
@@ -1924,7 +2059,7 @@ function MeasuresView({ measures, experiments, plants, tables, users, onSave, cu
         showNew && React.createElement(Modal, {title:'New Measurement Session', onClose:()=>setShowNew(false), onConfirm:createSession, confirmLabel:'Create'},
             React.createElement('div', {className:'mof'},
                 React.createElement('label', {className:'mol'}, 'Session name'),
-                React.createElement('input', {className:'moi', placeholder:'e.g. Week 3 Height', value:fm.name, onChange:e=>set('name',e.target.value), autoFocus:true})
+                React.createElement('input', {className:'moi', placeholder:'e.g. Week 3 – Plant height', value:fm.name, onChange:e=>set('name',e.target.value), autoFocus:true})
             ),
             React.createElement('div', {className:'morow'},
                 React.createElement('div', {className:'mof'},
@@ -1933,52 +2068,78 @@ function MeasuresView({ measures, experiments, plants, tables, users, onSave, cu
                 ),
                 React.createElement('div', {className:'mof'},
                     React.createElement('label', {className:'mol'}, 'Unit'),
-                    React.createElement('input', {className:'moi', placeholder:'e.g. cm, g, score', value:fm.unit, onChange:e=>set('unit',e.target.value)})
+                    React.createElement('input', {className:'moi', placeholder:'e.g. cm, g, score 1-5', value:fm.unit, onChange:e=>set('unit',e.target.value)})
                 )
             ),
             React.createElement('div', {className:'mof'},
-                React.createElement('label', {className:'mol'}, 'Experiment (optional)'),
+                React.createElement('label', {className:'mol'}, 'Experiment (optional — limits to experiment plants)'),
                 React.createElement('select', {className:'mosel', value:fm.experiment_id, onChange:e=>set('experiment_id',e.target.value)},
-                    React.createElement('option', {value:''}, '— All plants —'),
+                    React.createElement('option', {value:''}, '— All plants with genotype —'),
                     experiments.map(ex=>React.createElement('option',{key:ex.id,value:ex.id},ex.name))
                 )
             ),
             React.createElement('div', {className:'mof'},
-                React.createElement('label', {className:'mol'}, 'Notes'),
-                React.createElement('textarea', {className:'mota', rows:2, value:fm.notes, onChange:e=>set('notes',e.target.value), placeholder:'Protocol notes...'})
+                React.createElement('label', {className:'mol'}, 'Protocol notes'),
+                React.createElement('textarea', {className:'mota', rows:2, value:fm.notes, onChange:e=>set('notes',e.target.value), placeholder:'e.g. Measure from soil to shoot tip'})
             )
         )
     );
 }
 
-function MeasureRow({ plant, table, existing, unit, trait, onAdd, onDel }) {
-    const [val, setVal] = React.useState('');
-    const add = () => { if (!val.trim()) return; onAdd(val.trim()); setVal(''); };
-    return React.createElement('div', {className:'meas-row'},
+function MeasureRow2({ plant, table, rowData, unit, trait, onSet, onClear, autoFocusFirst }) {
+    const [editing, setEditing] = React.useState(!rowData);
+    const [val, setVal] = React.useState(rowData ? rowData.value : '');
+    const inputRef = React.useRef();
+
+    // Sync if rowData changes externally
+    React.useEffect(() => {
+        if (rowData) { setVal(rowData.value); setEditing(false); }
+        else { setEditing(true); }
+    }, [rowData]);
+
+    const submit = () => {
+        const v = val.toString().trim();
+        if (!v) return;
+        onSet(v);
+        setEditing(false);
+    };
+
+    const handleKey = e => {
+        if (e.key === 'Enter') { e.preventDefault(); submit(); }
+        if (e.key === 'Escape') { if (rowData) { setVal(rowData.value); setEditing(false); } }
+    };
+
+    const pos = (table?.name||'?')+' R'+(plant.row+1)+'C'+(plant.col+1);
+
+    return React.createElement('div', {className:'meas-row'+(rowData?' has-value':'')},
         React.createElement('div', {className:'meas-row-plant'},
-            React.createElement('span', {style:{fontWeight:600,fontSize:13,color:'var(--i1)'}}, plant.genotype),
-            plant.treatment && React.createElement('span', {style:{fontSize:11,color:'var(--i4)',marginLeft:4}}, '/ '+plant.treatment)
+            React.createElement('div', {className:'meas-row-geno'}, plant.genotype),
+            plant.treatment && React.createElement('div', {className:'meas-row-treat'}, plant.treatment)
         ),
-        React.createElement('div', {className:'meas-row-pos', style:{fontSize:11,color:'var(--i4)'}},
-            (table?.name||'?')+' R'+(plant.row+1)+'C'+(plant.col+1)
-        ),
+        React.createElement('div', {className:'meas-row-pos'}, pos),
         React.createElement('div', {className:'meas-row-input'},
-            existing.length > 0
-                ? React.createElement('div', {style:{display:'flex',flexDirection:'column',gap:3}},
-                    existing.map(r => React.createElement('div', {key:r.id, style:{display:'flex',alignItems:'center',gap:6}},
-                        React.createElement('span', {style:{fontWeight:700,fontSize:14,color:'#78C043',minWidth:50}}, r.value+(unit?' '+unit:'')),
-                        React.createElement('span', {style:{fontSize:10,color:'var(--i5)'}}, r.measured_by),
-                        React.createElement('button', {onClick:()=>onDel(r.id), style:{background:'none',border:'none',color:'var(--to)',cursor:'pointer',fontSize:13,lineHeight:1}}, '×')
-                    )),
-                    React.createElement('div', {style:{display:'flex',gap:4,marginTop:2}},
-                        React.createElement('input', {className:'fi', type:'number', step:'any', placeholder:'Add another...', value:val, onChange:e=>setVal(e.target.value), onKeyDown:e=>{if(e.key==='Enter'){e.preventDefault();add();}}, style:{width:90,fontSize:13}}),
-                        React.createElement('button', {className:'btn btns bxs', onClick:add}, '+')
-                    )
+            rowData && !editing
+                ? React.createElement('div', {className:'meas-val-done'},
+                    React.createElement('span', {className:'meas-val-num'}, rowData.value),
+                    unit && React.createElement('span', {className:'meas-val-unit'}, unit),
+                    React.createElement('button', {className:'meas-val-edit', title:'Edit value', onClick:()=>{setVal(rowData.value);setEditing(true);setTimeout(()=>inputRef.current?.select(),30);}}, '✎')
                   )
-                : React.createElement('div', {style:{display:'flex',gap:4}},
-                    React.createElement('input', {className:'fi', type:'number', step:'any', placeholder:trait||'value', value:val, onChange:e=>setVal(e.target.value), onKeyDown:e=>{if(e.key==='Enter'){e.preventDefault();add();}}, style:{width:90,fontSize:14,fontWeight:600}}),
-                    React.createElement('button', {className:'btn btnp bxs', onClick:add}, '✓')
-                  )
+                : React.createElement('input', {
+                    ref: inputRef,
+                    className:'meas-val-input'+(rowData?' filled':''),
+                    type:'number', step:'any',
+                    placeholder: trait||'value',
+                    value:val,
+                    onChange:e=>setVal(e.target.value),
+                    onKeyDown:handleKey,
+                    onBlur: ()=>{ if(val.toString().trim()) submit(); else if(rowData) setEditing(false); },
+                    autoFocus: autoFocusFirst && !rowData
+                  })
+        ),
+        React.createElement('div', {className:'meas-row-check'},
+            rowData
+                ? React.createElement('div', {className:'meas-check-icon done', title:'Measured — click to clear', onClick:onClear, style:{cursor:'pointer'}}, '✓')
+                : React.createElement('div', {className:'meas-check-icon empty'}, '○')
         )
     );
 }
@@ -2061,12 +2222,16 @@ function StockView({ stock, onAdd, onEdit, onRemove, onQty }) {
         const sou = URL.createObjectURL(fl);
         si.onload = () => {
             URL.revokeObjectURL(sou);
-            const SC = Math.min(1, 200 / Math.max(si.width, si.height));
+            // Larger size (320px) and higher quality (0.82) so images look good
+            const SC = Math.min(1, 320 / Math.max(si.width, si.height));
             const sw = Math.round(si.width*SC), sh = Math.round(si.height*SC);
             const sc3 = document.createElement('canvas');
             sc3.width = sw; sc3.height = sh;
             sc3.getContext('2d').drawImage(si, 0, 0, sw, sh);
-            set('image', sc3.toDataURL('image/jpeg', 0.65));
+            const imgData = sc3.toDataURL('image/jpeg', 0.82);
+            set('image', imgData);
+            // Also persist to localStorage separately so it survives JSONBin size limits
+            try { localStorage.setItem('gl_stk_img_pending', imgData); } catch(e2) {}
         };
         si.src = sou;
     };
@@ -2111,16 +2276,17 @@ function StockView({ stock, onAdd, onEdit, onRemove, onQty }) {
                     onDragEnd: () => { setDragId(null); setDragOver(null); },
                     style: { opacity: dragId===item.id ? 0.5 : 1 }
                 },
-                    React.createElement("div", { style:{cursor:'grab',color:'var(--i5)',fontSize:16,flexShrink:0,padding:'0 4px',display:'flex',alignItems:'center'} }, "⠿"),
+                    React.createElement("div", { style:{cursor:'grab',color:'var(--i5)',fontSize:16,flexShrink:0,padding:'0 2px',display:'flex',alignItems:'center'} }, "⠿"),
                     React.createElement("div", { className: "stk-img", onClick: () => { setEditId(item.id); setFm({ name: item.name, category: item.category, quantity: item.quantity, notes: item.notes || '', image: item.image || null }); } }, item.image ? React.createElement("img", { src: item.image, alt: item.name }) : '📦'),
-                    React.createElement("div", { style: { flex: 1, minWidth: 0 } },
-                        React.createElement("div", { style:{fontSize:14,fontWeight:600,color:'var(--i1)',wordBreak:'break-word',lineHeight:1.3} }, item.name),
-                        item.notes && React.createElement("div", { style:{fontSize:11,color:'var(--i4)',marginTop:2} }, item.notes)),
-                    React.createElement("div", { className: "stk-qty", style:{flexShrink:0} },
-                        React.createElement("button", { className: "stk-qbtn", onClick: () => onQty(item.id, -1) }, "-"),
+                    React.createElement("div", { className: "stk-info" },
+                        React.createElement("span", { className: "stk-nm", title: item.name }, item.name),
+                        React.createElement("span", { className: "stk-cat" }, item.category+(item.notes?' · '+item.notes:'')),
+                    ),
+                    React.createElement("div", { className: "stk-qty" },
+                        React.createElement("button", { className: "stk-qbtn", onClick: () => onQty(item.id, -1) }, "−"),
                         React.createElement("span", { className: "stk-qval" }, item.quantity),
                         React.createElement("button", { className: "stk-qbtn", onClick: () => onQty(item.id, 1) }, "+")),
-                    React.createElement("div", {style:{display:'flex',flexDirection:'column',gap:4,flexShrink:0}},
+                    React.createElement("div", { className: "stk-acts" },
                         React.createElement("button", { className: "medbtn", onClick: () => { setEditId(item.id); setFm({ name: item.name, category: item.category, quantity: item.quantity, notes: item.notes || '', image: item.image || null }); } }, "Edit"),
                         React.createElement("button", { className: "stk-del", onClick: () => onRemove(item.id) }, "Del"))
                 ))
@@ -4551,9 +4717,9 @@ useEffect(() => {
                     React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><line x1=\"21\" y1=\"21\" x2=\"16.65\" y2=\"16.65\"/></svg>'} })),
                     "Plants"
                 ),
-                React.createElement("button", { className: `mbn-btn${tab==='schedule'?' on':''}`, onClick: ()=>{ setTab('schedule'); } },
-                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"18\" rx=\"2\"/><line x1=\"16\" y1=\"2\" x2=\"16\" y2=\"6\"/><line x1=\"8\" y1=\"2\" x2=\"8\" y2=\"6\"/><line x1=\"3\" y1=\"10\" x2=\"21\" y2=\"10\"/></svg>'} })),
-                    "Schedule"
+                React.createElement("button", { className: `mbn-btn${tab==='measures'?' on':''}`, onClick: ()=>{ setTab('measures'); } },
+                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18\"/></svg>'} })),
+                    "Measures"
                 ),
                 React.createElement("button", { className: `mbn-btn${tab==='stock'?' on':''}`, onClick: ()=>{ setTab('stock'); } },
                     React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z\"/></svg>'} })),
@@ -4568,7 +4734,11 @@ useEffect(() => {
                         React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\"/></svg>'} }),
                         (() => { const lastRead = lastMsgRead[activeLab?.id]; const unread=(data.messages||[]).filter(m=>!lastRead||m.created_at>lastRead).length; return unread>0?React.createElement("span",{style:{position:'absolute',top:-4,right:-4,background:'#ef4444',color:'#fff',borderRadius:'50%',width:14,height:14,fontSize:8,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',border:'1.5px solid #fff'}},unread>9?'9+':unread):null;})()
                     ),
-                    "Messages"
+                    "Chat"
+                ),
+                React.createElement("button", { className: `mbn-btn${tab==='more'?' on':''}`, onClick: ()=>{ setTab(tab==='schedule'?'dash':tab==='dash'?'team':tab==='team'?'schedule':'schedule'); } },
+                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"1\"/><circle cx=\"19\" cy=\"12\" r=\"1\"/><circle cx=\"5\" cy=\"12\" r=\"1\"/></svg>'} })),
+                    tab==='schedule'?'Schedule':tab==='dash'?'Dashboard':tab==='team'?'Team':'More'
                 )
             ),
 
