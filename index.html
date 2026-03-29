@@ -739,6 +739,36 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .ord-priority.normal{background:var(--cr2);color:var(--i4)}
 .ord-priority.low{background:var(--ll);color:#166534}
 .ord-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:10px;color:var(--i4);padding:60px}
+/* ── Orders v2.0 additions ── */
+.ord-card.ord-pending{opacity:.75;border-style:dashed;border-color:var(--fo);background:linear-gradient(135deg,#fffdf0 0%,#fff 100%)}
+.ord-card.ord-pending::after{content:'⏳ Pending sync';position:absolute;top:8px;right:8px;font-size:9px;font-weight:700;color:var(--fo2);background:#fffbeb;border:1px solid #fde68a;border-radius:20px;padding:2px 7px}
+.ord-card{position:relative}
+.ord-sync-bar{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:6px 24px;background:linear-gradient(90deg,#f8fafc,#fff);border-bottom:1px solid var(--bo);gap:10px;flex-wrap:wrap}
+.ord-sync-icon{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;border-radius:20px;padding:4px 10px;cursor:pointer;transition:all .15s;border:1px solid transparent}
+.ord-sync-icon.saving{color:#1d4ed8;background:#eff6ff;border-color:#bfdbfe;animation:ord-pulse 1.2s infinite}
+.ord-sync-icon.synced{color:#15803d;background:#f0fdf4;border-color:#bbf7d0}
+.ord-sync-icon.saved{color:#15803d;background:#f0fdf4;border-color:#bbf7d0}
+.ord-sync-icon.error{color:#dc2626;background:#fef2f2;border-color:#fca5a5}
+@keyframes ord-pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.ord-date-filter{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--i4)}
+.ord-date-filter input{font-size:11px;border:1.5px solid var(--bo);border-radius:var(--r);padding:3px 7px;outline:none;color:var(--i2);background:#fff;min-width:0;width:110px}
+.ord-date-filter input:focus{border-color:var(--fo);box-shadow:0 0 0 2px #d1fae5}
+.ord-fab{position:fixed;right:20px;bottom:80px;z-index:200;width:52px;height:52px;border-radius:50%;background:var(--fo);color:#fff;border:none;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(0,0,0,.22);cursor:pointer;transition:transform .15s;display:none}
+.ord-fab:active{transform:scale(.92)}
+.ord-val-err{font-size:11px;color:#dc2626;margin-top:3px;display:flex;align-items:center;gap:4px}
+.ord-val-err::before{content:'⚠';font-size:10px}
+.moi.err{border-color:#f87171!important;background:#fff5f5}
+@media(max-width:1024px){
+  .ord-fab{display:flex}
+  .ord-head .ord-add-btns{display:none}
+  .ord-sync-bar{padding:5px 14px}
+  .ord-date-filter{flex:1}
+  .ord-date-filter input{width:90px}
+  .ord-body{padding:12px 10px}
+  .ord-card-top{padding:12px 12px}
+  .ord-meta-row{padding:0 12px 12px;gap:8px}
+  .ord-actions button{min-width:44px;min-height:44px;font-size:13px}
+}
 
 /* ── Plant Timeline ── */
 .tl{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--bo);padding-top:10px;margin-top:4px}
@@ -899,6 +929,70 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .stk-drag-over{ border-color:#78C043!important; box-shadow:0 0 0 2px rgba(120,192,67,.3)!important; }
 .stk-item{ cursor:default; }
 
+/* ═══ STOCK v2: card-grid ═══════════════════════════════════ */
+.stk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;padding:18px 24px;flex:1;min-height:0;overflow-y:auto}
+.stk-card{background:#fff;border:1px solid var(--bo);border-radius:var(--r3);box-shadow:var(--sh-card);display:flex;flex-direction:column;overflow:hidden;transition:all .15s}
+.stk-card:hover{border-color:#c3e6a8;box-shadow:0 8px 24px rgba(120,192,67,.14);transform:translateY(-2px)}
+.stk-card-img{width:100%;height:110px;background:var(--cr2);display:flex;align-items:center;justify-content:center;font-size:38px;cursor:pointer;flex-shrink:0;overflow:hidden}
+.stk-card-img img{width:100%;height:100%;object-fit:cover}
+.stk-card-body{padding:12px 14px;flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
+.stk-card-name{font-size:14px;font-weight:700;color:var(--i1);line-height:1.3;word-break:break-word}
+.stk-card-cat{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--fo2);background:var(--ll);border-radius:20px;padding:2px 8px;display:inline-block;margin-bottom:2px}
+.stk-card-notes{font-size:11px;color:var(--i4);line-height:1.4}
+.stk-card-foot{display:flex;align-items:center;justify-content:space-between;padding:8px 14px 12px;border-top:1px solid var(--cr2);gap:8px;flex-shrink:0}
+.stk-card-qty{display:flex;align-items:center;gap:4px}
+.stk-card-qbtn{width:34px;height:34px;border-radius:8px;border:1.5px solid var(--bo);background:#fff;color:var(--i2);cursor:pointer;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .12s;-webkit-tap-highlight-color:transparent}
+.stk-card-qbtn:hover,.stk-card-qbtn:active{background:#edf7e3;border-color:#c3e6a8}
+.stk-card-qval{font-size:15px;font-weight:700;color:var(--i1);min-width:32px;text-align:center}
+.stk-card-acts{display:flex;gap:5px}
+@media(max-width:1024px){
+  .stk-grid{grid-template-columns:1fr;gap:8px;padding:10px 10px 80px}
+  .stk-card{flex-direction:row;border-radius:var(--r2);min-height:80px}
+  .stk-card-img{width:80px;height:auto;min-height:80px;flex-shrink:0;border-radius:0;border-right:1px solid var(--bo)}
+  .stk-card-body{padding:10px 12px;justify-content:center}
+  .stk-card-foot{padding:8px 12px;border-top:none;border-left:1px solid var(--cr2);flex-direction:column;justify-content:center;min-width:84px;flex-shrink:0;gap:6px}
+  .stk-card-qbtn{width:38px;height:38px;font-size:19px}
+}
+
+/* ═══ STATUS BOTTOM-SHEET ════════════════════════════════════ */
+.bs-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:900;display:flex;align-items:flex-end;animation:bs-fade-in .2s ease}
+@keyframes bs-fade-in{from{opacity:0}to{opacity:1}}
+.bs-sheet{background:#fff;border-radius:24px 24px 0 0;padding:0 0 env(safe-area-inset-bottom,12px);width:100%;max-height:72dvh;overflow-y:auto;animation:bs-slide-up .25s cubic-bezier(.32,.72,0,1)}
+@keyframes bs-slide-up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.bs-handle{width:36px;height:4px;background:#E5E7EB;border-radius:2px;margin:12px auto 0}
+.bs-title{padding:14px 20px 10px;font-size:14px;font-weight:700;color:var(--i1);border-bottom:1px solid var(--bo)}
+.bs-option{display:flex;align-items:center;gap:14px;padding:14px 20px;cursor:pointer;transition:background .1s;font-size:14px;font-weight:500;color:var(--i2);border-bottom:1px solid var(--cr2);min-height:52px;-webkit-tap-highlight-color:transparent}
+.bs-option:last-child{border-bottom:none}
+.bs-option:active,.bs-option:hover{background:var(--ll)}
+.bs-option.sel{color:var(--fo2);font-weight:700}
+.bs-check{margin-left:auto;color:var(--fo2);font-size:16px}
+
+/* ═══ SYNC RING SPINNER ══════════════════════════════════════ */
+@keyframes spin360{to{transform:rotate(360deg)}}
+.sync-ring{display:inline-block;width:12px;height:12px;border:2px solid #bfdbfe;border-top-color:#1d4ed8;border-radius:50%;animation:spin360 .7s linear infinite;flex-shrink:0;vertical-align:middle}
+
+/* ═══ POT POPUP: iOS safe-area scroll fix ═══════════════════ */
+@media(max-width:1024px){
+  .pop.mobile-sheet{width:100%!important;max-width:100%!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;border-radius:24px 24px 0 0!important;max-height:92dvh!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;padding-bottom:0!important}
+  .pop.mobile-sheet .ppb{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))!important;overscroll-behavior:contain}
+  .pop.mobile-sheet .ppf{flex-shrink:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--bo);background:#fff}
+  .pop.mobile-sheet input,.pop.mobile-sheet select,.pop.mobile-sheet textarea{font-size:16px!important}
+}
+
+/* ═══ DESKTOP NAV: More overflow menu ═══════════════════════ */
+.tab-more-menu{position:absolute;top:calc(100% + 4px);right:0;background:#fff;border:1px solid var(--bo);border-radius:var(--r2);box-shadow:var(--sh2);z-index:600;min-width:160px;overflow:hidden;animation:pop .12s ease}
+.tab-more-item{display:flex;align-items:center;gap:8px;padding:10px 16px;cursor:pointer;font-size:12px;font-weight:500;color:var(--i2);transition:background .1s;white-space:nowrap}
+.tab-more-item:hover{background:var(--ll);color:var(--fo2)}
+.tab-more-item.on{color:var(--fo2);font-weight:700;background:var(--ll)}
+
+/* ═══ MOBILE NAV: More drawer ═══════════════════════════════ */
+.mbn-more-drawer{position:fixed;bottom:52px;left:0;right:0;z-index:390;background:#fff;border-top:1px solid var(--bo);border-radius:16px 16px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.1);padding:8px 0 env(safe-area-inset-bottom,4px);transition:transform .25s cubic-bezier(.32,.72,0,1)}
+.mbn-more-drawer.mbn-hidden{transform:translateY(110%)}
+.mbn-more-item{display:flex;align-items:center;gap:14px;padding:13px 20px;cursor:pointer;font-size:14px;font-weight:500;color:var(--i2);transition:background .1s;min-height:52px;-webkit-tap-highlight-color:transparent}
+.mbn-more-item:hover,.mbn-more-item:active{background:var(--ll)}
+.mbn-more-item.on{color:var(--fo2);font-weight:700}
+.mbn-more-ic{width:24px;height:24px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
 
 /* ═══════════ MESSAGES ════════════ */
 .msgs-page{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
@@ -954,7 +1048,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .notes-page{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;background:#F9FAFB}
 .notes-head{flex-shrink:0;padding:16px 20px;border-bottom:1px solid var(--bo);background:#fff;display:flex;align-items:center;justify-content:space-between}
 .notes-tit{font-size:20px;font-weight:700;color:var(--i1)}
-.notes-list{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 80px;display:flex;flex-direction:column;gap:10px}
+.notes-list{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 12px;display:flex;flex-direction:column;gap:10px}
 .note-card{background:#fff;border:1.5px solid var(--bo);border-radius:16px;padding:14px 16px}
 .note-card.pinned{border-color:#f59e0b;background:#fffbeb}
 .note-card.hl-green{border-left:4px solid #78C043;background:#f0fdf4}
@@ -973,9 +1067,9 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .note-hl-dot{width:16px;height:16px;border-radius:50%;cursor:pointer;flex-shrink:0;border:2px solid rgba(0,0,0,.12);transition:transform .12s}
 .note-hl-dot:hover{transform:scale(1.25)}
 .note-hl-dot.on{box-shadow:0 0 0 2px #fff,0 0 0 4px #555}
-.note-compose{flex-shrink:0;background:#fff;border-top:1px solid var(--bo);padding:12px 16px;display:flex;flex-direction:column;gap:8px}
-.note-ta{width:100%;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:12px;color:#333;font-size:13px;padding:9px 12px;outline:none;resize:none;line-height:1.5;font-family:'Poppins',sans-serif;box-sizing:border-box}
-.note-compose-row{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;min-width:0}
+.note-compose{flex-shrink:0;background:#fff;border-top:1px solid var(--bo);padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:8px;position:sticky;bottom:0;z-index:10}
+.note-ta{width:100%;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:12px;color:#333;font-size:13px;padding:9px 12px;outline:none;resize:vertical;line-height:1.5;font-family:'Poppins',sans-serif;box-sizing:border-box;min-height:72px}
+.note-compose-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
 .note-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--i4);padding:40px;text-align:center}
 .ord-status.requested{background:#f0f9ff;color:#075985;border:1px solid #bae6fd}
 .ord-status.rejected{background:#fef2f2;color:#7f1d1d;border:1px solid #fca5a5}
@@ -1003,11 +1097,21 @@ function jbRead() {
 function jbWrite(data) {
     if (!JB_KEY || JB_KEY.indexOf('PASTE') !== -1) return Promise.reject(new Error('JSONBin not configured'));
     var url = 'https://api.jsonbin.io/v3/b/' + JB_BIN_ID;
-    return fetch(url, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-Master-Key': JB_KEY, 'X-Bin-Versioning': 'false' },
-        body: JSON.stringify(data)
-    }).then(function(r) { if (!r.ok) return r.text().then(function(t){throw new Error(r.status+':'+t);}); return r.json(); });
+    function attempt(tries, delay) {
+        return fetch(url, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-Master-Key': JB_KEY, 'X-Bin-Versioning': 'false' },
+            body: JSON.stringify(data)
+        }).then(function(r) {
+            if (!r.ok) return r.text().then(function(t){ throw new Error(r.status+':'+t); });
+            return r.json();
+        }).catch(function(err) {
+            if (tries <= 1) throw err;
+            console.warn('[DB] jbWrite failed ('+err.message+'), retrying in '+delay+'ms…');
+            return new Promise(function(res){ setTimeout(res, delay); }).then(function(){ return attempt(tries-1, delay*2); });
+        });
+    }
+    return attempt(3, 1000);
 }
 function jbCreate(data) {
     if (!JB_KEY || JB_KEY.indexOf('PASTE') !== -1) return Promise.reject(new Error('JSONBin not configured'));
@@ -1065,7 +1169,7 @@ function loadLabData(labId) { try {
     if (r)
         return JSON.parse(r);
 }
-catch (_a) { } return { greenhouses: [], tables: [], plants: [], experiments: [], users: [], structs: [], stock: [], orders: [], schedules: [], messages: [], measures: [], locked: true }; }
+catch (_a) { } return { greenhouses: [], tables: [], plants: [], experiments: [], users: [], structs: [], stock: [], orders: [], schedules: [], messages: [], measures: [], notes: [], locked: true }; }
 function saveLabData(labId, d) { try {
     // Strip large images to prevent localStorage quota overflow
     var slim = Object.assign({}, d, {
@@ -1367,7 +1471,7 @@ function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onD
                     fontSize: fs - 1, color: '#c0ccc4', fontFamily: 'Inter,sans-serif', userSelect: 'none' } }, teMode ? '+' : '')));
     }
     const alertCls = hasPests ? ' alert-pest' : hasSick ? ' alert-sick' : '';
-    return (React.createElement("div", { className: 'pcw' + (isActive ? ' active' : '') + (isSel ? ' pot-sel' : '') + (selMode ? ' sel-mode' : '') + (teMode ? ' temode' : '') + alertCls, style: { width: ppx, height: ppx + LBH, position: 'relative', background: expBg || undefined, borderRadius: expBg ? 6 : undefined }, title: lbl + (plant.treatment ? ' | ' + plant.treatment : '') + (sc === 'sick' ? ' ⚠ SICK' : sc === 'pests' ? ' 🐛 PESTS' : ''), onClick: e => { e.stopPropagation(); if (selMode || !teMode)
+    return (React.createElement("div", { className: 'pcw' + (isActive ? ' active' : '') + (isSel ? ' pot-sel' : '') + (selMode ? ' sel-mode' : '') + (teMode ? ' temode' : '') + alertCls, style: { width: ppx, height: ppx + LBH, position: 'relative', background: expBg || undefined, borderRadius: expBg ? 6 : undefined }, title: lbl + (plant.treatment ? ' | ' + plant.treatment : '') + (sc === 'sick' ? ' ⚠ SICK' : sc === 'pests' ? ' 🐛 PESTS' : ''), onClick: e => { e.stopPropagation(); if (selMode || true)
             onPotClick(e, plant); },
         onMouseEnter: expInitials && onExpHover ? e => onExpHover(e.clientX, e.clientY) : undefined,
         onMouseMove:  expInitials && onExpHover ? e => onExpHover(e.clientX, e.clientY) : undefined,
@@ -1593,7 +1697,7 @@ function loadData(labId) {
             return JSON.parse(r);
     }
     catch (_a) { }
-    return { greenhouses: [], tables: [], plants: [], experiments: [], users: [], structs: [], stock: [], orders: [], schedules: [], messages: [], measures: [], locked: true };
+    return { greenhouses: [], tables: [], plants: [], experiments: [], users: [], structs: [], stock: [], orders: [], schedules: [], messages: [], measures: [], notes: [], locked: true };
 }
 /* ── Photo subcollection helpers ──────────────────────────────
    User photos stored at: labs/{labId}/users/{userId}/private/photo
@@ -1647,42 +1751,37 @@ function loadImages(d) {
         });
     } catch(e) { return d; }
 }
-function saveData(d, labId) {
-    // Always persist images to localStorage regardless of backend
+function saveData(d, labId, onOK, onFail) {
+    // Offline-first: always write locally before attempting network
     saveImages(d);
-    if (!labId) {
-        try { localStorage.setItem('gl_v19', JSON.stringify(d)); } catch(_a) {}
-        return;
-    }
-    // Strip large binary fields to stay under JSONBin 100KB free limit
+    if (labId) { try { saveLabData(labId, d); } catch(e2) {} }
+    else       { try { localStorage.setItem('gl_v19', JSON.stringify(d)); } catch(e2) {} }
+    if (!labId) { if (onOK) onOK('local'); return Promise.resolve('local'); }
+
     var writeData = Object.assign({}, d, {
         plants: d.plants ? d.plants.map(function(p){var p2=Object.assign({},p);delete p2.image;return p2;}) : d.plants,
         stock:  d.stock  ? d.stock.map( function(s){var s2=Object.assign({},s);delete s2.image;return s2;}) : d.stock,
         orders: d.orders ? d.orders.map(function(o){var o2=Object.assign({},o);delete o2.item_image;delete o2.quotation_file;return o2;}) : d.orders
     });
-    // Also compress user photos to tiny thumbnails for inline storage
-    if (writeData.users) {
-        writeData.users = writeData.users.map(function(u) {
-            if (!u.photo) return u;
-            // Already compressed at upload time — just keep it
-            return u;
-        });
-    }
+    if (writeData.users) { writeData.users = writeData.users.map(function(u){ return u; }); }
     var sizeKB = Math.round(JSON.stringify(writeData).length / 1024);
+
     if (JB_BIN_ID && JB_BIN_ID.indexOf('PASTE') === -1) {
-        jbWrite(writeData).then(function() {
-            console.log('[DB] Saved to JSONBin (' + sizeKB + 'KB)');
+        return jbWrite(writeData).then(function() {
+            console.log('[DB] Saved to JSONBin ('+sizeKB+'KB)');
+            if (onOK) onOK('remote');
         }).catch(function(e) {
-            console.error('[DB] JSONBin write failed:', e.message);
-            saveLabData(labId, d);
+            console.error('[DB] JSONBin write failed (all retries exhausted):', e.message);
+            if (onFail) onFail(e);  // data already safe in localStorage
         });
     } else {
-        saveLabData(labId, d);
+        if (onOK) onOK('local');
+        return Promise.resolve('local');
     }
 }
 function seedIfEmpty(d) {
     if (d.greenhouses.length > 0)
-        return Object.assign(Object.assign({ structs: [], stock: [], schedules: [], orders: [], messages: [], measures: [] }, d), { users: d.users.map(u => (Object.assign({ position: '', photo: null }, u))), greenhouses: d.greenhouses.map(g => (Object.assign({ notes: '' }, g))) });
+        return Object.assign(Object.assign({ structs: [], stock: [], schedules: [], orders: [], messages: [], measures: [], notes: [] }, d), { users: d.users.map(u => (Object.assign({ position: '', photo: null }, u))), greenhouses: d.greenhouses.map(g => (Object.assign({ notes: '' }, g))) });
     const g1 = uid(), g2 = uid(), t1 = uid(), t2 = uid(), t3 = uid(), e1 = uid(), e2 = uid();
     const GN = ['Col-0', 'Col-0', 'wrky33', 'wrky33', 'npr1-1', 'sid2'], TR = ['Control', '+SA', '+JA', 'Mock', 'Control', '+SA'], ST = ['healthy', 'healthy', 'healthy', 'wilting', 'healthy', 'dead'];
     const plants = [];
@@ -1700,6 +1799,7 @@ function seedIfEmpty(d) {
         messages: [],
         measures: [],
         schedules: [],
+        notes: [],
         users: [{ id: 'u1', name: 'Alice Chen', email: 'alice@lab.edu', role: 'admin', position: 'PI', color: '#4e9e72', photo: null }, { id: 'u2', name: 'Ben Levi', email: 'ben@lab.edu', role: 'member', position: 'PhD student', color: '#3b82f6', photo: null }, { id: 'u3', name: 'Sara Park', email: 'sara@lab.edu', role: 'member', position: 'Postdoc', color: '#ec4899', photo: null }],
         experiments: [{ id: e1, name: 'SA Treatment', owner_name: 'Alice Chen', description: 'SA response', created_at: '2025-03-01', color_index: 0 }, { id: e2, name: 'JA Response', owner_name: 'Ben Levi', description: 'JA pathway', created_at: '2025-03-05', color_index: 1 }],
         greenhouses: [
@@ -2062,7 +2162,7 @@ function NotesView({ notes, onAdd, onEdit, onDel, currentUser, users }) {
                 var isMe=currentUser&&n.author===currentUser.name;
                 var avColor=n.author_color&&n.author_color.match(/^#[0-9a-fA-F]{3,6}$/)?n.author_color:'#6b7280';
                 var initials=(n.author||'?').charAt(0).toUpperCase();
-                var cardStyle={background:n.highlight&&hlBg[n.highlight]?hlBg[n.highlight]:'#fff',borderRadius:14,padding:'14px 16px',overflow:'hidden',border:'1.5px solid var(--bo)'};
+                var cardStyle={background:n.highlight&&hlBg[n.highlight]?hlBg[n.highlight]:'#fff',borderRadius:14,padding:'14px 16px',border:'1.5px solid var(--bo)'};
                 if(n.highlight&&hlBorder[n.highlight]) cardStyle.borderLeft='4px solid '+hlBorder[n.highlight];
                 if(n.pinned){cardStyle.borderColor='#f59e0b';cardStyle.background='#fffbeb';}
                 return React.createElement('div',{key:n.id,style:cardStyle},
@@ -2092,7 +2192,7 @@ function NotesView({ notes, onAdd, onEdit, onDel, currentUser, users }) {
         ),
         React.createElement('div',{className:'note-compose'},
             React.createElement('textarea',{className:'note-ta',rows:3,placeholder:'Write a note…',value:text,onChange:function(e){setText(e.target.value);},onKeyDown:function(e){if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();submit();}}}),
-            React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6,flexWrap:'nowrap',minWidth:0,marginTop:6}},
+            React.createElement('div',{className:'note-compose-row',style:{marginTop:6}},
                 React.createElement('span',{style:{fontSize:10,color:'var(--i4)',flexShrink:0}},'Color:'),
                 HL.map(function(h){return React.createElement('div',{key:h.id,title:h.id,onClick:function(){setHl(function(x){return x===h.id?'':h.id;});},style:{width:14,height:14,minWidth:14,borderRadius:'50%',cursor:'pointer',flexShrink:0,background:h.col,border:hl===h.id?'2px solid #fff':'2px solid transparent',boxShadow:hl===h.id?'0 0 0 2px '+h.col:'none'}});}),
                 React.createElement('button',{className:'btn btns bsm',style:{marginLeft:4,flexShrink:0},onClick:function(){pdfRef.current.click();}},pdfFile?'📄 '+pdfName.slice(0,12):'📎 PDF'),
@@ -2215,40 +2315,58 @@ function StockView({ stock, onAdd, onEdit, onRemove, onQty }) {
     return (React.createElement("div", { className: "stk" },
         React.createElement("div", { className: "stk-head" },
             React.createElement("div", { className: "stk-tit" }, "Stock"),
-            React.createElement("input", { className:"fi", placeholder:"Search stock…", value:stkSearch, onChange:e=>setStkSearch(e.target.value), style:{maxWidth:200,padding:'6px 10px',fontSize:12} }),
+            React.createElement("div", { style:{position:'relative',flex:1,maxWidth:280} },
+                React.createElement("span", { style:{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',fontSize:13,color:'var(--i4)',pointerEvents:'none'} }, '🔍'),
+                React.createElement("input", { className:"fi", value:stkSearch, onChange:e=>setStkSearch(e.target.value),
+                    placeholder:"Search stock…", style:{paddingLeft:32,width:'100%',padding:'7px 10px 7px 32px',fontSize:13} })
+            ),
             React.createElement("button", { className: "btn btnp bsm", onClick: () => { setFm(EMPTY); setShowAdd(true); } }, "+ Add item")),
-        React.createElement("div", { className: "stk-list" },
+        React.createElement("div", { className: "stk-grid" },
             stock.length === 0 && React.createElement("div", { className: "stk-empty" },
-                React.createElement("div", { style: { fontSize: 30, opacity: .3 } }, "\uD83D\uDCE6"),
-                React.createElement("div", { style: { fontSize: 12 } }, "No stock items yet")),
-            grouped.map(({ cat, items }) => React.createElement("div", { key: cat },
-                React.createElement("div", { style:{fontSize:10,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--i4)',padding:'8px 4px 4px',display:'flex',alignItems:'center',gap:6} },
-                    React.createElement("span", null, cat),
-                    React.createElement("span", {style:{background:'var(--cr2)',borderRadius:20,padding:'1px 8px',fontSize:10,color:'var(--i3)',fontWeight:600}}, items.length)
-                ),
-                items.map(item => React.createElement("div", { key: item.id, className: "stk-item" + (dragOver===item.id?' stk-drag-over':''),
-                    draggable: true,
-                    onDragStart: () => onDragStart(item.id),
-                    onDragOver: e => { e.preventDefault(); onDragOverItem(item.id); },
-                    onDrop: () => onDrop(item.id),
-                    onDragEnd: () => { setDragId(null); setDragOver(null); },
-                    style: { opacity: dragId===item.id ? 0.5 : 1 }
-                },
-                    React.createElement("div", { style:{cursor:'grab',color:'var(--i5)',fontSize:16,flexShrink:0,padding:'0 4px',display:'flex',alignItems:'center'} }, "⠿"),
-                    React.createElement("div", { className: "stk-img", onClick: () => { setEditId(item.id); setFm({ name: item.name, category: item.category, quantity: item.quantity, notes: item.notes || '', image: item.image || null }); } }, item.image ? React.createElement("img", { src: item.image, alt: item.name }) : '📦'),
-                    React.createElement("div", { style: { flex: 1, minWidth: 0 } },
-                        React.createElement("div", { style:{fontSize:14,fontWeight:600,color:'var(--i1)',wordBreak:'break-word',lineHeight:1.3} }, item.name),
-                        item.notes && React.createElement("div", { style:{fontSize:11,color:'var(--i4)',marginTop:2} }, item.notes)),
-                    React.createElement("div", { className: "stk-qty", style:{flexShrink:0} },
-                        React.createElement("button", { className: "stk-qbtn", onClick: () => onQty(item.id, -1) }, "-"),
-                        React.createElement("span", { className: "stk-qval" }, item.quantity),
-                        React.createElement("button", { className: "stk-qbtn", onClick: () => onQty(item.id, 1) }, "+")),
-                    React.createElement("div", {style:{display:'flex',flexDirection:'column',gap:4,flexShrink:0}},
-                        React.createElement("button", { className: "medbtn", onClick: () => { setEditId(item.id); setFm({ name: item.name, category: item.category, quantity: item.quantity, notes: item.notes || '', image: item.image || null }); } }, "Edit"),
-                        React.createElement("button", { className: "stk-del", onClick: () => onRemove(item.id) }, "Del"))
-                ))
-            ))),
-        (showAdd || editId) && React.createElement(Modal, { title: editId ? 'Edit Item' : 'Add Stock Item', onClose: () => { setShowAdd(false); setEditId(null); }, onConfirm: editId ? doEdit : doAdd, confirmLabel: editId ? 'Save' : 'Add' },
+                React.createElement("div", { style:{fontSize:30,opacity:.3} }, "📦"),
+                React.createElement("div", { style:{fontSize:12} }, "No stock items yet")),
+            grouped.map(function(grp) {
+                var cat = grp.cat, items = grp.items;
+                return React.createElement("div", { key: cat },
+                    React.createElement("div", { style:{fontSize:10,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--i4)',padding:'10px 0 6px',display:'flex',alignItems:'center',gap:6} },
+                        React.createElement("span", null, cat),
+                        React.createElement("span", {style:{background:'var(--cr2)',borderRadius:20,padding:'1px 8px',fontSize:10,color:'var(--i3)',fontWeight:600}}, items.length)
+                    ),
+                    items.map(function(item) {
+                        var editing = function(){ setEditId(item.id); setFm({name:item.name,category:item.category,quantity:item.quantity,notes:item.notes||'',image:item.image||null}); };
+                        return React.createElement("div", { key: item.id,
+                            className: "stk-card"+(dragOver===item.id?' stk-drag-over':''),
+                            draggable: true,
+                            onDragStart: function(){ onDragStart(item.id); },
+                            onDragOver:  function(e){ e.preventDefault(); onDragOverItem(item.id); },
+                            onDrop:      function(){ onDrop(item.id); },
+                            onDragEnd:   function(){ setDragId(null); setDragOver(null); },
+                            style:{ opacity: dragId===item.id ? 0.5 : 1 }
+                        },
+                            React.createElement("div", { className:"stk-card-img", onClick:editing },
+                                item.image ? React.createElement("img", {src:item.image,alt:item.name,style:{width:'100%',height:'100%',objectFit:'cover'}}) : "📦"
+                            ),
+                            React.createElement("div", { className:"stk-card-body" },
+                                React.createElement("div", { className:"stk-card-cat" }, item.category),
+                                React.createElement("div", { className:"stk-card-name" }, item.name),
+                                item.notes && React.createElement("div", { className:"stk-card-notes" }, item.notes)
+                            ),
+                            React.createElement("div", { className:"stk-card-foot" },
+                                React.createElement("div", { className:"stk-card-qty" },
+                                    React.createElement("button", { className:"stk-card-qbtn", onClick:function(){ onQty(item.id,-1); }, "aria-label":"Less" }, "−"),
+                                    React.createElement("span",   { className:"stk-card-qval" }, item.quantity),
+                                    React.createElement("button", { className:"stk-card-qbtn", onClick:function(){ onQty(item.id,1);  }, "aria-label":"More" }, "+")
+                                ),
+                                React.createElement("div", { className:"stk-card-acts" },
+                                    React.createElement("button", { className:"medbtn", style:{minHeight:36,minWidth:44}, onClick:editing }, "Edit"),
+                                    React.createElement("button", { className:"stk-del", style:{minHeight:36,minWidth:44}, onClick:function(){ onRemove(item.id); } }, "Del")
+                                )
+                            )
+                        );
+                    })
+                );
+            })),
+                (showAdd || editId) && React.createElement(Modal, { title: editId ? 'Edit Item' : 'Add Stock Item', onClose: () => { setShowAdd(false); setEditId(null); }, onConfirm: editId ? doEdit : doAdd, confirmLabel: editId ? 'Save' : 'Add' },
             React.createElement("div", { className: "mof" },
                 React.createElement("label", { className: "mol" }, "Item photo"),
                 React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 } },
@@ -2668,19 +2786,54 @@ function SearchView({ plants, tables, ghs, exps, onSel }) {
 /* ═══════════════════════════════════
    ORDERS VIEW
 ═══════════════════════════════════ */
+
+/* ═══════════════════════════════════
+   BOTTOM SHEET + STATUS DOT  helpers
+═══════════════════════════════════ */
+var STATUS_COLORS={'Requested':'#7c3aed','Draft':'#6B7280','Waiting for approval':'#d97706','Ordered':'#1d4ed8','In process':'#5b21b6','Shipped':'#059669','Arrived':'#14532d','Received':'#166534','Cancelled':'#991b1b','Rejected':'#b91c1c'};
+function StatusDot(props){
+    return React.createElement('span',{style:{width:10,height:10,borderRadius:'50%',flexShrink:0,display:'inline-block',background:STATUS_COLORS[props.status]||'#9CA3AF',verticalAlign:'middle'}});
+}
+function BottomSheetPicker(props){
+    var title=props.title,options=props.options,value=props.value,onChange=props.onChange,onClose=props.onClose;
+    return React.createElement('div',{className:'bs-overlay',onClick:function(e){if(e.target===e.currentTarget)onClose();}},
+        React.createElement('div',{className:'bs-sheet'},
+            React.createElement('div',{className:'bs-handle'}),
+            React.createElement('div',{className:'bs-title'},title),
+            options.map(function(opt){
+                var sel=opt===value;
+                return React.createElement('div',{key:opt,className:'bs-option'+(sel?' sel':''),onClick:function(){onChange(opt);onClose();}},
+                    React.createElement(StatusDot,{status:opt}),
+                    React.createElement('span',{style:{flex:1,marginLeft:6}},opt),
+                    sel&&React.createElement('span',{className:'bs-check'},'✓')
+                );
+            })
+        )
+    );
+}
 const ORDER_STATUSES = ['Requested','Draft','Waiting for approval','Ordered','In process','Shipped','Arrived','Received','Cancelled','Rejected'];
 const ORDER_STATUS_KEY = {'Requested':'requested','Draft':'draft','Waiting for approval':'waiting','Ordered':'ordered','In process':'in-process','Shipped':'shipped','Arrived':'arrived','Received':'received','Cancelled':'cancelled','Rejected':'rejected'};
 const ORDER_CATS = ['Equipment','Consumables','Chemicals','Reagents','Plasticware','Software','Services','Other'];
 const ORDER_CURRENCIES = ['USD','EUR','ILS','GBP','CHF','Other'];
 const ORDER_PRIORITIES = ['Urgent','High','Normal','Low'];
 
-function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel }) {
+function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel, syncStatus }) {
     const [filter, setFilter] = React.useState('all');
     const [sort, setSort] = React.useState('order_date_desc');
     const [showForm, setShowForm] = React.useState(false);
     const [showReqForm, setShowReqForm] = React.useState(false);
     const [editId, setEditId] = React.useState(null);
     const [ordSearch, setOrdSearch] = React.useState('');
+    const [dateFrom, setDateFrom] = React.useState('');
+    const [dateTo, setDateTo] = React.useState('');
+    const [pendingIds, setPendingIds] = React.useState(new Set());
+    const [formErr, setFormErr] = React.useState('');
+    const [localSyncStatus, setLocalSyncStatus] = React.useState(syncStatus || 'saved');
+    const [showStatusPicker, setShowStatusPicker] = React.useState(false);
+    var isMob = typeof window !== 'undefined' && window.innerWidth <= 1024;
+
+    // Draft auto-save to localStorage
+    const DRAFT_KEY = 'gl_ord_draft';
     const EMPTY_ORDER = { item_name:'', category:'Equipment', description:'', ordered_by: curUser?.name||'', supplier:'', status:'Draft', quantity:1, order_date: new Date().toISOString().slice(0,10), expected_arrival_date:'', actual_arrival_date:'', estimated_cost:'', currency:'USD', catalog_number:'', supplier_link:'', notes:'', priority:'Normal', storage_location:'', received_by:'', item_image:null, quotation_file:null, quotation_file_name:'', experiment_id:'' };
     const [fm, setFm] = React.useState(EMPTY_ORDER);
     const EMPTY_REQ={item_name:'',requested_by:curUser?curUser.name:'',quantity:1,supplier:'',catalog_link:'',notes:'',priority:'Medium',pdf:null,pdf_name:''};
@@ -2690,16 +2843,37 @@ function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel }) {
     const setR=function(k,v){setReqFm(function(prev){return Object.assign({},prev,{[k]:v});});};
     const imgRef = React.useRef(); const pdfRef = React.useRef();
     const reqPdfRef=React.useRef();
-    const set = (k,v) => setFm(p => ({...p,[k]:v}));
+    const set = (k,v) => { setFm(p => {const n={...p,[k]:v}; try{localStorage.setItem(DRAFT_KEY,JSON.stringify(n));}catch(e){} return n;}); setFormErr(''); };
 
-    const openAdd = () => { setFm({...EMPTY_ORDER, ordered_by: curUser?.name||'', order_date: new Date().toISOString().slice(0,10)}); setEditId(null); setShowForm(true); };
-    const openEdit = (o) => { setFm({...EMPTY_ORDER,...o}); setEditId(o.id); setShowForm(true); };
+    // Sync status mirror
+    React.useEffect(()=>{ setLocalSyncStatus(syncStatus||'saved'); },[syncStatus]);
+
+    const syncLabel = localSyncStatus==='saving' ? '☁ Saving…' : localSyncStatus==='error' ? '⚠ Sync failed — tap to retry' : '✓ All saved';
+
+    const openAdd = () => {
+        let draft = null;
+        try { const r=localStorage.getItem(DRAFT_KEY); if(r){ draft=JSON.parse(r); } } catch(e){}
+        setFm(draft && !draft.id ? {...EMPTY_ORDER,...draft, ordered_by: curUser?.name||draft.ordered_by||'', order_date: draft.order_date||new Date().toISOString().slice(0,10)} : {...EMPTY_ORDER, ordered_by: curUser?.name||'', order_date: new Date().toISOString().slice(0,10)});
+        setEditId(null); setFormErr(''); setShowForm(true);
+    };
+    const openEdit = (o) => { setFm({...EMPTY_ORDER,...o}); setEditId(o.id); setFormErr(''); setShowForm(true); };
     const save = () => {
-        if (!fm.item_name.trim()) return;
-        if (editId) { onUpd(editId, fm); }
-        else { onAdd({...fm, id: Math.random().toString(36).slice(2,9), created_at: new Date().toISOString(), updated_at: new Date().toISOString()}); }
+        if (!fm.item_name.trim()) { setFormErr('Item name is required'); return; }
+        setFormErr('');
+        if (editId) {
+            onUpd(editId, fm);
+        } else {
+            const newId = Math.random().toString(36).slice(2,9);
+            // Optimistic: mark as pending
+            setPendingIds(p => new Set([...p, newId]));
+            onAdd({...fm, id: newId, created_at: new Date().toISOString(), updated_at: new Date().toISOString()});
+            // Remove pending after 4s (by then sync should have completed or failed)
+            setTimeout(()=>{ setPendingIds(p=>{ const n=new Set(p); n.delete(newId); return n; }); }, 4000);
+        }
+        try { localStorage.removeItem(DRAFT_KEY); } catch(e) {}
         setShowForm(false); setEditId(null);
     };
+    const cancelForm = () => { setShowForm(false); setEditId(null); setFormErr(''); try{localStorage.removeItem(DRAFT_KEY);}catch(e){} };
     const saveRequest=function(){if(!reqFm.item_name.trim())return;onAdd({id:Math.random().toString(36).slice(2,9),item_name:reqFm.item_name.trim(),category:'Request',ordered_by:reqFm.requested_by,quantity:+reqFm.quantity||1,supplier:reqFm.supplier,catalog_number:reqFm.catalog_link,notes:reqFm.notes,priority:reqFm.priority,status:'Requested',order_date:new Date().toISOString().slice(0,10),quotation_file:reqFm.pdf||null,quotation_file_name:reqFm.pdf_name||'',created_at:new Date().toISOString(),updated_at:new Date().toISOString()});setReqFm(Object.assign({},EMPTY_REQ,{requested_by:curUser?curUser.name:''}));setShowReqForm(false);};
     const handleReqPdf=function(e){const fl=e.target.files[0];if(!fl)return;const r=new FileReader();r.onload=function(ev){setR('pdf',ev.target.result);setR('pdf_name',fl.name);};r.readAsDataURL(fl);};
 
@@ -2710,12 +2884,14 @@ function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel }) {
         let res = [...(orders||[])];
         if (filter !== 'all') res = res.filter(o => o.status === filter);
         if (ordSearch.trim()) { const sq = ordSearch.toLowerCase(); res = res.filter(o => (o.item_name||'').toLowerCase().includes(sq) || (o.supplier||'').toLowerCase().includes(sq) || (o.ordered_by||'').toLowerCase().includes(sq) || (o.order_date||'').includes(sq) || (o.catalog_number||'').toLowerCase().includes(sq)); }
+        if (dateFrom) res = res.filter(o => (o.order_date||'') >= dateFrom);
+        if (dateTo)   res = res.filter(o => (o.order_date||'') <= dateTo);
         if (sort==='order_date_desc') res.sort((a,b)=>(b.order_date||'').localeCompare(a.order_date||''));
         if (sort==='order_date_asc')  res.sort((a,b)=>(a.order_date||'').localeCompare(b.order_date||''));
         if (sort==='arrival_asc')     res.sort((a,b)=>{ if(!a.expected_arrival_date) return 1; if(!b.expected_arrival_date) return -1; return a.expected_arrival_date.localeCompare(b.expected_arrival_date); });
         if (sort==='arrival_desc')    res.sort((a,b)=>{ if(!a.expected_arrival_date) return 1; if(!b.expected_arrival_date) return -1; return b.expected_arrival_date.localeCompare(a.expected_arrival_date); });
         return res;
-    }, [orders, filter, sort]);
+    }, [orders, filter, sort, ordSearch, dateFrom, dateTo]);
     // Pre-compute category boundaries for grouping headers
     const ordCatHeaders = React.useMemo(() => {
         var seen = new Set(); var headers = {};
@@ -2736,6 +2912,7 @@ function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel }) {
     const fmtDate = d => d ? new Date(d+'T12:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
 
     return React.createElement('div', {className:'ord-page'},
+        /* Header */
         React.createElement('div', {className:'ord-head'},
             React.createElement('div', null,
                 React.createElement('div', {style:{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',marginBottom:4}},
@@ -2751,10 +2928,32 @@ function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel }) {
                     React.createElement('option',{value:'arrival_asc'},'Arrival: soonest'),
                     React.createElement('option',{value:'arrival_desc'},'Arrival: latest')
                 ),
-                React.createElement('button', {className:'btn btns bsm', onClick:function(){setReqFm(Object.assign({},EMPTY_REQ,{requested_by:curUser?curUser.name:''}));setShowReqForm(true);}}, '+ Request Item'),
-                React.createElement('button', {className:'btn btnp bsm', onClick:openAdd}, '+ New Order')
+                React.createElement('div', {className:'ord-add-btns', style:{display:'flex',gap:8}},
+                    React.createElement('button', {className:'btn btns bsm', onClick:function(){setReqFm(Object.assign({},EMPTY_REQ,{requested_by:curUser?curUser.name:''}));setShowReqForm(true);}}, '+ Request Item'),
+                    React.createElement('button', {className:'btn btnp bsm', onClick:openAdd}, '+ New Order')
+                )
             )
         ),
+        /* Sync status bar + date range filter */
+        React.createElement('div', {className:'ord-sync-bar'},
+            React.createElement('div', {className:'ord-sync-icon '+localSyncStatus,
+                style:{display:'flex',alignItems:'center',gap:6,cursor:localSyncStatus==='error'?'pointer':'default'},
+                title:localSyncStatus==='error'?'Click to retry sync':undefined},
+                localSyncStatus==='saving' && React.createElement('span',{className:'sync-ring'}),
+                (localSyncStatus==='synced'||localSyncStatus==='saved') && React.createElement('span',{style:{color:'#15803d',fontWeight:700}},'✓'),
+                localSyncStatus==='error' && React.createElement('span',{style:{color:'#dc2626'}},'⚠'),
+                React.createElement('span',null,syncLabel)
+            ),
+            React.createElement('div', {className:'ord-date-filter'},
+                React.createElement('span', null, 'From'),
+                React.createElement('input', {type:'date', value:dateFrom, onChange:e=>setDateFrom(e.target.value), title:'Filter from date'}),
+                React.createElement('span', null, '–'),
+                React.createElement('input', {type:'date', value:dateTo, onChange:e=>setDateTo(e.target.value), title:'Filter to date'}),
+                (dateFrom||dateTo) && React.createElement('button', {className:'btn btns bxs', onClick:()=>{setDateFrom('');setDateTo('');}}, '✕')
+            )
+        ),
+        /* Mobile FAB */
+        React.createElement('button', {className:'ord-fab', onClick:openAdd, title:'New Order', 'aria-label':'Add new order'}, '+'),
 
         React.createElement('div', {className:'ord-filters'},
             React.createElement('div', {className:`fc${filter==='all'?' on':''}`, onClick:()=>setFilter('all')}, `All (${statusCounts.all})`),
@@ -2780,7 +2979,7 @@ function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel }) {
                         ordCatHeaders[o.id],
                         React.createElement('span',{style:{background:'var(--cr2)',borderRadius:20,padding:'1px 8px',fontWeight:600,color:'var(--i4)',fontSize:9}}, (filtered||[]).filter(function(x){return(x.category||'Other')===ordCatHeaders[o.id];}).length)
                     ),
-                    React.createElement('div', {className:'ord-card'},
+                    React.createElement('div', {className:'ord-card' + (pendingIds.has(o.id)?' ord-pending':'')},
                     React.createElement('div', {className:'ord-card-top'},
                         React.createElement('div', {className:'ord-img', onClick:()=>o.item_image && window.open(o.item_image)},
                             o.item_image ? React.createElement('img',{src:o.item_image,alt:o.item_name}) : '📦'
@@ -2928,7 +3127,7 @@ function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel }) {
                     React.createElement('div', {style:{flex:1}},
                         React.createElement('div',{className:'mof'},
                             React.createElement('label',{className:'mol'},'Item name *'),
-                            React.createElement('input',{className:'moi',placeholder:'e.g. Pipette set 100-1000µL',value:fm.item_name,onChange:e=>set('item_name',e.target.value),autoFocus:true})
+                            React.createElement('input',{className:'moi'+(formErr?' err':''),placeholder:'e.g. Pipette set 100-1000µL',value:fm.item_name,onChange:e=>set('item_name',e.target.value),autoFocus:true})
                         ),
                         React.createElement('div',{className:'morow'},
                             React.createElement('div',{className:'mof'},
@@ -2955,10 +3154,23 @@ function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel }) {
                 React.createElement('div',{className:'morow'},
                     React.createElement('div',{className:'mof'},
                         React.createElement('label',{className:'mol'},'Status'),
-                        React.createElement('select',{className:'mosel',value:fm.status,onChange:e=>set('status',e.target.value)},
-                            ORDER_STATUSES.map(s=>React.createElement('option',{key:s,value:s},s))
-                        )
+                        isMob
+                            ? React.createElement('button',{
+                                style:{display:'flex',alignItems:'center',gap:8,padding:'9px 12px',border:'1.5px solid var(--bo)',borderRadius:'var(--r)',background:'#fff',width:'100%',cursor:'pointer',fontSize:13,minHeight:44,fontFamily:'inherit'},
+                                onClick:function(e){e.preventDefault();setShowStatusPicker(true);}
+                              },
+                                React.createElement(StatusDot,{status:fm.status}),
+                                React.createElement('span',{style:{flex:1,textAlign:'left',marginLeft:6}},fm.status),
+                                React.createElement('span',{style:{color:'var(--i4)',fontSize:11}},'▾')
+                              )
+                            : React.createElement('select',{className:'mosel',value:fm.status,onChange:e=>set('status',e.target.value)},
+                                ORDER_STATUSES.map(s=>React.createElement('option',{key:s,value:s},s))
+                              )
                     ),
+                    showStatusPicker && React.createElement(BottomSheetPicker,{
+                        title:'Set order status',options:ORDER_STATUSES,value:fm.status,
+                        onChange:function(v){set('status',v);},onClose:function(){setShowStatusPicker(false);}
+                    }),
                     React.createElement('div',{className:'mof'},
                         React.createElement('label',{className:'mol'},'Ordered by'),
                         React.createElement('select',{className:'mosel',value:users.find(u=>u.name===fm.ordered_by)?fm.ordered_by:'__custom__',onChange:e=>e.target.value!=='__custom__'?set('ordered_by',e.target.value):set('ordered_by','')},
@@ -3050,8 +3262,9 @@ function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel }) {
                     React.createElement('textarea',{className:'mota',rows:2,placeholder:'Any additional notes...',value:fm.notes,onChange:e=>set('notes',e.target.value)})
                 ),
 
+                formErr && React.createElement('div',{className:'ord-val-err',style:{marginBottom:6}}, formErr),
                 React.createElement('div',{className:'moacts'},
-                    React.createElement('button',{className:'btn btns',onClick:()=>setShowForm(false)},'Cancel'),
+                    React.createElement('button',{className:'btn btns',onClick:cancelForm},'Cancel'),
                     React.createElement('button',{className:'btn btnp',onClick:save},editId?'Save changes':'Add order')
                 )
             )
@@ -3708,7 +3921,7 @@ function App() {
         } catch(e) {}
         return null;
     }); // null = lab not chosen yet
-    const [data, setData] = useState({ greenhouses:[], tables:[], plants:[], experiments:[], users:[], structs:[], stock:[], orders:[], schedules:[], messages:[], measures:[], locked:true });
+    const [data, setData] = useState({ greenhouses:[], tables:[], plants:[], experiments:[], users:[], structs:[], stock:[], orders:[], schedules:[], messages:[], measures:[], notes:[], locked:true });
     const [user, setUser] = useState(null);
     const [tab, setTab] = useState('layout');
     const [ghId, setGhId] = useState(null);
@@ -3728,7 +3941,7 @@ function App() {
     const [dimSpray, setDimSpray] = useState({});
     const [zoom, setZoom] = useState(1);
     const [pan, setPan] = useState({ x: 40, y: 40 });
-    const dataLoadedRef = useRef(false); const vpRef = useRef(), wrRef = useRef(), panRef = useRef(null), spRef = useRef(false), remoteUpdateRef = useRef(false), lastTblRef = useRef({ width: 230, length: 125, rows: 3, cols: 6 }), forceWriteRef = useRef(false);
+    const dataLoadedRef = useRef(false); const vpRef = useRef(), wrRef = useRef(), panRef = useRef(null), spRef = useRef(false), remoteUpdateRef = useRef(false), lastTblRef = useRef({ width: 230, length: 125, rows: 3, cols: 6 }), forceWriteRef = useRef(false), writeTimerRef = useRef(null), lastLocalWriteRef = useRef(0);
     const [showAGH, setShowAGH] = useState(false);
     const [showATbl, setShowATbl] = useState(false);
     const [showUL, setShowUL] = useState(false);
@@ -3751,6 +3964,8 @@ function App() {
     const [nStrFm, setNStrFm] = useState({ type: 'door', w: 20, h: 40 });
     const [delConfirm, setDelConfirm] = useState(null); // {type:'gh'|'tbl', id, name}
     const [menuOpen, setMenuOpen] = useState(false);
+    const [moreOpen, setMoreOpen] = useState(false);   // desktop More menu
+    const [mbnMore,  setMbnMore]  = useState(false);   // mobile More drawer
     const [expTip, setExpTip] = useState(null); // {x,y,exp,owner} for hover tooltip
     const [colorByExp, setColorByExp] = useState(false); // toggle experiment color overlay
     const [tblSelMode, setTblSelMode] = useState(false); // multi-table selection mode
@@ -3855,7 +4070,8 @@ useEffect(() => {
                         setData(seeded);
                         if (seeded.greenhouses.length > 0) setGhId(seeded.greenhouses[0].id);
                     } else {
-                        if (!forceWriteRef.current) {
+                        var msSinceWrite = Date.now() - lastLocalWriteRef.current;
+                        if (!forceWriteRef.current && msSinceWrite > 5000) {
                             remoteUpdateRef.current = true;
                             dataLoadedRef.current = true;
                             setData(loadImages(remote));
@@ -3908,31 +4124,29 @@ useEffect(() => {
                 });
         }
         fetchLabData();
-        var pollId = setInterval(fetchLabData, 30000); // 30s - reduce overwrite risk
+        var pollId = setInterval(fetchLabData, 120000); // 120s poll — prevent overwriting pending local writes
         return function() { clearInterval(pollId); };
     }, [activeLab ? activeLab.id : null]);
     /* Write on every local data change — skip only if this exact update came from remote */
     useEffect(() => {
         if (!activeLab) return;
-        if (!dataLoadedRef.current) return; // wait until data is loaded from storage
+        if (!dataLoadedRef.current) return;
         if (remoteUpdateRef.current && !forceWriteRef.current) {
             remoteUpdateRef.current = false;
             return;
         }
         remoteUpdateRef.current = false;
         forceWriteRef.current = false;
+        lastLocalWriteRef.current = Date.now();
         setSyncStatus('saving');
-        try {
-            saveData(data, activeLab ? activeLab.id : null);
-            setTimeout(function() {
-                setSyncStatus('synced');
-                setLastSaved(new Date());
-                if (user) setLastBy(user.name);
-            }, 800);
-        }
-        catch(e) {
-            setSyncStatus('error');
-        }
+        if (writeTimerRef.current) clearTimeout(writeTimerRef.current);
+        var sd = data, sl = activeLab, su = user;
+        writeTimerRef.current = setTimeout(function() {
+            saveData(sd, sl ? sl.id : null,
+                function() { setSyncStatus('synced'); setLastSaved(new Date()); if (su) setLastBy(su.name); },
+                function() { setSyncStatus('error'); }
+            );
+        }, 1200);
     }, [data]);
     const notify = useCallback(m => { setNotif(m); setTimeout(() => setNotif(null), 2500); }, []);
     const logActivity = useCallback((what) => {
@@ -4673,24 +4887,24 @@ useEffect(() => {
                     ),
                     React.createElement("button", { key: 'measures', className: `tab-btn${tab === 'measures' ? ' on' : ''}`, onClick: () => { setTab('measures'); setMenuOpen(false); } },
                         React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='measures' ? 'rgba(255,255,255,.22)' : '#10B9811A', color: tab==='measures' ? '#fff' : '#10B981', marginRight:1 } },
-                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18\"/></svg>' } })
+                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18"/></svg>' } })
                         ),
                         "Measures"
                     ),
                     React.createElement("button", { key: 'messages', className: `tab-btn${tab === 'messages' ? ' on' : ''}`, onClick: () => { setTab('messages'); setMenuOpen(false); setLastMsgRead(r=>({...r,[activeLab?.id]:new Date().toISOString()})); } },
                         React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='messages' ? 'rgba(255,255,255,.22)' : '#F59E0B1A', color: tab==='messages' ? '#fff' : '#F59E0B', marginRight:1, position:'relative' } },
-                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\"/></svg>' } }),
+                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' } }),
                             (() => { const lastRead = lastMsgRead[activeLab?.id]; const unread = (data.messages||[]).filter(m=>!lastRead||m.created_at>lastRead).length; return unread>0 && React.createElement("span",{style:{position:'absolute',top:-5,right:-5,background:'#ef4444',color:'#fff',borderRadius:'50%',width:14,height:14,fontSize:8,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',border:'1.5px solid #fff'}},unread>9?'9+':unread); })()
                         ),
                         "Messages"
                     ),
-                    React.createElement("button", { key: 'dash', className: `tab-btn${tab === 'dash' ? ' on' : ''}`, onClick: () => { setTab('dash'); setMenuOpen(false); if ('dash' !== 'layout') { setTblSelMode(false); setSelTbls(new Set()); } } },
+                    React.createElement("button", { key: 'dash', className: `tab-btn${tab === 'dash' ? ' on' : ''}`, onClick: () => { setTab('dash'); setMenuOpen(false); setTblSelMode(false); setSelTbls(new Set()); } },
                         React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='dash' ? 'rgba(255,255,255,.22)' : '#4DB6AC1A', color: tab==='dash' ? '#fff' : '#4DB6AC', marginRight:1 } },
-                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"18\" y1=\"20\" x2=\"18\" y2=\"10\"/><line x1=\"12\" y1=\"20\" x2=\"12\" y2=\"4\"/><line x1=\"6\" y1=\"20\" x2=\"6\" y2=\"14\"/></svg>' } })
+                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>' } })
                         ),
                         "Dashboard"
                     ),
-                    React.createElement("button", { key: 'notes', className: `tab-btn${tab === 'notes' ? ' on' : ''}`, onClick: () => { setTab('notes'); setMenuOpen(false); } },
+                                        React.createElement("button", { key: 'notes', className: `tab-btn${tab === 'notes' ? ' on' : ''}`, onClick: () => { setTab('notes'); setMenuOpen(false); } },
                         React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='notes' ? 'rgba(255,255,255,.22)' : '#F472B61A', color: tab==='notes' ? '#fff' : '#F472B6', marginRight:1 } },
                             React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/></svg>' } })
                         ),
@@ -4840,7 +5054,7 @@ useEffect(() => {
                 tab === 'measures' && React.createElement(MeasuresView, { measures:data.measures||[], experiments:data.experiments||[], plants:data.plants||[], tables:data.tables||[], users:data.users||[], onSave:saveMeasures, currentUser:user }),
                 tab === 'messages' && React.createElement(MessagesView, { messages:data.messages||[], onAdd:addMessage, onEdit:editMessage, onDel:delMessage, currentUser:user, users:data.users }),
                 tab === 'notes' && React.createElement(NotesView, { notes:data.notes||[], onAdd:addNote, onEdit:editNote, onDel:delNote, currentUser:user, users:data.users }),
-                tab === 'orders' && React.createElement(OrdersView, { orders: data.orders||[], users: data.users, curUser: user, exps: data.experiments||[], onAdd: addOrder, onUpd: updOrder, onDel: delOrder }),
+                tab === 'orders' && React.createElement(OrdersView, { orders: data.orders||[], users: data.users, curUser: user, exps: data.experiments||[], onAdd: addOrder, onUpd: updOrder, onDel: delOrder, syncStatus: syncStatus }),
                 tab === 'schedule' && React.createElement(ScheduleView, { tables: data.tables, users: data.users, schedules: data.schedules||[], onAdd: addSchedule, onDel: delSchedule, currentUser: user ? user.name : '' }),
                 tab === 'dash' && React.createElement(DashView, { greenhouses: data.greenhouses, tables: data.tables, structs: data.structs || [], plants: data.plants || [], experiments: data.experiments || [] }))),
 
@@ -4869,25 +5083,41 @@ useEffect(() => {
                     React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/></svg>'} })),
                     "Notes"
                 ),
-                React.createElement("button", { className: `mbn-btn${tab==='team'?' on':''}`, onClick: ()=>setTab('team') },
-                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'} })),
-                    "Team"
-                ),
-                React.createElement("button", { className: `mbn-btn${tab==='measures'?' on':''}`, onClick: ()=>setTab('measures') },
-                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'} })),
-                    "Measures"
-                ),
-                React.createElement("button", { className: `mbn-btn${tab==='dash'?' on':''}`, onClick: ()=>setTab('dash') },
-                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>'} })),
-                    "Dashboard"
-                ),
-                React.createElement("button", { className: `mbn-btn${tab==='messages'?' on':''}`, onClick: ()=>{ setTab('messages'); setLastMsgRead(r=>({...r,[activeLab?.id]:new Date().toISOString()})); } },
-                    React.createElement("div", { className:"mbn-ic", style:{position:'relative'} },
-                        React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\"/></svg>'} }),
-                        (() => { const lastRead = lastMsgRead[activeLab?.id]; const unread=(data.messages||[]).filter(m=>!lastRead||m.created_at>lastRead).length; return unread>0?React.createElement("span",{style:{position:'absolute',top:-4,right:-4,background:'#ef4444',color:'#fff',borderRadius:'50%',width:14,height:14,fontSize:8,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',border:'1.5px solid #fff'}},unread>9?'9+':unread):null;})()
-                    ),
-                    "Messages"
-                )
+(function(){
+                    var sec = [
+                        {key:'team',    label:'Team',      icon:'👥'},
+                        {key:'measures',label:'Measures',  icon:'📊'},
+                        {key:'messages',label:'Messages',  icon:'💬'},
+                        {key:'dash',    label:'Dashboard', icon:'📈'},
+                    ];
+                    var anyOn = sec.some(function(t){return t.key===tab;});
+                    var unrd = (function(){var lr=lastMsgRead[activeLab&&activeLab.id];return (data.messages||[]).filter(function(m){return !lr||m.created_at>lr;}).length;})();
+                    return React.createElement(React.Fragment,null,
+                        React.createElement("button",{className:'mbn-btn'+(anyOn?' on':''),onClick:function(){setMbnMore(function(o){return !o;});}},
+                            React.createElement("div",{className:"mbn-ic",style:{fontSize:20,fontWeight:700,position:'relative'}},
+                                '⋯',
+                                unrd>0&&React.createElement("span",{style:{position:'absolute',top:-4,right:-4,background:'#ef4444',color:'#fff',borderRadius:'50%',width:14,height:14,fontSize:8,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',border:'1.5px solid #fff'}},unrd>9?'9+':unrd)
+                            ),
+                            "More"
+                        ),
+                        mbnMore&&React.createElement("div",{style:{position:'fixed',inset:0,zIndex:388,background:'rgba(0,0,0,.35)'},onClick:function(){setMbnMore(false);}}),
+                        React.createElement("div",{className:"mbn-more-drawer"+(mbnMore?'':' mbn-hidden')},
+                            sec.map(function(t){
+                                return React.createElement("div",{key:t.key,className:"mbn-more-item"+(tab===t.key?' on':''),
+                                    onClick:function(){
+                                        setTab(t.key);
+                                        if(t.key==='messages')setLastMsgRead(function(r){var x=Object.assign({},r);x[activeLab&&activeLab.id]=new Date().toISOString();return x;});
+                                        setMbnMore(false);
+                                    }
+                                },
+                                    React.createElement("div",{className:"mbn-more-ic",style:{fontSize:20}},t.icon),
+                                    t.label,
+                                    t.key==='messages'&&unrd>0&&React.createElement("span",{style:{marginLeft:'auto',background:'#ef4444',color:'#fff',borderRadius:20,padding:'1px 7px',fontSize:10,fontWeight:700}},unrd)
+                                );
+                            })
+                        )
+                    );
+                })()
             ),
 
         popup && React.createElement(PotPopup, { plant: popup.plant, tblNm: popup.tblNm, ghNm: popup.ghNm, rect: popup.rect, exps: data.experiments, allPlants: data.plants, users: data.users, onSave: savePlant, onClose: () => { setPopup(null); setActPot(null); } }),
