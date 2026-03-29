@@ -13,6 +13,7 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 input[type=number]{-moz-appearance:textfield}
 input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+input,textarea,select,button{font-family:inherit}
 html,body{height:100%}
 body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;font-size:14px}
 #root{display:flex;flex-direction:column;height:100vh;overflow:hidden}
@@ -286,8 +287,13 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 /* ═══════════════════════════════════
    POT POPUP (float panel)
 ═══════════════════════════════════ */
+@keyframes sheet-up{from{transform:translateY(60px);opacity:.5}to{transform:translateY(0);opacity:1}}
 @keyframes pop{from{opacity:0;transform:scale(.96) translateY(6px)}to{opacity:1;transform:scale(1) translateY(0)}}
-.pop{position:fixed;z-index:700;background:#fff;border:1px solid var(--bo);border-radius:var(--r3);box-shadow:var(--sh2);width:316px;animation:pop .15s ease;display:flex;flex-direction:column;max-height:90vh;overflow:hidden}
+.pop{position:fixed;z-index:700;background:#fff;border:1px solid var(--bo);border-radius:var(--r3);box-shadow:var(--sh2);width:316px;animation:pop .15s ease;display:flex;flex-direction:column;max-height:90vh}
+.pop-handle{display:none;width:36px;height:4px;background:#D1D5DB;border-radius:2px;margin:10px auto 0;flex-shrink:0}
+@media(max-width:1024px){.pop-handle{display:block}}
+.pop-handle{display:none;width:36px;height:4px;background:#D1D5DB;border-radius:2px;margin:10px auto 4px;flex-shrink:0}
+@media(max-width:1024px){.pop-handle{display:block}}
 .pph{padding:14px 16px 12px;border-bottom:1px solid var(--bo);display:flex;align-items:center;gap:10px;background:#f9fafb;border-radius:var(--r3) var(--r3) 0 0}
 .pppre{width:38px;height:38px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .pptit{font-size:13px;font-weight:700;color:var(--i1)}
@@ -560,7 +566,9 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
   padding:10px 18px;background:#F9FAFB;
   border-bottom:1px solid #EBEBEB;
   height:56px;position:sticky;top:0;z-index:50;
+  overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;
 }
+.tab-bar::-webkit-scrollbar{display:none}
 .tab-btn{
   display:inline-flex;align-items:center;gap:5px;
   height:34px;padding:0 12px 0 6px;
@@ -606,8 +614,8 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
   .selbtn{padding:7px 14px;font-size:13px}
   .btn{padding:8px 16px}
   .bsm{padding:7px 14px;font-size:12px}
-  .pop{width:calc(100vw - 16px)!important;max-width:calc(100vw - 16px)!important;left:8px!important;right:8px!important;max-height:88vh}
-  .pop.mobile-center{top:50%!important;transform:translateY(-50%)}
+  .pop{width:100vw!important;max-width:100vw!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;transform:none!important;border-radius:20px 20px 0 0!important;max-height:98vh}
+  /* bottom-sheet handles positioning */
   .ppb{padding:12px 14px;gap:10px}
   .ppf{padding:10px 14px}
   .fi,.moi,.mota,.mosel,.fta{font-size:16px;padding:10px 12px}
@@ -698,7 +706,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .ord-sub{font-size:12px;color:var(--i4);margin-top:3px}
 .ord-filters{flex-shrink:0;display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;border-bottom:1px solid var(--bo);background:#fff;align-items:center}
 .ord-body{flex:1;min-height:0;overflow-y:auto;padding:18px 24px;display:flex;flex-direction:column;gap:10px}
-.ord-card{background:#fff;border:1px solid var(--bo);border-radius:var(--r3);box-shadow:var(--sh);transition:all .15s;overflow:hidden}
+.ord-card{background:#fff;border:1px solid var(--bo);border-radius:var(--r3);box-shadow:var(--sh);transition:all .15s}
 .ord-card:hover{border-color:#c3e6a8;box-shadow:0 4px 14px rgba(0,0,0,.08)}
 .ord-card-top{display:flex;align-items:flex-start;gap:14px;padding:14px 16px}
 .ord-img{width:64px;height:64px;border-radius:var(--r2);object-fit:cover;flex-shrink:0;border:1.5px solid var(--bo);background:var(--cr2);display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden;cursor:pointer}
@@ -873,14 +881,8 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .pot-alert-badge.sick-badge  { background: #9333ea; color: #fff; }
 .pot-alert-badge.pest-badge  { background: #ea580c; color: #fff; }
 /* Legend strip above greenhouse grid */
-.alert-legend {
-  display: flex; align-items: center; gap: 12px;
-  padding: 5px 16px; font-size: 10px; font-weight: 600;
-  background: rgba(255,255,255,.85); backdrop-filter: blur(4px);
-  border-bottom: 1px solid #F0F0F0; flex-shrink: 0;
-  font-family: 'Poppins', sans-serif; color: #6B7280;
-}
-.alert-legend-item { display: flex; align-items: center; gap: 5px; }
+.alert-legend{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;overflow:hidden;padding:4px 16px;font-size:10px;font-weight:600;background:#fff;border-bottom:1px solid #F0F0F0;flex-shrink:0;color:#6B7280}
+.alert-legend-item{display:inline-flex;align-items:center;gap:5px;flex-shrink:0}
 .alert-legend-dot  { width: 10px; height: 10px; border-radius: 50%; }
 
 
@@ -944,12 +946,12 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
   .meas-sidebar{width:100%;max-height:160px;border-right:none;border-bottom:1px solid var(--bo)}
 }
 
-/* ── Notes tab ─────────────────────────────────────── */
+/* ── Notes tab ─────────────────────────── */
 .notes-page{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;background:#F9FAFB}
 .notes-head{flex-shrink:0;padding:16px 20px;border-bottom:1px solid var(--bo);background:#fff;display:flex;align-items:center;justify-content:space-between}
 .notes-tit{font-size:20px;font-weight:700;color:var(--i1)}
 .notes-list{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 80px;display:flex;flex-direction:column;gap:10px}
-.note-card{background:#fff;border:1.5px solid var(--bo);border-radius:16px;padding:14px 16px;position:relative}
+.note-card{background:#fff;border:1.5px solid var(--bo);border-radius:16px;padding:14px 16px}
 .note-card.pinned{border-color:#f59e0b;background:#fffbeb}
 .note-card.hl-green{border-left:4px solid #78C043;background:#f0fdf4}
 .note-card.hl-yellow{border-left:4px solid #f59e0b;background:#fffbeb}
@@ -969,7 +971,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .note-hl-dot.on{box-shadow:0 0 0 2px #fff,0 0 0 4px #555}
 .note-compose{flex-shrink:0;background:#fff;border-top:1px solid var(--bo);padding:12px 16px;display:flex;flex-direction:column;gap:8px}
 .note-ta{width:100%;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:12px;color:#333;font-size:13px;padding:9px 12px;outline:none;resize:none;line-height:1.5;font-family:'Poppins',sans-serif;box-sizing:border-box}
-.note-compose-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.note-compose-row{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;min-width:0}
 .note-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--i4);padding:40px;text-align:center}
 .ord-status.requested{background:#f0f9ff;color:#075985;border:1px solid #bae6fd}
 .ord-status.rejected{background:#fef2f2;color:#7f1d1d;border:1px solid #fca5a5}
@@ -1097,7 +1099,7 @@ function SprayCountdown({ sprayedAt }) {
         React.createElement("div", {style:{flex:1,height:4,background:'#F3F4F6',borderRadius:2,overflow:'hidden'}},
             React.createElement("div", {style:{width:(pct*100)+'%',height:'100%',background:col,borderRadius:2,transition:'width 1s linear'}})
         ),
-        React.createElement("span", {style:{fontSize:10,fontWeight:700,color:col,fontFamily:'Inter',flexShrink:0}},
+        React.createElement("span", {style:{fontSize:10,fontWeight:700,color:col,fontFamily:'Poppins',flexShrink:0}},
             String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0')
         )
     );
@@ -1332,7 +1334,10 @@ function PotSVG({ sid = 'round', sz = 40, sc = null, hi = false, iu = null, colo
 /* PotCell: always shows label below pot icon. Never shifts on delete. */
 function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onDel, expInitials, expColor, onExpHover, onExpLeave, expBg }) {
     const filled = !!((plant === null || plant === void 0 ? void 0 : plant.genotype) || (plant === null || plant === void 0 ? void 0 : plant.treatment));
-    const sc = (plant === null || plant === void 0 ? void 0 : plant.status) && plant.status !== 'empty' ? plant.status : null;
+    var _sts = (plant && plant.statuses && plant.statuses.length > 0) ? plant.statuses : (plant && plant.status && plant.status !== 'empty' ? [plant.status] : []);
+    const sc = _sts.length > 0 ? _sts[0] : null; // primary status for PotSVG color
+    const hasSick  = _sts.includes('sick');
+    const hasPests = _sts.includes('pests');
     const lbl = (plant === null || plant === void 0 ? void 0 : plant.genotype) || '';
     const fs = clamp(Math.round(ppx * .19), 8, 12);
     const maxC = Math.max(3, Math.floor(ppx / 4.2));
@@ -1347,7 +1352,7 @@ function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onD
             React.createElement("div", { style: { height: LBH, display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: fs - 1, color: '#c0ccc4', fontFamily: 'Inter,sans-serif', userSelect: 'none' } }, teMode ? '+' : '')));
     }
-    const alertCls = sc === 'pests' ? ' alert-pest' : sc === 'sick' ? ' alert-sick' : '';
+    const alertCls = hasPests ? ' alert-pest' : hasSick ? ' alert-sick' : '';
     return (React.createElement("div", { className: 'pcw' + (isActive ? ' active' : '') + (isSel ? ' pot-sel' : '') + (selMode ? ' sel-mode' : '') + (teMode ? ' temode' : '') + alertCls, style: { width: ppx, height: ppx + LBH, position: 'relative', background: expBg || undefined, borderRadius: expBg ? 6 : undefined }, title: lbl + (plant.treatment ? ' | ' + plant.treatment : '') + (sc === 'sick' ? ' ⚠ SICK' : sc === 'pests' ? ' 🐛 PESTS' : ''), onClick: e => { e.stopPropagation(); if (selMode || !teMode)
             onPotClick(e, plant); },
         onMouseEnter: expInitials && onExpHover ? e => onExpHover(e.clientX, e.clientY) : undefined,
@@ -1357,8 +1362,8 @@ function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onD
             React.createElement(PotSVG, { sid: plant.pot_style || 'conic', sz: svgSz, sc: sc, hi: !!plant.image, iu: plant.image, colorId: plant.pot_color || 'terra' }),
             React.createElement("span", { className: "plbl", style: { fontSize: fs, width: ppx + 4, marginTop: 1, height: LBH - 1 } }, disp || '')),
         teMode && React.createElement("button", { className: "pdel", onClick: e => { e.stopPropagation(); onDel(plant.id); } }, "x"),
-        sc === 'pests' && React.createElement("div", { className: "pot-alert-badge pest-badge" }, "🐛"),
-        sc === 'sick'  && React.createElement("div", { className: "pot-alert-badge sick-badge"  }, "⚠"),
+        hasPests && React.createElement("div", { className: "pot-alert-badge pest-badge", style:{right: hasSick ? 16 : 2} }, "🐛"),
+        hasSick  && React.createElement("div", { className: "pot-alert-badge sick-badge", style:{right:2} }, "⚠"),
         plant.image && React.createElement("div", { style: { position: 'absolute', top: 1, right: 1, width: 6, height: 6, borderRadius: '50%', background: var_amber, border: '1px solid #fff' } }),
         expInitials && React.createElement("div", { style: {
             position: 'absolute', top: 2, left: 2,
@@ -1543,7 +1548,7 @@ function StructObj({ obj, locked, onDrag, onDel, onSwitch }) {
         onMouseDown: hmd },
         React.createElement("span", { style:{ fontSize: Math.min(w,h)*.4, lineHeight:1, pointerEvents:'none',
             transform: isRotated ? 'rotate(90deg)' : 'none', display:'block' } }, icon),
-        React.createElement("span", { style:{ fontSize:9, color:def.col, fontFamily:'Inter', opacity:.8, pointerEvents:'none' } }, def.lbl),
+        React.createElement("span", { style:{ fontSize:9, color:def.col, fontFamily:'Poppins', opacity:.8, pointerEvents:'none' } }, def.lbl),
         sel && !locked && React.createElement("div", {
             style:{ position:'absolute', top:-28, left:'50%', transform:'translateX(-50%)',
                 display:'flex', gap:3, background:'#111827', borderRadius:6, padding:'3px 5px',
@@ -1614,16 +1619,16 @@ function saveImages(d) {
         (d.stock||[]).forEach(function(i){ if(i.image) imgs['s_'+i.id]=i.image; });
         (d.orders||[]).forEach(function(o){ if(o.quotation_file) imgs['q_'+o.id]=o.quotation_file; });
         localStorage.setItem(GL_IMG_KEY, JSON.stringify(imgs));
+        (d.stock||[]).forEach(function(i){ if(i.image){ try{localStorage.setItem('gl_stk_img_'+i.id,i.image);}catch(e2){} } });
     } catch(e) { console.warn('[IMG] save failed:', e.message); }
 }
 function loadImages(d) {
     try {
-        var raw = localStorage.getItem(GL_IMG_KEY);
-        if (!raw) return d;
-        var imgs = JSON.parse(raw);
+        var imgs = {};
+        try { var raw = localStorage.getItem(GL_IMG_KEY); if(raw) imgs=JSON.parse(raw); } catch(e2){}
         return Object.assign({}, d, {
             plants: (d.plants||[]).map(function(p){ return imgs['p_'+p.id] ? Object.assign({},p,{image:imgs['p_'+p.id]}) : p; }),
-            stock:  (d.stock||[]).map(function(i){  return imgs['s_'+i.id] ? Object.assign({},i,{image:imgs['s_'+i.id]}) : i; }),
+            stock:  (d.stock||[]).map(function(i){ var img=imgs['s_'+i.id]||localStorage.getItem('gl_stk_img_'+i.id); return img ? Object.assign({},i,{image:img}) : i; }),
             orders: (d.orders||[]).map(function(o){ return imgs['q_'+o.id] ? Object.assign({},o,{quotation_file:imgs['q_'+o.id]}) : o; }),
         });
     } catch(e) { return d; }
@@ -1718,32 +1723,37 @@ function Modal({ title, sub, onClose, onConfirm, confirmLabel = 'Create', wide, 
 }
 /* Autocomplete input — touch + mouse compatible */
 function Autocomplete({ value, onChange, onKeyDown, suggestions, placeholder, className, inputRef, big, onDeleteSuggestion }) {
-    const [open, setOpen] = useState(false);
-    const [hi, setHi] = useState(-1);
-    const wrap = useRef();
-    const isMobile = () => window.matchMedia('(max-width:1024px)').matches || ('ontouchstart' in window);
+    const [open, setOpen] = React.useState(false);
+    const [hi, setHi] = React.useState(-1);
+    const wrap = React.useRef();
+    const [dropRect, setDropRect] = React.useState(null);
 
-    const filtered = useMemo(() => {
-        const lv = (value||"").toLowerCase();
+    const filtered = React.useMemo(() => {
+        const lv = (value||'').toLowerCase();
         if (!lv) return suggestions.slice(0, 10);
         return suggestions.filter(s => s.toLowerCase().includes(lv)).slice(0, 10);
     }, [value, suggestions]);
 
-    useEffect(() => { setHi(-1); }, [filtered.length]);
+    React.useEffect(() => { setHi(-1); }, [filtered.length]);
 
-    // Close on outside click/touch
-    useEffect(() => {
+    // Close on outside click
+    React.useEffect(() => {
         const fn = e => {
-            if (wrap.current && !wrap.current.contains(e.target) && !e.target.closest('.ac-drop'))
-                setOpen(false);
+            if (wrap.current && !wrap.current.contains(e.target)) setOpen(false);
         };
         document.addEventListener('mousedown', fn);
         document.addEventListener('touchstart', fn, { passive: true });
-        return () => {
-            document.removeEventListener('mousedown', fn);
-            document.removeEventListener('touchstart', fn);
-        };
+        return () => { document.removeEventListener('mousedown', fn); document.removeEventListener('touchstart', fn); };
     }, []);
+
+    const updateRect = () => {
+        if (wrap.current) {
+            const r = wrap.current.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - r.bottom;
+            const top = spaceBelow < 180 ? (r.top - 180) : (r.bottom + 2);
+            setDropRect({ top, left: r.left, width: r.width });
+        }
+    };
 
     const pick = v => { onChange(v); setOpen(false); setHi(-1); };
 
@@ -1756,60 +1766,47 @@ function Autocomplete({ value, onChange, onKeyDown, suggestions, placeholder, cl
         else if (onKeyDown) { onKeyDown(e); }
     };
 
-    // On mobile: render dropdown inline (position:relative) so it's inside
-    // the scrollable popup and not affected by keyboard/viewport shifts.
-    // On desktop: use position:fixed with getBoundingClientRect.
-    const [dropRect, setDropRect] = React.useState(null);
-    const updateRect = () => {
-        if (!isMobile() && wrap.current) {
-            const r = wrap.current.getBoundingClientRect();
-            // Flip upward if too close to bottom
-            const spaceBelow = window.innerHeight - r.bottom;
-            const top = spaceBelow < 170 ? r.top - 170 : r.bottom + 2;
-            setDropRect({ top, left: r.left, width: r.width });
-        } else {
-            setDropRect(null); // mobile: inline mode
-        }
-    };
+    // Portal dropdown rendered directly on body to escape any stacking context
+    const dropdown = open && filtered.length > 0 && dropRect
+        ? ReactDOM.createPortal(
+            React.createElement('div', {
+                className: 'ac-drop',
+                style: { position:'fixed', top: dropRect.top, left: dropRect.left, width: dropRect.width, zIndex: 99999 }
+            }, filtered.map((item, i) => React.createElement('div', {
+                key: item,
+                className: 'ac-item' + (hi === i ? ' hi' : ''),
+                style: { display:'flex', alignItems:'center', justifyContent:'space-between', gap:8 }
+            },
+                React.createElement('span', {
+                    style: { flex:1 },
+                    onMouseDown: e => { e.preventDefault(); pick(item); },
+                    onTouchEnd: e => { e.preventDefault(); pick(item); }
+                }, item),
+                onDeleteSuggestion && React.createElement('span', {
+                    title: 'Delete',
+                    style: { color:'#ef4444', fontSize:13, lineHeight:1, padding:'2px 4px', cursor:'pointer', flexShrink:0 },
+                    onMouseDown: e => { e.preventDefault(); e.stopPropagation(); onDeleteSuggestion(item); setOpen(false); },
+                    onTouchEnd: e => { e.preventDefault(); e.stopPropagation(); onDeleteSuggestion(item); setOpen(false); }
+                }, '×')
+            ))),
+            document.body
+        )
+        : null;
 
-    const dropStyle = dropRect
-        ? { position: 'fixed', top: dropRect.top, left: dropRect.left, width: dropRect.width }
-        : { position: 'relative', top: 'unset', left: 'unset', width: '100%', marginTop: 2 };
-
-    return React.createElement("div", { className: "ac-wrap", ref: wrap },
-        React.createElement("input", {
+    return React.createElement('div', { className: 'ac-wrap', ref: wrap },
+        React.createElement('input', {
             ref: inputRef,
             className: className || (big ? 'fi big' : 'fi'),
             value: value,
             onChange: e => { onChange(e.target.value); setOpen(true); updateRect(); },
-            onFocus: () => { updateRect(); /* do not open on focus - only open when user types */ },
+            onFocus: () => { updateRect(); },
             onKeyDown: hKey,
             placeholder: placeholder || '',
-            autoComplete: "off"
+            autoComplete: 'off'
         }),
-        open && filtered.length > 0 && React.createElement("div", {
-            className: "ac-drop",
-            style: dropStyle
-        }, filtered.map((item, i) => React.createElement("div", {
-            key: item,
-            className: `ac-item${hi === i ? ' hi' : ''}`,
-            style: { display:'flex', alignItems:'center', justifyContent:'space-between', gap:8 }
-        },
-            React.createElement("span", {
-                style: { flex:1 },
-                onMouseDown: e => { e.preventDefault(); pick(item); },
-                onTouchEnd: e => { e.preventDefault(); pick(item); }
-            }, item),
-            onDeleteSuggestion && React.createElement("span", {
-                title: "Delete this genotype from all pots",
-                style: { color:'#ef4444', fontSize:13, lineHeight:1, padding:'2px 4px', cursor:'pointer', flexShrink:0 },
-                onMouseDown: e => { e.preventDefault(); e.stopPropagation(); onDeleteSuggestion(item); setOpen(false); },
-                onTouchEnd: e => { e.preventDefault(); e.stopPropagation(); onDeleteSuggestion(item); setOpen(false); }
-            }, "×")
-        )))
+        dropdown
     );
 }
-
 
 /* ═══════════════════════════════════
    MEASURES TAB  (iPad-optimised data collection)
@@ -2016,95 +2013,76 @@ function MeasureRow({ plant, table, existing, unit, trait, onAdd, onDel }) {
    MESSAGES TAB
 ═══════════════════════════════════ */
 function NotesView({ notes, onAdd, onEdit, onDel, currentUser, users }) {
-    const [text, setText] = React.useState('');
-    const [hl, setHl] = React.useState('');
-    const [editId, setEditId] = React.useState(null);
-    const [editText, setEditText] = React.useState('');
-    const [pdfFile, setPdfFile] = React.useState(null);
-    const [pdfName, setPdfName] = React.useState('');
-    const pdfRef = React.useRef();
-    const HL = [{id:'green',col:'#78C043'},{id:'yellow',col:'#f59e0b'},{id:'red',col:'#ef4444'},{id:'blue',col:'#3b82f6'},{id:'purple',col:'#8b5cf6'}];
-    const handlePdf = e => {
-        const fl = e.target.files[0]; if (!fl) return;
-        const r = new FileReader();
-        r.onload = ev => { setPdfFile(ev.target.result); setPdfName(fl.name); };
-        r.readAsDataURL(fl);
-    };
-    const submit = () => {
-        if (!text.trim()) return;
-        onAdd({ id: uid(), text: text.trim(), author: currentUser ? currentUser.name : '?', author_color: currentUser ? currentUser.color : '#999', highlight: hl, pinned: false, pdf: pdfFile||null, pdf_name: pdfName||'', created_at: new Date().toISOString(), edited: false });
-        setText(''); setHl(''); setPdfFile(null); setPdfName('');
-    };
-    const saveEdit = function(id) { if (!editText.trim()) return; onEdit(id, { text: editText.trim(), edited: true }); setEditId(null); };
-    const togglePin = function(n) { onEdit(n.id, { pinned: !n.pinned }); };
-    const toggleHL  = function(n, hlId) { onEdit(n.id, { highlight: n.highlight === hlId ? '' : hlId }); };
-    const fmtDate = function(iso) { try { return new Date(iso).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'}); } catch(e){ return iso; } };
-    const sorted = (notes||[]).slice().sort(function(a,b) {
-        if (a.pinned && !b.pinned) return -1; if (!a.pinned && b.pinned) return 1;
-        return b.created_at.localeCompare(a.created_at);
-    });
-    return React.createElement('div', { className: 'notes-page' },
-        React.createElement('div', { className: 'notes-head' },
-            React.createElement('div', { className: 'notes-tit' }, '📌 Lab Notes'),
-            React.createElement('div', { style:{fontSize:11,color:'var(--i4)'} }, sorted.length + ' note' + (sorted.length !== 1 ? 's' : ''))
+    const [text,setText]=React.useState('');
+    const [hl,setHl]=React.useState('');
+    const [editId,setEditId]=React.useState(null);
+    const [editText,setEditText]=React.useState('');
+    const [pdfFile,setPdfFile]=React.useState(null);
+    const [pdfName,setPdfName]=React.useState('');
+    const pdfRef=React.useRef();
+    const HL=[{id:'green',col:'#78C043'},{id:'yellow',col:'#f59e0b'},{id:'red',col:'#ef4444'},{id:'blue',col:'#3b82f6'},{id:'purple',col:'#8b5cf6'}];
+    const handlePdf=function(e){var fl=e.target.files[0];if(!fl)return;var r=new FileReader();r.onload=function(ev){setPdfFile(ev.target.result);setPdfName(fl.name);};r.readAsDataURL(fl);};
+    const submit=function(){if(!text.trim())return;onAdd({id:uid(),text:text.trim(),author:currentUser?currentUser.name:'?',author_color:currentUser?currentUser.color:'#6b7280',highlight:hl,pinned:false,pdf:pdfFile||null,pdf_name:pdfName||'',created_at:new Date().toISOString(),edited:false});setText('');setHl('');setPdfFile(null);setPdfName('');};
+    const saveEdit=function(id){if(!editText.trim())return;onEdit(id,{text:editText.trim(),edited:true});setEditId(null);};
+    const togglePin=function(n){onEdit(n.id,{pinned:!n.pinned});};
+    const toggleHL=function(n,hlId){onEdit(n.id,{highlight:n.highlight===hlId?'':hlId});};
+    const fmtDate=function(iso){try{return new Date(iso).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'});}catch(e){return iso;}};
+    const sorted=(notes||[]).slice().sort(function(a,b){if(a.pinned&&!b.pinned)return -1;if(!a.pinned&&b.pinned)return 1;return b.created_at.localeCompare(a.created_at);});
+    const hlBorder={green:'#78C043',yellow:'#f59e0b',red:'#ef4444',blue:'#3b82f6',purple:'#8b5cf6'};
+    const hlBg={green:'#f6fff0',yellow:'#fffdf0',red:'#fff5f5',blue:'#f0f6ff',purple:'#f8f0ff'};
+    return React.createElement('div',{className:'notes-page'},
+        React.createElement('div',{className:'notes-head'},
+            React.createElement('div',{className:'notes-tit'},'📌 Lab Notes'),
+            React.createElement('div',{style:{fontSize:11,color:'var(--i4)'}},sorted.length+' note'+(sorted.length!==1?'s':''))
         ),
-        React.createElement('div', { className: 'notes-list' },
-            sorted.length === 0 && React.createElement('div', { className: 'note-empty' },
-                React.createElement('div', { style:{fontSize:36,opacity:.3} }, '📝'),
-                React.createElement('div', { style:{fontSize:13,fontWeight:600,color:'var(--i2)'} }, 'No notes yet'),
-                React.createElement('div', { style:{fontSize:12,maxWidth:240,lineHeight:1.5} }, 'Write shared notes below.')
+        React.createElement('div',{className:'notes-list'},
+            sorted.length===0&&React.createElement('div',{className:'note-empty'},
+                React.createElement('div',{style:{fontSize:36,opacity:.3}},'📝'),
+                React.createElement('div',{style:{fontSize:13,fontWeight:600,color:'var(--i2)'}},'No notes yet'),
+                React.createElement('div',{style:{fontSize:12,maxWidth:240,lineHeight:1.5}},'Write shared notes below.')
             ),
-            sorted.map(function(n) {
-                var u = users.find(function(u){ return u.name === n.author; });
-                var isMe = currentUser && n.author === currentUser.name;
-                return React.createElement('div', { key: n.id, className: 'note-card' + (n.pinned ? ' pinned' : '') + (n.highlight ? ' hl-' + n.highlight : '') },
-                    React.createElement('div', { className: 'note-meta' },
-                        React.createElement('div', { className: 'note-author-av', style:{background:n.author_color||'#999'} },
-                            u && u.photo ? React.createElement('img', {src:u.photo, alt:n.author}) : (n.author||'?').charAt(0)
-                        ),
-                        React.createElement('span', { className: 'note-author' }, n.author),
-                        n.edited && React.createElement('span', { style:{fontSize:9,color:'var(--i5)'} }, '(edited)'),
-                        React.createElement('span', { className: 'note-date' }, fmtDate(n.created_at)),
-                        React.createElement('span', { onClick: function(){ togglePin(n); }, title: n.pinned ? 'Unpin' : 'Pin',
-                            style:{cursor:'pointer',fontSize:14,opacity:n.pinned?1:.3,marginLeft:4} }, '📌')
+            sorted.map(function(n){
+                var isMe=currentUser&&n.author===currentUser.name;
+                var avColor=n.author_color&&n.author_color.match(/^#[0-9a-fA-F]{3,6}$/)?n.author_color:'#6b7280';
+                var initials=(n.author||'?').charAt(0).toUpperCase();
+                var cardStyle={background:n.highlight&&hlBg[n.highlight]?hlBg[n.highlight]:'#fff',borderRadius:14,padding:'14px 16px',overflow:'hidden',border:'1.5px solid var(--bo)'};
+                if(n.highlight&&hlBorder[n.highlight]) cardStyle.borderLeft='4px solid '+hlBorder[n.highlight];
+                if(n.pinned){cardStyle.borderColor='#f59e0b';cardStyle.background='#fffbeb';}
+                return React.createElement('div',{key:n.id,style:cardStyle},
+                    React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,marginBottom:8}},
+                        React.createElement('div',{style:{width:22,height:22,minWidth:22,minHeight:22,borderRadius:'50%',background:avColor,display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:'#fff',flexShrink:0,overflow:'hidden'}},initials),
+                        React.createElement('span',{style:{fontSize:11,fontWeight:600,color:'var(--i2)',flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},n.author),
+                        n.edited&&React.createElement('span',{style:{fontSize:9,color:'var(--i5)'}},'(edited)'),
+                        React.createElement('span',{style:{fontSize:10,color:'var(--i5)',flexShrink:0,whiteSpace:'nowrap'}},fmtDate(n.created_at)),
+                        React.createElement('span',{onClick:function(){togglePin(n);},title:n.pinned?'Unpin':'Pin',style:{cursor:'pointer',fontSize:13,opacity:n.pinned?1:.25,marginLeft:6,flexShrink:0}},'📌')
                     ),
-                    editId === n.id
-                        ? React.createElement('div', { style:{display:'flex',flexDirection:'column',gap:6} },
-                            React.createElement('textarea', { className:'note-ta', rows:4, value:editText, autoFocus:true,
-                                onChange: function(e){ setEditText(e.target.value); },
-                                onKeyDown: function(e){ if(e.key==='Escape') setEditId(null); } }),
-                            React.createElement('div', { style:{display:'flex',gap:6} },
-                                React.createElement('button', { className:'btn btnp bsm', onClick:function(){ saveEdit(n.id); } }, 'Save'),
-                                React.createElement('button', { className:'btn btns bsm', onClick:function(){ setEditId(null); } }, 'Cancel')
-                            )
-                          )
-                        : React.createElement('div', { className: 'note-body' }, n.text),
-                    n.pdf && React.createElement('a', { className:'note-pdf-link', href:n.pdf, download:n.pdf_name||'attachment' }, '📄 ', n.pdf_name||'Attachment'),
-                    React.createElement('div', { className: 'note-actions' },
-                        HL.map(function(h){ return React.createElement('div', { key:h.id, className:'note-hl-dot'+(n.highlight===h.id?' on':''),
-                            title:h.id, style:{background:h.col}, onClick:function(){ toggleHL(n,h.id); } }); }),
-                        isMe && editId !== n.id && React.createElement('button', { className:'eli-btn', style:{marginLeft:'auto'},
-                            onClick:function(){ setEditId(n.id); setEditText(n.text); } }, 'Edit'),
-                        React.createElement('button', { className:'eli-btn del', style:{marginLeft: isMe ? 4 : 'auto'},
-                            onClick:function(){ window.confirm('Delete this note?') && onDel(n.id); } }, '✕')
+                    editId===n.id
+                        ?React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:6}},
+                            React.createElement('textarea',{className:'note-ta',rows:4,value:editText,autoFocus:true,onChange:function(e){setEditText(e.target.value);},onKeyDown:function(e){if(e.key==='Escape')setEditId(null);}}),
+                            React.createElement('div',{style:{display:'flex',gap:6}},
+                                React.createElement('button',{className:'btn btnp bsm',onClick:function(){saveEdit(n.id);}},'Save'),
+                                React.createElement('button',{className:'btn btns bsm',onClick:function(){setEditId(null);}},'Cancel')
+                            ))
+                        :React.createElement('div',{style:{fontSize:13,color:'var(--i1)',lineHeight:1.55,whiteSpace:'pre-wrap',wordBreak:'break-word'}},n.text),
+                    n.pdf&&React.createElement('a',{href:n.pdf,download:n.pdf_name||'attachment',style:{display:'inline-flex',alignItems:'center',gap:5,marginTop:8,padding:'4px 10px',background:'#eff6ff',border:'1px solid #bfdbfe',borderRadius:20,fontSize:11,color:'#1d4ed8',textDecoration:'none'}},'📄 ',n.pdf_name||'Attachment'),
+                    React.createElement('div',{style:{display:'flex',gap:6,marginTop:10,borderTop:'1px solid var(--bo)',paddingTop:8,alignItems:'center',flexWrap:'nowrap',minWidth:0}},
+                        HL.map(function(h){return React.createElement('div',{key:h.id,title:h.id,onClick:function(){toggleHL(n,h.id);},style:{width:14,height:14,minWidth:14,borderRadius:'50%',cursor:'pointer',flexShrink:0,background:h.col,border:n.highlight===h.id?'2px solid #fff':'2px solid transparent',boxShadow:n.highlight===h.id?'0 0 0 2px '+h.col:'none'}});}),
+                        isMe&&editId!==n.id&&React.createElement('button',{className:'eli-btn',style:{marginLeft:'auto'},onClick:function(){setEditId(n.id);setEditText(n.text);}},'Edit'),
+                        React.createElement('button',{className:'eli-btn del',style:{marginLeft:isMe?4:'auto'},onClick:function(){window.confirm('Delete?')&&onDel(n.id);}},'✕')
                     )
                 );
             })
         ),
-        React.createElement('div', { className: 'note-compose' },
-            React.createElement('textarea', { className:'note-ta', rows:3, placeholder:'Write a note for the team…', value:text,
-                onChange: function(e){ setText(e.target.value); },
-                onKeyDown: function(e){ if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){ e.preventDefault(); submit(); } } }),
-            React.createElement('div', { className:'note-compose-row' },
-                React.createElement('span', { style:{fontSize:10,color:'var(--i4)',flexShrink:0} }, 'Color:'),
-                HL.map(function(h){ return React.createElement('div', { key:h.id, className:'note-hl-dot'+(hl===h.id?' on':''),
-                    title:h.id, style:{background:h.col}, onClick:function(){ setHl(function(x){ return x===h.id?'':h.id; }); } }); }),
-                React.createElement('button', { className:'btn btns bsm', style:{marginLeft:4}, onClick:function(){ pdfRef.current.click(); } },
-                    pdfFile ? '📄 '+pdfName.slice(0,12) : '📎 PDF'),
-                pdfFile && React.createElement('button', { className:'btn btnd bxs', onClick:function(){ setPdfFile(null); setPdfName(''); } }, '×'),
-                React.createElement('input', { ref:pdfRef, type:'file', accept:'application/pdf,.pdf', style:{display:'none'}, onChange:handlePdf }),
-                React.createElement('button', { className:'btn btnp bsm', style:{marginLeft:'auto'}, onClick:submit, disabled:!text.trim() }, 'Post'),
-                React.createElement('span', { style:{fontSize:9,color:'var(--i5)'} }, '⌘+Enter')
+        React.createElement('div',{className:'note-compose'},
+            React.createElement('textarea',{className:'note-ta',rows:3,placeholder:'Write a note…',value:text,onChange:function(e){setText(e.target.value);},onKeyDown:function(e){if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();submit();}}}),
+            React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6,flexWrap:'nowrap',minWidth:0,marginTop:6}},
+                React.createElement('span',{style:{fontSize:10,color:'var(--i4)',flexShrink:0}},'Color:'),
+                HL.map(function(h){return React.createElement('div',{key:h.id,title:h.id,onClick:function(){setHl(function(x){return x===h.id?'':h.id;});},style:{width:14,height:14,minWidth:14,borderRadius:'50%',cursor:'pointer',flexShrink:0,background:h.col,border:hl===h.id?'2px solid #fff':'2px solid transparent',boxShadow:hl===h.id?'0 0 0 2px '+h.col:'none'}});}),
+                React.createElement('button',{className:'btn btns bsm',style:{marginLeft:4,flexShrink:0},onClick:function(){pdfRef.current.click();}},pdfFile?'📄 '+pdfName.slice(0,12):'📎 PDF'),
+                pdfFile&&React.createElement('button',{className:'btn btnd bxs',style:{flexShrink:0},onClick:function(){setPdfFile(null);setPdfName('');}},'×'),
+                React.createElement('input',{ref:pdfRef,type:'file',accept:'application/pdf,.pdf',style:{display:'none'},onChange:handlePdf}),
+                React.createElement('button',{className:'btn btnp bsm',style:{marginLeft:'auto',flexShrink:0},onClick:submit,disabled:!text.trim()},'Post'),
+                React.createElement('span',{style:{fontSize:9,color:'var(--i5)',flexShrink:0}},'⌘+Enter')
             )
         )
     );
@@ -2288,8 +2266,10 @@ function tlDiff(oldP, newP, userName, exps) {
     if ((newP.genotype||'') !== (oldP.genotype||'') && newP.genotype) {
         events.push({ type:'genotype', text:'Genotype set to ' + newP.genotype + (newP.treatment ? ' / ' + newP.treatment : ''), date:d, by:by });
     }
-    if ((newP.status||'') !== (oldP.status||'') && newP.status && newP.status !== 'empty') {
-        events.push({ type:'status', text:'Status changed to ' + newP.status + (newP.status==='sick'&&newP.disease_name?' ('+newP.disease_name+')':newP.status==='pests'&&newP.pest_name?' ('+newP.pest_name+')':''), date:d, by:by });
+    var newSts = (newP.statuses&&newP.statuses.length ? newP.statuses : (newP.status&&newP.status!=='empty'?[newP.status]:[])).filter(Boolean);
+    var oldSts = (oldP.statuses&&oldP.statuses.length ? oldP.statuses : (oldP.status&&oldP.status!=='empty'?[oldP.status]:[])).filter(Boolean);
+    if (JSON.stringify(newSts.slice().sort()) !== JSON.stringify(oldSts.slice().sort()) && newSts.length > 0) {
+        events.push({ type:'status', text:'Status: '+newSts.join(' + ')+(newP.disease_name?' ('+newP.disease_name+')':'')+(newP.pest_name?' / '+newP.pest_name:''), date:d, by:by });
     }
     if ((newP.experiment_id||'') !== (oldP.experiment_id||'')) {
         var expName = newP.experiment_id ? ((exps||[]).find(function(ex){return ex.id===newP.experiment_id;})||{}).name||newP.experiment_id : null;
@@ -2364,7 +2344,7 @@ function PlannedGenotypesEditor({ value, onChange }) {
 function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, users }) {
     const CROPS = ['Tomato', 'Cucumber', 'Eggplant', 'Basil', 'Arabidopsis', 'Pepper', 'Lettuce', 'Strawberry', 'Wheat', 'Maize', 'Other'];
     const CROP_ICONS = {'Tomato':'🍅','Cucumber':'🥒','Eggplant':'🍆','Basil':'🌿','Arabidopsis':'🌱','Pepper':'🫑','Lettuce':'🥬','Strawberry':'🍓','Wheat':'🌾','Maize':'🌽','Other':'🪴'};
-    const [f, setF] = useState({ genotype: plant.genotype || '', treatment: plant.treatment || '', treatments: plant.treatments || [], cross_parent1: plant.cross_parent1 || '', cross_parent2: plant.cross_parent2 || '', planting_date: plant.planting_date || '', status: plant.status || 'empty', disease_name: plant.disease_name || '', pest_name: plant.pest_name || '', crop: plant.crop || 'Tomato', owner: plant.owner || '', date_moved_in: plant.date_moved_in || '', date_until: plant.date_until || '', notes: plant.notes || '', pot_style: plant.pot_style || 'conic', pot_color: plant.pot_color || 'terra', image: plant.image || null, photos: plant.photos || (plant.image ? [{id:'i0',data:plant.image,date:''}] : []), experiment_id: plant.experiment_id || null });
+    const [f, setF] = useState({ genotype: plant.genotype || '', treatment: plant.treatment || '', treatments: plant.treatments || [], cross_parent1: plant.cross_parent1 || '', cross_parent2: plant.cross_parent2 || '', planting_date: plant.planting_date || '', status: plant.status || 'empty', statuses: plant.statuses || (plant.status && plant.status !== 'empty' ? [plant.status] : []), disease_name: plant.disease_name || '', pest_name: plant.pest_name || '', crop: plant.crop || 'Tomato', owner: plant.owner || '', date_moved_in: plant.date_moved_in || '', date_until: plant.date_until || '', notes: plant.notes || '', pot_style: plant.pot_style || 'conic', pot_color: plant.pot_color || 'terra', image: plant.image || null, photos: plant.photos || (plant.image ? [{id:'i0',data:plant.image,date:''}] : []), experiment_id: plant.experiment_id || null });
     const [lbIdx, setLbIdx] = React.useState(null);
     const allGenos = useMemo(() => [...new Set((allPlants || []).map(p => p.genotype).filter(Boolean))], [allPlants]);
     const allTrts = useMemo(() => [...new Set((allPlants || []).map(p => p.treatment).filter(Boolean))], [allPlants]);
@@ -2394,8 +2374,7 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
         const ou2 = URL.createObjectURL(fl);
         img2.onload = () => {
             URL.revokeObjectURL(ou2);
-            const MAX2 = 360;
-            const sc2 = Math.min(1, MAX2 / Math.max(img2.width, img2.height));
+            const sc2 = Math.min(1, 360 / Math.max(img2.width, img2.height));
             const cw = Math.round(img2.width * sc2), ch = Math.round(img2.height * sc2);
             const cv2 = document.createElement('canvas');
             cv2.width = cw; cv2.height = ch;
@@ -2408,11 +2387,13 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
         img2.src = ou2;
     };
     const rmPhoto = function(pid) {
-        const rem = (f.photos||[]).filter(function(p){ return p.id !== pid; });
+        const rem = (f.photos||[]).filter(function(ph){ return ph.id !== pid; });
         set('photos', rem);
         set('image', rem.length > 0 ? rem[rem.length-1].data : null);
     };
-    const mobClass = window.innerWidth <= 1024 ? " mobile-center" : ""; return (React.createElement("div", { className: "pop" + mobClass, ref: ref, style: { top: pos.top, left: pos.left, maxHeight: Math.min(Math.round(window.innerHeight * 0.9), 560) } },
+    const isMob = window.innerWidth <= 1024;
+    const mobClass = isMob ? " mobile-sheet" : ""; return (React.createElement("div", { className: "pop" + mobClass, ref: ref, style: isMob ? {} : { top: pos.top, left: pos.left, maxHeight: Math.min(Math.round(window.innerHeight * 0.9), 560) } },
+        React.createElement("div", { className: "pop-handle" }),
         React.createElement("div", { className: "pph" },
             React.createElement("div", { className: "pppre" },
                 React.createElement(PotSVG, { sid: f.pot_style, sz: 36, sc: f.status !== 'empty' ? f.status : null, colorId: f.pot_color || 'terra' })),
@@ -2435,50 +2416,25 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
                     })),
             React.createElement("div", null,
                 React.createElement("label", { className: "fl" }, "Treatment"),
-                React.createElement(Autocomplete, { value: f.treatment, onChange: v => set('treatment', v), onKeyDown: onKey, suggestions: allTrts, placeholder: "Primary treatment, e.g. +SA..." }),
+                React.createElement(Autocomplete, { value: f.treatment, onChange: v => set('treatment', v), onKeyDown: onKey, suggestions: allTrts, placeholder: "Primary, e.g. +SA..." }),
                 (f.treatments && f.treatments.length > 0) && React.createElement("div", { style:{marginTop:5,display:'flex',flexDirection:'column',gap:3} },
-                    f.treatments.map(function(t, i) { return React.createElement("div", {key:i, style:{display:'flex',gap:4,alignItems:'center',background:'var(--cr2)',borderRadius:8,padding:'4px 8px',fontSize:11}},
-                        React.createElement("span", {style:{flex:1,fontWeight:500,color:'var(--i2)'}}, t.label),
+                    f.treatments.map(function(t,i){ return React.createElement("div", {key:i, style:{display:'flex',gap:4,alignItems:'center',background:'var(--cr2)',borderRadius:8,padding:'4px 8px',fontSize:11}},
+                        React.createElement("span", {style:{flex:1,fontWeight:500,color:'var(--i2)'} }, t.label),
                         t.date && React.createElement("span", {style:{color:'var(--i5)',fontSize:10,flexShrink:0}}, t.date),
-                        React.createElement("button", {
-                            title:"Edit",
-                            onClick: function() {
-                                var lbl = window.prompt('Edit treatment name:', t.label);
-                                if (lbl === null) return;
-                                if (!lbl.trim()) { set('treatments', f.treatments.filter(function(_,j){ return j!==i; })); return; }
-                                var dt = window.prompt('Date (YYYY-MM-DD):', t.date||'');
-                                set('treatments', f.treatments.map(function(x,j){ return j===i ? {label:lbl.trim(),date:dt||''} : x; }));
-                            },
-                            style:{background:'none',border:'none',color:'var(--i4)',cursor:'pointer',fontSize:12,padding:'0 2px',lineHeight:1}
-                        }, '✎'),
-                        React.createElement("button", {
-                            title:"Remove",
-                            onClick: function() { set('treatments', f.treatments.filter(function(_,j){ return j!==i; })); },
-                            style:{background:'none',border:'none',color:'var(--to)',cursor:'pointer',fontSize:13,padding:'0 2px',lineHeight:1}
-                        }, '×')
+                        React.createElement("button", { title:"Edit", onClick:function(){ var lbl=window.prompt('Edit:',t.label); if(lbl===null) return; if(!lbl.trim()){set('treatments',f.treatments.filter(function(_,j){return j!==i;}));return;} var dt=window.prompt('Date (YYYY-MM-DD):',t.date||''); set('treatments',f.treatments.map(function(x,j){return j===i?{label:lbl.trim(),date:dt||''}:x;})); }, style:{background:'none',border:'none',color:'var(--i4)',cursor:'pointer',fontSize:12,padding:'0 2px'} }, '✎'),
+                        React.createElement("button", { title:"Remove", onClick:function(){ set('treatments',f.treatments.filter(function(_,j){return j!==i;})); }, style:{background:'none',border:'none',color:'var(--to)',cursor:'pointer',fontSize:13,padding:'0 2px'} }, '×')
                     ); })
                 ),
-                React.createElement("button", {
-                    className: "btn btns bxs",
-                    style: {fontSize:10,padding:'3px 8px',marginTop:4},
-                    onClick: function() {
-                        var lbl = window.prompt('Treatment name (e.g. +SA, mock, control):');
-                        if (!lbl || !lbl.trim()) return;
-                        var dt = window.prompt('Date applied (YYYY-MM-DD, or leave blank):', new Date().toISOString().slice(0,10));
-                        set('treatments', (f.treatments||[]).concat([{label:lbl.trim(), date:dt||''}]));
-                    }
-                }, '+ Add treatment')
+                React.createElement("button", { className:"btn btns bxs", style:{fontSize:10,padding:'3px 8px',marginTop:4}, onClick:function(){ var lbl=window.prompt('Treatment name (e.g. +SA, mock):'); if(!lbl||!lbl.trim()) return; var dt=window.prompt('Date (YYYY-MM-DD, optional):',new Date().toISOString().slice(0,10)); set('treatments',(f.treatments||[]).concat([{label:lbl.trim(),date:dt||''}])); } }, '+ Add treatment')
             ),
             React.createElement("div", null,
-                React.createElement("label", { className: "fl" }, "Cross / Parents (optional)"),
+                React.createElement("label", { className: "fl" }, "Cross / Parents"),
                 React.createElement("div", {style:{display:'flex',gap:4,alignItems:'center'}},
-                    React.createElement("input", {className:"fi", style:{flex:1}, placeholder:"♀ Parent 1", value:f.cross_parent1, onChange:function(e){ set('cross_parent1', e.target.value); }}),
+                    React.createElement("input", {className:"fi", style:{flex:1}, placeholder:"♀ Parent 1", value:f.cross_parent1, onChange:function(e){ set('cross_parent1',e.target.value); }}),
                     React.createElement("span", {style:{fontSize:14,color:'var(--i4)',flexShrink:0,fontWeight:700}}, '×'),
-                    React.createElement("input", {className:"fi", style:{flex:1}, placeholder:"♂ Parent 2", value:f.cross_parent2, onChange:function(e){ set('cross_parent2', e.target.value); }})
+                    React.createElement("input", {className:"fi", style:{flex:1}, placeholder:"♂ Parent 2", value:f.cross_parent2, onChange:function(e){ set('cross_parent2',e.target.value); }})
                 ),
-                (f.cross_parent1 || f.cross_parent2) && React.createElement("div", {style:{fontSize:10,color:'var(--i4)',marginTop:3}},
-                    (f.cross_parent1||'?') + ' × ' + (f.cross_parent2||'?')
-                )
+                (f.cross_parent1||f.cross_parent2) && React.createElement("div", {style:{fontSize:10,color:'var(--i4)',marginTop:3}}, (f.cross_parent1||'?')+' × '+(f.cross_parent2||'?'))
             ),
             React.createElement("div", null,
                 React.createElement("label", { className: "fl" }, "Planting Date"),
@@ -2492,31 +2448,45 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
                         ['dead',   'Dead',   'pd',   '<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"18\" y1=\"6\" x2=\"6\" y2=\"18\"/><line x1=\"6\" y1=\"6\" x2=\"18\" y2=\"18\"/></svg>'],
                         ['sick',   'Sick',   'sick', '<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"12\" y1=\"8\" x2=\"12\" y2=\"12\"/><line x1=\"12\" y1=\"16\" x2=\"12.01\" y2=\"16\"/></svg>'],
                         ['pests',  'Pests',  'pest', '<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M6 12c-2 1-3 3-2 5m14-5c2 1 3 3 2 5M9 20h6M8 8l-4-2M16 8l4-2\"/></svg>'],
-                    ].map(([k,l,cls,icn]) => React.createElement("div", {
+                    ].map(([k,l,cls,icn]) => { var ADDITIVE=['sick','pests']; return React.createElement("div", {
                         key: k,
-                        className: `pill${f.status===k ? ' '+cls : ''}`,
-                        style: f.status===k && cls==='sick' ? {background:'#fdf4ff',borderColor:'#a855f7',color:'#6b21a8'} :
-                               f.status===k && cls==='pest' ? {background:'#fff7ed',borderColor:'#f97316',color:'#9a3412'} : {},
-                        onClick: () => set('status', k)
+                        className: 'pill' + (ADDITIVE.includes(k) ? ((f.statuses||[]).includes(k) ? ' '+cls : '') : (f.status===k ? ' '+cls : '')),
+                        style: (ADDITIVE.includes(k) ? (f.statuses||[]).includes(k) : f.status===k) && cls==='sick' ? {background:'#fdf4ff',borderColor:'#a855f7',color:'#6b21a8'} :
+                               (ADDITIVE.includes(k) ? (f.statuses||[]).includes(k) : f.status===k) && cls==='pest' ? {background:'#fff7ed',borderColor:'#f97316',color:'#9a3412'} :
+                               (ADDITIVE.includes(k) ? (f.statuses||[]).includes(k) : f.status===k) && cls==='ph' ? {background:'#f0fdf4',borderColor:'#16a34a',color:'#14532d'} :
+                               (ADDITIVE.includes(k) ? (f.statuses||[]).includes(k) : f.status===k) && cls==='pw' ? {background:'#fffbeb',borderColor:'#d97706',color:'#92400e'} :
+                               (ADDITIVE.includes(k) ? (f.statuses||[]).includes(k) : f.status===k) && cls==='pd' ? {background:'#fef2f2',borderColor:'#b91c1c',color:'#7f1d1d'} : {},
+                        onClick: function() {
+                            var ADDITIVE = ['sick','pests'];
+                            if (ADDITIVE.includes(k)) {
+                                var cur = f.statuses || [];
+                                var next = cur.includes(k) ? cur.filter(function(x){return x!==k;}) : cur.concat([k]);
+                                set('statuses', next);
+                            } else {
+                                set('status', k);
+                                set('statuses', [k]);
+                            }
+                        }
                     },
                         React.createElement("span", { dangerouslySetInnerHTML:{__html:icn}, style:{display:'inline-flex',alignItems:'center',marginRight:4,verticalAlign:'middle'} }),
                         l
-                    ))
+                    ); })
                 ),
-                f.status === 'sick' && React.createElement("div", { style:{marginTop:8} },
+                React.createElement("div", {style:{fontSize:9,color:'var(--i5)',marginTop:4,marginBottom:2}}, "Sick + Pests can both be active. Others are exclusive."),
+                ((f.statuses||[]).includes('sick') || f.status==='sick') && React.createElement("div", { style:{marginTop:8} },
                     React.createElement(Autocomplete, {
                         value: f.disease_name || '',
-                        onChange: v => set('disease_name', v),
-                        suggestions: DISEASES.filter(d=>d!=='Other'),
+                        onChange: function(v){ set('disease_name', v); },
+                        suggestions: DISEASES.filter(function(d){return d!=='Other';}),
                         placeholder: "Type or select disease...",
                         big: false
                     })
                 ),
-                f.status === 'pests' && React.createElement("div", { style:{marginTop:8} },
+                ((f.statuses||[]).includes('pests') || f.status==='pests') && React.createElement("div", { style:{marginTop:8} },
                     React.createElement(Autocomplete, {
                         value: f.pest_name || '',
-                        onChange: v => set('pest_name', v),
-                        suggestions: PESTS.filter(p=>p!=='Other'),
+                        onChange: function(v){ set('pest_name', v); },
+                        suggestions: PESTS.filter(function(p){return p!=='Other';}),
                         placeholder: "Type or select pest...",
                         big: false
                     })
@@ -2560,33 +2530,33 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
                         React.createElement("div", { style: { width: 10, height: 10, borderRadius: 3, background: EC[ex.color_index % 8], flexShrink: 0 } }),
                         React.createElement("span", { style: { flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, ex.name))))),
             React.createElement("div", null,
-                React.createElement("label", { className: "fl" }, "Photos" + ((f.photos && f.photos.length > 0) ? " (" + f.photos.length + ")" : "")),
+                React.createElement("label", { className: "fl" }, "Photos" + ((f.photos&&f.photos.length)?' ('+f.photos.length+')':'')),
                 (f.photos && f.photos.length > 0) && React.createElement("div", { style:{display:'flex',gap:6,flexWrap:'wrap',marginBottom:6} },
-                    f.photos.map(function(ph, idx){ return React.createElement("div", { key: ph.id||idx, style:{position:'relative',flexShrink:0} },
-                        React.createElement("img", { src: ph.data, alt:"plant", onClick:function(){ setLbIdx(idx); },
+                    f.photos.map(function(ph,idx){ return React.createElement("div", {key:ph.id||idx, style:{position:'relative',flexShrink:0}},
+                        React.createElement("img", { src:ph.data, alt:"plant", onClick:function(){ setLbIdx(idx); },
                             style:{width:64,height:64,objectFit:'cover',borderRadius:8,border:'1.5px solid var(--bo)',display:'block',cursor:'zoom-in'} }),
-                        ph.date && React.createElement("div", { style:{fontSize:8,color:'var(--i4)',textAlign:'center',marginTop:2} }, ph.date),
+                        ph.date && React.createElement("div", {style:{fontSize:8,color:'var(--i4)',textAlign:'center',marginTop:2}}, ph.date),
                         React.createElement("button", { onClick:function(){ rmPhoto(ph.id||('i'+idx)); },
-                            style:{position:'absolute',top:-5,right:-5,background:'#ef4444',color:'#fff',border:'none',borderRadius:'50%',width:16,height:16,fontSize:10,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1} }, "×")
+                            style:{position:'absolute',top:-5,right:-5,background:'#ef4444',color:'#fff',border:'none',borderRadius:'50%',width:16,height:16,fontSize:10,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'} }, "×")
                     ); })
                 ),
                 React.createElement("div", { className:"imgup", onClick:function(){ fref.current.click(); }, style:{height:44} },
-                    React.createElement("div", { className:"iuph" }, (f.photos && f.photos.length > 0) ? "📷 Add another photo" : "📷 Click to upload")
+                    React.createElement("div", { className:"iuph" }, (f.photos&&f.photos.length)?"📷 Add another photo":"📷 Click to upload")
                 ),
                 React.createElement("input", { ref: fref, type: "file", accept: "image/*", style: { display: 'none' }, onChange: handleImg })),
             lbIdx !== null && f.photos && f.photos[lbIdx] && React.createElement("div", {
-                onClick: function(){ setLbIdx(null); },
+                onClick:function(){ setLbIdx(null); },
                 style:{position:'fixed',inset:0,background:'rgba(0,0,0,.88)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:12,cursor:'zoom-out'}
             },
-                React.createElement("img", { src: f.photos[lbIdx].data, alt:"plant",
+                React.createElement("img", { src:f.photos[lbIdx].data, alt:"plant",
                     style:{maxWidth:'90vw',maxHeight:'80vh',objectFit:'contain',borderRadius:8,boxShadow:'0 8px 40px rgba(0,0,0,.6)'} }),
                 React.createElement("div", { style:{display:'flex',gap:12,alignItems:'center'}, onClick:function(e){ e.stopPropagation(); } },
                     f.photos.length > 1 && React.createElement("button", { onClick:function(){ setLbIdx(function(i){ return Math.max(0,i-1); }); },
-                        style:{background:'rgba(255,255,255,.15)',border:'none',color:'#fff',borderRadius:8,padding:'6px 14px',cursor:'pointer',fontSize:18} }, "‹"),
+                        style:{background:'rgba(255,255,255,.15)',border:'none',color:'#fff',borderRadius:8,padding:'6px 16px',cursor:'pointer',fontSize:20} }, "‹"),
                     React.createElement("span", { style:{color:'rgba(255,255,255,.7)',fontSize:12} },
-                        (lbIdx+1) + " / " + f.photos.length + (f.photos[lbIdx].date ? " · " + f.photos[lbIdx].date : "")),
+                        (lbIdx+1)+' / '+f.photos.length+(f.photos[lbIdx].date?' · '+f.photos[lbIdx].date:'')),
                     f.photos.length > 1 && React.createElement("button", { onClick:function(){ setLbIdx(function(i){ return Math.min(f.photos.length-1,i+1); }); },
-                        style:{background:'rgba(255,255,255,.15)',border:'none',color:'#fff',borderRadius:8,padding:'6px 14px',cursor:'pointer',fontSize:18} }, "›")
+                        style:{background:'rgba(255,255,255,.15)',border:'none',color:'#fff',borderRadius:8,padding:'6px 16px',cursor:'pointer',fontSize:20} }, "›")
                 )
             ),
             React.createElement("div", null,
@@ -2670,7 +2640,7 @@ function SearchView({ plants, tables, ghs, exps, onSel }) {
                     React.createElement("div", { className: `rcst ${p.status || 'empty'}`,
                         style: p.status==='sick'?{background:'#fdf4ff',color:'#9333ea',border:'1px solid #e9d5ff',fontWeight:700}:
                                p.status==='pests'?{background:'#fff7ed',color:'#ea580c',border:'1px solid #fed7aa',fontWeight:700}:{} },
-                        p.status==='pests'?'🐛 Pests':p.status==='sick'?'⚠ Sick':p.status && p.status !== 'empty' ? p.status : '')));
+                        (function(p2){ var s=(p2.statuses&&p2.statuses.length?p2.statuses:(p2.status&&p2.status!=='empty'?[p2.status]:[])); return s.map(function(x){return x==='pests'?'🐛':x==='sick'?'⚠':x.charAt(0).toUpperCase()+x.slice(1);}).join('+') || ''; })(p))));
             }))));
 }
 
@@ -2691,13 +2661,13 @@ function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel }) {
     const [editId, setEditId] = React.useState(null);
     const EMPTY_ORDER = { item_name:'', category:'Equipment', description:'', ordered_by: curUser?.name||'', supplier:'', status:'Draft', quantity:1, order_date: new Date().toISOString().slice(0,10), expected_arrival_date:'', actual_arrival_date:'', estimated_cost:'', currency:'USD', catalog_number:'', supplier_link:'', notes:'', priority:'Normal', storage_location:'', received_by:'', item_image:null, quotation_file:null, quotation_file_name:'', experiment_id:'' };
     const [fm, setFm] = React.useState(EMPTY_ORDER);
-    const EMPTY_REQ = { item_name:'', requested_by: curUser ? curUser.name : '', quantity:1, supplier:'', catalog_link:'', notes:'', priority:'Medium', pdf:null, pdf_name:'' };
-    const [reqFm, setReqFm] = React.useState(EMPTY_REQ);
-    const [reqSearch, setReqSearch] = React.useState('');
-    const [reqFilter, setReqFilter] = React.useState('all');
-    const setR = function(k,v){ setReqFm(function(p){ return Object.assign({},p,{[k]:v}); }); };
+    const EMPTY_REQ={item_name:'',requested_by:curUser?curUser.name:'',quantity:1,supplier:'',catalog_link:'',notes:'',priority:'Medium',pdf:null,pdf_name:''};
+    const [reqFm,setReqFm]=React.useState(EMPTY_REQ);
+    const [reqSearch,setReqSearch]=React.useState('');
+    const [reqFilter,setReqFilter]=React.useState('all');
+    const setR=function(k,v){setReqFm(function(prev){return Object.assign({},prev,{[k]:v});});};
     const imgRef = React.useRef(); const pdfRef = React.useRef();
-    const reqPdfRef = React.useRef();
+    const reqPdfRef=React.useRef();
     const set = (k,v) => setFm(p => ({...p,[k]:v}));
 
     const openAdd = () => { setFm({...EMPTY_ORDER, ordered_by: curUser?.name||'', order_date: new Date().toISOString().slice(0,10)}); setEditId(null); setShowForm(true); };
@@ -2708,13 +2678,8 @@ function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel }) {
         else { onAdd({...fm, id: Math.random().toString(36).slice(2,9), created_at: new Date().toISOString(), updated_at: new Date().toISOString()}); }
         setShowForm(false); setEditId(null);
     };
-    const saveRequest = function() {
-        if (!reqFm.item_name.trim()) return;
-        onAdd({ id: Math.random().toString(36).slice(2,9), item_name: reqFm.item_name.trim(), category: 'Request', ordered_by: reqFm.requested_by, quantity: +reqFm.quantity||1, supplier: reqFm.supplier, catalog_number: reqFm.catalog_link, notes: reqFm.notes, priority: reqFm.priority, status: 'Requested', order_date: new Date().toISOString().slice(0,10), quotation_file: reqFm.pdf||null, quotation_file_name: reqFm.pdf_name||'', created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
-        setReqFm(Object.assign({},EMPTY_REQ,{requested_by:curUser?curUser.name:''}));
-        setShowReqForm(false);
-    };
-    const handleReqPdf = function(e) { const fl=e.target.files[0]; if(!fl) return; const r=new FileReader(); r.onload=function(ev){ setR('pdf',ev.target.result); setR('pdf_name',fl.name); }; r.readAsDataURL(fl); };
+    const saveRequest=function(){if(!reqFm.item_name.trim())return;onAdd({id:Math.random().toString(36).slice(2,9),item_name:reqFm.item_name.trim(),category:'Request',ordered_by:reqFm.requested_by,quantity:+reqFm.quantity||1,supplier:reqFm.supplier,catalog_number:reqFm.catalog_link,notes:reqFm.notes,priority:reqFm.priority,status:'Requested',order_date:new Date().toISOString().slice(0,10),quotation_file:reqFm.pdf||null,quotation_file_name:reqFm.pdf_name||'',created_at:new Date().toISOString(),updated_at:new Date().toISOString()});setReqFm(Object.assign({},EMPTY_REQ,{requested_by:curUser?curUser.name:''}));setShowReqForm(false);};
+    const handleReqPdf=function(e){const fl=e.target.files[0];if(!fl)return;const r=new FileReader();r.onload=function(ev){setR('pdf',ev.target.result);setR('pdf_name',fl.name);};r.readAsDataURL(fl);};
 
     const hImg = e => { const fl = e.target.files[0]; if (!fl) return; const si=new Image(); const ou=URL.createObjectURL(fl); si.onload=()=>{ URL.revokeObjectURL(ou); const SC=Math.min(1,300/Math.max(si.width,si.height)); const cv=document.createElement('canvas'); cv.width=Math.round(si.width*SC); cv.height=Math.round(si.height*SC); cv.getContext('2d').drawImage(si,0,0,cv.width,cv.height); set('item_image',cv.toDataURL('image/jpeg',.75)); }; si.src=ou; };
     const hPdf = e => { const fl = e.target.files[0]; if (!fl) return; const r=new FileReader(); r.onload=ev=>{ set('quotation_file',ev.target.result); set('quotation_file_name',fl.name); }; r.readAsDataURL(fl); };
@@ -2750,7 +2715,7 @@ function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel }) {
                     React.createElement('option',{value:'arrival_asc'},'Arrival: soonest'),
                     React.createElement('option',{value:'arrival_desc'},'Arrival: latest')
                 ),
-                React.createElement('button', {className:'btn btns bsm', onClick:function(){ setReqFm(Object.assign({},EMPTY_REQ,{requested_by:curUser?curUser.name:''})); setShowReqForm(true); }}, '+ Request Item'),
+                React.createElement('button', {className:'btn btns bsm', onClick:function(){setReqFm(Object.assign({},EMPTY_REQ,{requested_by:curUser?curUser.name:''}));setShowReqForm(true);}}, '+ Request Item'),
                 React.createElement('button', {className:'btn btnp bsm', onClick:openAdd}, '+ New Order')
             )
         ),
@@ -2842,100 +2807,66 @@ function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel }) {
                 ))
               ),
 
-        /* ── Requests panel ── */
-        React.createElement('div', null,
-            React.createElement('div', {style:{flexShrink:0,borderTop:'2px solid var(--bo)',padding:'8px 20px 6px',background:'#f8fafc',display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}},
-                React.createElement('span', {style:{fontSize:12,fontWeight:700,color:'var(--i2)'}}, '📋 Item Requests'),
-                React.createElement('input', {placeholder:'Search…', value:reqSearch, onChange:function(e){ setReqSearch(e.target.value); },
-                    style:{fontSize:11,border:'1.5px solid var(--bo)',borderRadius:20,padding:'3px 10px',outline:'none',flex:1,minWidth:80}}),
-                React.createElement('select', {value:reqFilter, onChange:function(e){ setReqFilter(e.target.value); },
-                    style:{fontSize:11,border:'1.5px solid var(--bo)',borderRadius:20,padding:'3px 8px',outline:'none'}},
-                    React.createElement('option',{value:'all'},'All statuses'),
-                    ['Requested','Approved','Ordered','Arrived','Rejected'].map(function(s){ return React.createElement('option',{key:s,value:s},s); })
+        React.createElement('div',{style:{flexShrink:0,borderTop:'2px solid var(--bo)',background:'#f8fafc'}},
+            React.createElement('div',{style:{padding:'8px 20px 6px',display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}},
+                React.createElement('span',{style:{fontSize:12,fontWeight:700,color:'var(--i2)'}},'📋 Item Requests'),
+                React.createElement('input',{placeholder:'Search…',value:reqSearch,onChange:function(e){setReqSearch(e.target.value);},style:{fontSize:11,border:'1.5px solid var(--bo)',borderRadius:20,padding:'3px 10px',outline:'none',flex:1,minWidth:80}}),
+                React.createElement('select',{value:reqFilter,onChange:function(e){setReqFilter(e.target.value);},style:{fontSize:11,border:'1.5px solid var(--bo)',borderRadius:20,padding:'3px 8px',outline:'none'}},
+                    React.createElement('option',{value:'all'},'All'),
+                    ['Requested','Approved','Ordered','Arrived','Rejected'].map(function(s){return React.createElement('option',{key:s,value:s},s);})
                 )
             ),
-            React.createElement('div', {style:{maxHeight:200,overflowY:'auto',background:'#f8fafc',borderTop:'1px solid var(--bo)'}}, (function(){
-                var reqs = (orders||[]).filter(function(o){ return o.status==='Requested' || o.category==='Request'; });
-                var fil = reqs.filter(function(o){ return (reqFilter==='all'||o.status===reqFilter) && (!reqSearch||o.item_name.toLowerCase().includes(reqSearch.toLowerCase())); });
-                if (fil.length===0) return React.createElement('div',{style:{textAlign:'center',padding:'14px',fontSize:11,color:'var(--i4)'}},'No requests yet. Click "+ Request Item" to add one.');
-                return fil.map(function(o){ return React.createElement('div',{key:o.id,style:{display:'flex',alignItems:'center',gap:10,padding:'8px 20px',borderBottom:'1px solid var(--bo)',background:'#fff',marginBottom:1}},
+            React.createElement('div',{style:{maxHeight:200,overflowY:'auto',borderTop:'1px solid var(--bo)'}},(function(){
+                var reqs=(orders||[]).filter(function(o){return o.status==='Requested'||o.category==='Request';});
+                var fil=reqs.filter(function(o){return(reqFilter==='all'||o.status===reqFilter)&&(!reqSearch||o.item_name.toLowerCase().includes(reqSearch.toLowerCase()));});
+                if(fil.length===0)return React.createElement('div',{style:{textAlign:'center',padding:'14px',fontSize:11,color:'var(--i4)'}},'No requests yet — click “+ Request Item” to add one.');
+                return fil.map(function(o){return React.createElement('div',{key:o.id,style:{display:'flex',alignItems:'center',gap:10,padding:'8px 20px',borderBottom:'1px solid var(--bo)',background:'#fff',marginBottom:1}},
                     React.createElement('div',{style:{flex:1,minWidth:0}},
-                        React.createElement('div',{style:{fontWeight:600,fontSize:13,color:'var(--i1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}, o.item_name),
-                        React.createElement('div',{style:{fontSize:10,color:'var(--i4)',marginTop:2}},
-                            'By ' + (o.ordered_by||'?') + (o.quantity&&o.quantity>1?' · Qty '+o.quantity:'') + (o.supplier?' · '+o.supplier:'') + (o.catalog_number?' · '+o.catalog_number:'')
-                        ),
-                        o.notes && React.createElement('div',{style:{fontSize:10,color:'var(--i5)',marginTop:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}, o.notes)
+                        React.createElement('div',{style:{fontWeight:600,fontSize:13,color:'var(--i1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},o.item_name),
+                        React.createElement('div',{style:{fontSize:10,color:'var(--i4)',marginTop:2}},'By '+(o.ordered_by||'?')+(o.quantity&&o.quantity>1?' · Qty '+o.quantity:'')+(o.supplier?' · '+o.supplier:'')),
+                        o.notes&&React.createElement('div',{style:{fontSize:10,color:'var(--i5)',marginTop:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},o.notes)
                     ),
                     React.createElement('div',{style:{display:'flex',gap:4,flexShrink:0,alignItems:'center'}},
-                        React.createElement('span',{className:'ord-priority '+((o.priority||'Normal').toLowerCase())}, o.priority||'Normal'),
-                        React.createElement('select',{value:o.status||'Requested',
-                            style:{fontSize:10,border:'1.5px solid var(--bo)',borderRadius:20,padding:'3px 6px',outline:'none',cursor:'pointer'},
-                            onChange:function(e){ onUpd(o.id,Object.assign({},o,{status:e.target.value})); }},
-                            ['Requested','Approved','Ordered','Arrived','Rejected'].map(function(s){ return React.createElement('option',{key:s,value:s},s); })
+                        React.createElement('span',{className:'ord-priority '+((o.priority||'Normal').toLowerCase())},o.priority||'Normal'),
+                        React.createElement('select',{value:o.status||'Requested',style:{fontSize:10,border:'1.5px solid var(--bo)',borderRadius:20,padding:'3px 6px',outline:'none',cursor:'pointer'},onChange:function(e){onUpd(o.id,Object.assign({},o,{status:e.target.value}));}},
+                            ['Requested','Approved','Ordered','Arrived','Rejected'].map(function(s){return React.createElement('option',{key:s,value:s},s);})
                         ),
-                        o.quotation_file && React.createElement('a',{href:o.quotation_file,download:o.quotation_file_name||'file',className:'ord-quot',style:{fontSize:10,padding:'2px 8px'}},'📄'),
-                        React.createElement('button',{className:'eli-btn',onClick:function(){ openEdit(o); }},'Edit'),
-                        React.createElement('button',{className:'eli-btn del',onClick:function(){ window.confirm('Delete?')&&onDel(o.id); }},'✕')
+                        o.quotation_file&&React.createElement('a',{href:o.quotation_file,download:o.quotation_file_name||'file',className:'ord-quot',style:{fontSize:10,padding:'2px 8px'}},'📄'),
+                        React.createElement('button',{className:'eli-btn',onClick:function(){openEdit(o);}},'Edit'),
+                        React.createElement('button',{className:'eli-btn del',onClick:function(){window.confirm('Delete?')&&onDel(o.id);}},'✕')
                     )
-                ); });
+                );});
             })())
         ),
-
-        /* ── Request Item Modal ── */
-        showReqForm && React.createElement('div', {className:'mov', onClick:function(e){ if(e.target===e.currentTarget) setShowReqForm(false); }},
-            React.createElement('div', {className:'mo', style:{maxHeight:'90vh',overflowY:'auto'}},
-                React.createElement('div', {className:'motit'}, 'Request an Item'),
-                React.createElement('div', {className:'mosub'}, 'Submit what you need — a manager will review and order.'),
-                React.createElement('div', {className:'mof'},
-                    React.createElement('label', {className:'mol'}, 'Item name *'),
-                    React.createElement('input', {className:'moi', placeholder:'e.g. Eppendorf tubes 1.5ml', value:reqFm.item_name, autoFocus:true, onChange:function(e){ setR('item_name',e.target.value); }})
+        showReqForm&&React.createElement('div',{className:'mov',onClick:function(e){if(e.target===e.currentTarget)setShowReqForm(false);}},
+            React.createElement('div',{className:'mo',style:{maxHeight:'90vh',overflowY:'auto'}},
+                React.createElement('div',{className:'motit'},'Request an Item'),
+                React.createElement('div',{className:'mosub'},'Submit what you need — a manager will review and order.'),
+                React.createElement('div',{className:'mof'},React.createElement('label',{className:'mol'},'Item name *'),React.createElement('input',{className:'moi',placeholder:'e.g. Eppendorf tubes 1.5ml',value:reqFm.item_name,autoFocus:true,onChange:function(e){setR('item_name',e.target.value);}})),
+                React.createElement('div',{className:'morow'},
+                    React.createElement('div',{className:'mof'},React.createElement('label',{className:'mol'},'Requested by'),React.createElement('input',{className:'moi',value:reqFm.requested_by,onChange:function(e){setR('requested_by',e.target.value);}})),
+                    React.createElement('div',{className:'mof'},React.createElement('label',{className:'mol'},'Quantity'),React.createElement('input',{className:'moi',type:'number',min:1,value:reqFm.quantity,onChange:function(e){setR('quantity',e.target.value);}}))
                 ),
-                React.createElement('div', {className:'morow'},
-                    React.createElement('div', {className:'mof'},
-                        React.createElement('label', {className:'mol'}, 'Requested by'),
-                        React.createElement('input', {className:'moi', value:reqFm.requested_by, onChange:function(e){ setR('requested_by',e.target.value); }})
+                React.createElement('div',{className:'morow'},
+                    React.createElement('div',{className:'mof'},React.createElement('label',{className:'mol'},'Supplier'),React.createElement('input',{className:'moi',placeholder:'e.g. Sigma-Aldrich',value:reqFm.supplier,onChange:function(e){setR('supplier',e.target.value);}})),
+                    React.createElement('div',{className:'mof'},React.createElement('label',{className:'mol'},'Priority'),React.createElement('select',{className:'mosel',value:reqFm.priority,onChange:function(e){setR('priority',e.target.value);}},['Low','Medium','High','Urgent'].map(function(pp){return React.createElement('option',{key:pp,value:pp},pp);})))
+                ),
+                React.createElement('div',{className:'mof'},React.createElement('label',{className:'mol'},'Catalog # or link'),React.createElement('input',{className:'moi',placeholder:'https://... or cat. #',value:reqFm.catalog_link,onChange:function(e){setR('catalog_link',e.target.value);}})),
+                React.createElement('div',{className:'mof'},React.createElement('label',{className:'mol'},'Notes'),React.createElement('textarea',{className:'moi',rows:3,style:{resize:'vertical'},placeholder:'Why needed? Any specs?',value:reqFm.notes,onChange:function(e){setR('notes',e.target.value);}})),
+                React.createElement('div',{className:'mof'},
+                    React.createElement('label',{className:'mol'},'Quotation / file'),
+                    React.createElement('div',{style:{display:'flex',gap:8,alignItems:'center'}},
+                        React.createElement('button',{className:'btn btns bsm',onClick:function(){reqPdfRef.current.click();}},reqFm.pdf?'📄 '+reqFm.pdf_name.slice(0,20):'📎 Upload PDF'),
+                        reqFm.pdf&&React.createElement('button',{className:'btn btnd bxs',onClick:function(){setR('pdf',null);setR('pdf_name','');}},'×')
                     ),
-                    React.createElement('div', {className:'mof'},
-                        React.createElement('label', {className:'mol'}, 'Quantity'),
-                        React.createElement('input', {className:'moi', type:'number', min:1, value:reqFm.quantity, onChange:function(e){ setR('quantity',e.target.value); }})
-                    )
+                    React.createElement('input',{ref:reqPdfRef,type:'file',accept:'application/pdf,.pdf,image/*',style:{display:'none'},onChange:handleReqPdf})
                 ),
-                React.createElement('div', {className:'morow'},
-                    React.createElement('div', {className:'mof'},
-                        React.createElement('label', {className:'mol'}, 'Supplier (optional)'),
-                        React.createElement('input', {className:'moi', placeholder:'e.g. Sigma-Aldrich', value:reqFm.supplier, onChange:function(e){ setR('supplier',e.target.value); }})
-                    ),
-                    React.createElement('div', {className:'mof'},
-                        React.createElement('label', {className:'mol'}, 'Priority'),
-                        React.createElement('select', {className:'mosel', value:reqFm.priority, onChange:function(e){ setR('priority',e.target.value); }},
-                            ['Low','Medium','High','Urgent'].map(function(p){ return React.createElement('option',{key:p,value:p},p); })
-                        )
-                    )
-                ),
-                React.createElement('div', {className:'mof'},
-                    React.createElement('label', {className:'mol'}, 'Link or catalog number (optional)'),
-                    React.createElement('input', {className:'moi', placeholder:'https://... or cat. #', value:reqFm.catalog_link, onChange:function(e){ setR('catalog_link',e.target.value); }})
-                ),
-                React.createElement('div', {className:'mof'},
-                    React.createElement('label', {className:'mol'}, 'Notes'),
-                    React.createElement('textarea', {className:'moi', rows:3, style:{resize:'vertical'}, placeholder:'Why needed? Any specs or constraints?', value:reqFm.notes, onChange:function(e){ setR('notes',e.target.value); }})
-                ),
-                React.createElement('div', {className:'mof'},
-                    React.createElement('label', {className:'mol'}, 'Quotation / file (optional)'),
-                    React.createElement('div', {style:{display:'flex',gap:8,alignItems:'center'}},
-                        React.createElement('button', {className:'btn btns bsm', onClick:function(){ reqPdfRef.current.click(); }},
-                            reqFm.pdf ? '📄 ' + reqFm.pdf_name.slice(0,20) : '📎 Upload file'),
-                        reqFm.pdf && React.createElement('button', {className:'btn btnd bxs', onClick:function(){ setR('pdf',null); setR('pdf_name',''); }}, '×')
-                    ),
-                    React.createElement('input', {ref:reqPdfRef, type:'file', accept:'application/pdf,.pdf,image/*', style:{display:'none'}, onChange:handleReqPdf})
-                ),
-                React.createElement('div', {style:{display:'flex',gap:8,marginTop:12}},
-                    React.createElement('button', {className:'btn btnp bsm', style:{flex:1}, onClick:saveRequest}, 'Submit Request'),
-                    React.createElement('button', {className:'btn btns bsm', onClick:function(){ setShowReqForm(false); }}, 'Cancel')
+                React.createElement('div',{style:{display:'flex',gap:8,marginTop:12}},
+                    React.createElement('button',{className:'btn btnp bsm',style:{flex:1},onClick:saveRequest},'Submit Request'),
+                    React.createElement('button',{className:'btn btns bsm',onClick:function(){setShowReqForm(false);}},'Cancel')
                 )
             )
         ),
-
         /* ── Add / Edit Modal ── */
         showForm && React.createElement('div', {className:'mov', onClick:e=>e.target===e.currentTarget&&setShowForm(false)},
             React.createElement('div', {className:'mo wide', style:{maxHeight:'90vh',overflowY:'auto'}},
@@ -3244,7 +3175,7 @@ function LabSelectScreen({onSelectLab}){
         React.createElement('div', {style:{width:34,height:34,background:'var(--lf)',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}, '🍅'),
         React.createElement('div', null,
           React.createElement('div', {style:{fontFamily:'Inter,sans-serif',fontSize:20,color:'var(--fo)'}}, 'GreenLab'),
-          React.createElement('div', {style:{fontSize:10,color:'var(--i4)',fontFamily:'Inter'}}, 'Select your lab to continue')
+          React.createElement('div', {style:{fontSize:10,color:'var(--i4)',fontFamily:'Poppins'}}, 'Select your lab to continue')
         )
       ),
       React.createElement('div', {className:'lab-tag'}, 'Available labs'),
@@ -3298,7 +3229,7 @@ function LabSelectScreen({onSelectLab}){
         React.createElement('button',{className:'btn btnp',onClick:addLab},'Add'),
         React.createElement('button',{className:'btn btns',onClick:function(){setShowAdd(false);}},'Cancel')
       ) : React.createElement('button',{className:'btn btns btnw bsm',style:{marginTop:8},onClick:function(){setShowAdd(true);}}, '+ Add another lab'),
-      React.createElement('div',{style:{marginTop:14,fontSize:10,color:'var(--i5)',fontFamily:'Inter',textAlign:'center'}},
+      React.createElement('div',{style:{marginTop:14,fontSize:10,color:'var(--i5)',fontFamily:'Poppins',textAlign:'center'}},
         'Each lab has its own members, greenhouses and data'
       )
     )
@@ -3434,15 +3365,11 @@ function ScheduleView({ tables, users, schedules, onAdd, onDel, currentUser }) {
         const tblIds = r.table_ids || (r.table_id ? [r.table_id] : []);
         const tblNames = tblIds.map(id => { const t=tables.find(t=>t.id===id); return t?t.name:id; }).join(', ');
         const u = users.find(u=>u.name===r.user_name);
-        const rStart = r.start_date || r.date || '';
-        const daysUntil = rStart ? Math.ceil((new Date(rStart) - new Date()) / 86400000) : null;
-        const soonAlert = daysUntil !== null && daysUntil >= 0 && daysUntil <= 7;
-        return React.createElement('div', { key: r.id, className:'sched-item', style: soonAlert ? {borderColor:'#f59e0b',background:'#fffbeb'} : {} },
-            soonAlert && React.createElement('div', {style:{marginBottom:4}},
-                React.createElement('span', {style:{fontSize:10,fontWeight:700,color:'#92400e',background:'#fef3c7',border:'1px solid #fcd34d',borderRadius:20,padding:'2px 8px'}},
-                    daysUntil === 0 ? '⚠️ Today!' : daysUntil === 1 ? '⚠️ Tomorrow' : '⚠️ ' + daysUntil + ' days away'
-                )
-            ),
+        const rStart=r.start_date||r.date||'';
+        const daysUntil=rStart?Math.ceil((new Date(rStart)-new Date())/86400000):null;
+        const soonAlert=daysUntil!==null&&daysUntil>=0&&daysUntil<=7;
+        return React.createElement('div', { key: r.id, className:'sched-item', style:soonAlert?{borderColor:'#f59e0b',background:'#fffbeb'}:{} },
+            soonAlert && React.createElement('div',{style:{marginBottom:4}},React.createElement('span',{style:{fontSize:10,fontWeight:700,color:'#92400e',background:'#fef3c7',border:'1px solid #fcd34d',borderRadius:20,padding:'2px 8px'}},daysUntil===0?'⚠️ Today!':daysUntil===1?'⚠️ Tomorrow':'⚠️ '+daysUntil+' days away')),
             React.createElement('div', { className:'sched-item-date' }, fmtDateRange(r)),
             React.createElement('div', { className:'sched-item-tbl' }, tblNames || '—'),
             React.createElement('div', { className:'sched-item-who', style:{ display:'flex', alignItems:'center', gap:5 } },
@@ -3551,7 +3478,7 @@ function DashView({ greenhouses, tables, structs, plants, experiments }) {
             { key:'sick',    label:'Sick',    color:'#dc2626' },
             { key:'pests',   label:'Pests',   color:'#9333ea' },
             { key:'dead',    label:'Dead',    color:'#6b7280' }
-        ].map(s => Object.assign({}, s, { cnt: filled.filter(p => p.status===s.key).length }))
+        ].map(s => Object.assign({}, s, { cnt: filled.filter(function(p){ var sts=p.statuses&&p.statuses.length?p.statuses:[p.status]; return sts.includes(s.key); }).length }))
          .filter(s => s.cnt > 0);
     }, [plants]);
 
@@ -3812,8 +3739,8 @@ function App() {
     const alerts = useMemo(() => {
         const list = [];
         // Sick/dead plants
-        const sickCount = data.plants.filter(p => p.status === 'sick' || p.status === 'pests').length;
-        const deadCount = data.plants.filter(p => p.status === 'dead').length;
+        const sickCount = data.plants.filter(p => { var s = p.statuses||[]; return s.includes('sick')||s.includes('pests')||p.status==='sick'||p.status==='pests'; }).length;
+        const deadCount = data.plants.filter(p => { var s = p.statuses||[]; return s.includes('dead')||p.status==='dead'; }).length;
         if (sickCount > 0) list.push({ type: 'red', text: sickCount + ' plant' + (sickCount>1?'s':'') + ' sick or have pests' });
         if (deadCount > 0) list.push({ type: 'red', text: deadCount + ' plant' + (deadCount>1?'s':'') + ' dead' });
         // Experiments ending within 7 days
@@ -3841,7 +3768,7 @@ useEffect(() => {
                 var local = loadLabData(activeLab.id);
                 if (local && local.greenhouses && local.greenhouses.length > 0) {
                     remoteUpdateRef.current = true;
-                    setData(local);
+                    setData(loadImages(local));
                     setGhId(local.greenhouses[0].id);
                 }
                 setSyncStatus('saved');
@@ -3940,7 +3867,7 @@ useEffect(() => {
     /* Write on every local data change — skip only if this exact update came from remote */
     useEffect(() => {
         if (!activeLab) return;
-        if (!data.users || data.users.length === 0) return; // not loaded yet
+        if (!data.greenhouses || (data.greenhouses.length === 0 && data.tables.length === 0 && (!data.users || data.users.length === 0))) return; // truly not loaded yet
         if (remoteUpdateRef.current && !forceWriteRef.current) {
             remoteUpdateRef.current = false;
             return;
@@ -4379,7 +4306,7 @@ useEffect(() => {
     const saveMeasures = (updated) => setData(d => ({...d, measures:updated}));
     const delMessage  = id => setData(d => ({...d, messages:(d.messages||[]).filter(m=>m.id!==id)}));
     const addNote  = n   => setData(d => ({...d, notes:[...(d.notes||[]),n]}));
-    const editNote = (id,p) => setData(d => ({...d, notes:(d.notes||[]).map(n=>n.id===id?Object.assign({},n,p):n)}));
+    const editNote = (id,patch) => setData(d => ({...d, notes:(d.notes||[]).map(n=>n.id===id?Object.assign({},n,patch):n)}));
     const delNote  = id  => setData(d => ({...d, notes:(d.notes||[]).filter(n=>n.id!==id)}));
     const updOrder    = (id, fm) => setData(d => ({...d, orders: (d.orders||[]).map(o => o.id===id ? {...o,...fm, updated_at:now()} : o)}));
     const delOrder    = id => setData(d => ({...d, orders: (d.orders||[]).filter(o => o.id!==id)}));
@@ -4511,7 +4438,7 @@ useEffect(() => {
                         (aGh.spray_history||[]).length === 0 && React.createElement("div", { style: { fontSize: 11, color: 'var(--i5)', fontFamily: 'Inter' } }, "No spray recorded"),
                         React.createElement("div", {style:{display:'flex',flexDirection:'column',gap:4}},
                             [...(aGh.spray_history||[])].reverse().map(e => React.createElement("div", {key:e.id,
-                                style:{background:'var(--cr2)',borderRadius:'var(--r)',padding:'6px 8px',display:'flex',alignItems:'flex-start',gap:6,fontSize:10,fontFamily:'Inter'}},
+                                style:{background:'var(--cr2)',borderRadius:'var(--r)',padding:'6px 8px',display:'flex',alignItems:'flex-start',gap:6,fontSize:10,fontFamily:'Poppins'}},
                                 React.createElement("div", {style:{flex:1,minWidth:0}},
                                     React.createElement("div", {style:{fontWeight:600,color:'var(--i2)',fontSize:11,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}, e.material),
                                     React.createElement("div", {style:{color:'var(--i4)',marginTop:1}}, e.category+(e.sprayer?' · '+e.sprayer:'')+" · "+ago(e.at))
@@ -4756,7 +4683,7 @@ useEffect(() => {
                     }, "+ New")
                 ),
                 React.createElement("div", { className: "toolbar" },
-                    !locked && aGh && tab === 'layout' && React.createElement("button", { className: "btn btnp bsm", onClick: () => { setTFm({ name: `B${aTbls.length + 1}`, width: lastTblRef.current.width, length: lastTblRef.current.length, rows: lastTblRef.current.rows, cols: lastTblRef.current.cols }); setShowATbl(true); } }, "+ Table"),
+                    !locked && aGh && tab === 'layout' && React.createElement("button", { className: "btn btnp bsm", onClick: () => { setTFm({ name: `B${aTbls.length + 1}`, width: lastTblRef.current.width, length: lastTblRef.current.length, rows: lastTblRef.current.rows, cols: lastTblRef.current.cols }); if(aGh) setGhId(aGh.id); setShowATbl(true); } }, "+ Table"),
                     !locked && React.createElement("div", { className: "enote" }, "Edit mode"),
                     editTbl && React.createElement("div", { className: "tenote" }, "Table edit \u2014 click x to remove pots"),
                     tab === 'layout' && selTbls.size > 1 && tblSelMode && React.createElement(React.Fragment, null,
@@ -4793,7 +4720,7 @@ useEffect(() => {
                     React.createElement("button", { className: "btn btnp bsm", onClick: () => { var _a; setAssExpFm({ mode: 'existing', newName: '', newOwner: (user === null || user === void 0 ? void 0 : user.name) || '', newDesc: '', newUntilDate: '', existId: ((_a = data.experiments[0]) === null || _a === void 0 ? void 0 : _a.id) || '' }); setShowAssExp(true); } }, "Assign experiment"),
                     React.createElement("button", { className: "btn bsm", style: { background: 'rgba(255,255,255,.15)', color: '#fff', border: 'none' }, onClick: () => { setSelPots([]); setSelMode(false); } }, "Cancel")),
                 tab === 'layout' && React.createElement(React.Fragment, null,
-                    React.createElement("div", { className: "alert-legend" },
+                    React.createElement("div", { className: "alert-legend", style:{display:"flex",alignItems:"center",gap:8,flexWrap:"nowrap",overflow:"hidden"} },
                         React.createElement("span", { style:{color:'#9CA3AF',marginRight:6,flexShrink:0} }, "Alerts:"),
                         React.createElement("div", { className: "alert-legend-item" },
                             React.createElement("div", { className: "alert-legend-dot", style:{background:'#ea580c',boxShadow:'0 0 4px rgba(234,88,12,.5)',animation:'pest-pulse 1.6s ease-in-out infinite'} }),
@@ -4804,10 +4731,10 @@ useEffect(() => {
                             React.createElement("span", { style:{color:'#9333ea'} }, "Sick")
                         ),
                         (() => {
-                            const sickCount = aPlants.filter(p => p.status === 'sick').length;
-                            const pestCount = aPlants.filter(p => p.status === 'pests').length;
+                            const sickCount = aPlants.filter(p => { var s=p.statuses||[]; return s.includes('sick')||p.status==='sick'; }).length;
+                            const pestCount  = aPlants.filter(p => { var s=p.statuses||[]; return s.includes('pests')||p.status==='pests'; }).length;
                             return (sickCount + pestCount) > 0
-                                ? React.createElement("span", { style:{marginLeft:'auto',display:'flex',gap:12} },
+                                ? React.createElement("span", { style:{display:'flex',gap:8,flexShrink:0,marginLeft:8} },
                                     pestCount > 0 && React.createElement("span", {style:{color:'#ea580c',fontWeight:700}}, "🐛 "+pestCount+" pest"+(pestCount>1?"s":"")),
                                     sickCount > 0  && React.createElement("span", {style:{color:'#9333ea',fontWeight:700}}, "⚠ "+sickCount+" sick")
                                   )
