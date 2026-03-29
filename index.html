@@ -227,7 +227,8 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 /* ═══════════════════════════════════
    CANVAS / LAYOUT VIEW
 ═══════════════════════════════════ */
-.cvp{flex:1;min-height:0;overflow:hidden;background:#F4F6F8;background-image:radial-gradient(circle,#D1D5DB 1px,transparent 1px);background-size:22px 22px;position:relative;touch-action:none;-webkit-user-select:none;user-select:none;cursor:grab}.cvp:active{cursor:grabbing}
+.cvp{flex:1;min-height:0;overflow:hidden;background:#F4F6F8;background-image:radial-gradient(circle,#D1D5DB 1px,transparent 1px);background-size:22px 22px;position:relative;touch-action:none;-webkit-user-select:none;user-select:none;cursor:grab;cursor:grab}
+.cvp:active{cursor:grabbing}
 .cvp.panning{cursor:grabbing!important}
 .cvp.space-mode{cursor:grab}
 .cvw{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform;touch-action:none}
@@ -303,7 +304,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .ppb{padding:10px 14px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;min-height:0}
 .ppf{padding:10px 16px;border-top:1px solid var(--bo);display:flex;align-items:center;gap:7px;flex-shrink:0;background:#f9fafb}
 .fl{display:block;font-size:11px;font-weight:600;color:var(--i3);margin-bottom:4px}
-.fi{width:100%;background:var(--cr2);border:1.5px solid var(--bo);border-radius:var(--r);color:var(--i1);font-size:13px;padding:8px 10px;outline:none;transition:border-color .12s}
+.fi{width:100%;background:var(--cr2);border:1.5px solid var(--bo);border-radius:var(--r);color:var(--i1);font-size:12px;padding:7px 9px;outline:none;transition:border-color .12s}
 .fi:focus{border-color:#78C043;background:#fff;box-shadow:0 0 0 3px rgba(120,192,67,.12)}
 .fi.big{font-size:14px;font-weight:600}
 .fta{width:100%;background:var(--cr2);border:1.5px solid var(--bo);border-radius:var(--r);color:var(--i1);font-size:12px;padding:8px 10px;outline:none;resize:none;line-height:1.5;transition:border-color .12s}
@@ -421,7 +422,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
    STOCK TAB
 ═══════════════════════════════════ */
 .stk{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
-.stk-head{flex-shrink:0;padding:20px 24px;border-bottom:1px solid var(--bo);display:flex;align-items:center;justify-content:space-between;background:#fff}
+.stk-head{flex-shrink:0;padding:20px 24px;border-bottom:1px solid var(--bo);display:flex;align-items:center;justify-content:space-between;background:#fff;flex-wrap:wrap;gap:8px}
 .stk-tit{font-size:20px;color:var(--i1);font-weight:700}
 .stk-list{flex:1;min-height:0;overflow-y:auto;padding:18px 24px;display:flex;flex-direction:column;gap:10px}
 .stk-item{background:#fff;border:1px solid #F0F0F0;border-radius:24px;padding:16px 20px;display:flex;align-items:flex-start;gap:14px;box-shadow:var(--sh-card);transition:all .15s;min-width:0;overflow:hidden}
@@ -616,7 +617,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
   .bsm{padding:7px 14px;font-size:12px}
   .pop{width:100vw!important;max-width:100vw!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;transform:none!important;border-radius:20px 20px 0 0!important;max-height:96vh;overflow-y:auto}
   /* bottom-sheet handles positioning */
-  .ppb{padding:12px 14px;gap:10px}
+  .ppb{padding:8px 12px;gap:7px;max-height:calc(96vh - 130px)}
   .ppf{padding:10px 14px}
   .fi,.moi,.mota,.mosel,.fta{font-size:16px;padding:10px 12px}
   .fi.big{font-size:16px}
@@ -792,7 +793,8 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
     transition:color .15s;
     -webkit-tap-highlight-color:transparent;
   }
-  .mob-bottom-nav .mbn-btn.on{color:#78C043}
+  .mob-bottom-nav .mbn-btn.on{color:#78C043;flex:1.8}
+  .mob-bottom-nav .mbn-btn:not(.on){flex:0.75;opacity:0.85}
   .mob-bottom-nav .mbn-btn.on .mbn-ic{background:#78C04318}
   .mob-bottom-nav .mbn-btn .mbn-ic{
     width:20px;height:18px;border-radius:6px;
@@ -2161,6 +2163,7 @@ function MessagesView({ messages, onAdd, onEdit, onDel, currentUser, users }) {
 function StockView({ stock, onAdd, onEdit, onRemove, onQty }) {
     const [showAdd, setShowAdd] = useState(false);
     const [editId, setEditId] = useState(null);
+    const [stkSearch, setStkSearch] = useState('');
     const [fm, setFm] = useState({ name: '', category: 'Pots', quantity: 1, notes: '', image: null });
     const CATS = ['Pots', 'Trays', 'Labels', 'Soil', 'Fertilizer', 'Watering', 'Pipes', 'Clips', 'Chemicals', 'Tools', 'Other'];
     const fref = useRef();
@@ -2188,8 +2191,10 @@ function StockView({ stock, onAdd, onEdit, onRemove, onQty }) {
     // Group stock by category, sorted by sort_order within each
     const grouped = useMemo(() => {
         const sorted = [...stock].sort((a,b) => (a.sort_order||0) - (b.sort_order||0));
-        const cats = [...new Set(sorted.map(s=>s.category||'Other'))];
-        return cats.map(cat => ({ cat, items: sorted.filter(s=>(s.category||'Other')===cat) }));
+        const sq = stkSearch.toLowerCase();
+        const filtered = sq ? sorted.filter(s => (s.name||'').toLowerCase().includes(sq) || (s.category||'').toLowerCase().includes(sq) || (s.notes||'').toLowerCase().includes(sq)) : sorted;
+        const cats = [...new Set(filtered.map(s=>s.category||'Other'))];
+        return cats.map(cat => ({ cat, items: filtered.filter(s=>(s.category||'Other')===cat) }));
     }, [stock]);
     const [dragId, setDragId] = useState(null);
     const [dragOver, setDragOver] = useState(null);
@@ -2208,6 +2213,7 @@ function StockView({ stock, onAdd, onEdit, onRemove, onQty }) {
     return (React.createElement("div", { className: "stk" },
         React.createElement("div", { className: "stk-head" },
             React.createElement("div", { className: "stk-tit" }, "Stock"),
+            React.createElement("input", { className:"fi", placeholder:"Search stock…", value:stkSearch, onChange:e=>setStkSearch(e.target.value), style:{maxWidth:200,padding:'6px 10px',fontSize:12} }),
             React.createElement("button", { className: "btn btnp bsm", onClick: () => { setFm(EMPTY); setShowAdd(true); } }, "+ Add item")),
         React.createElement("div", { className: "stk-list" },
             stock.length === 0 && React.createElement("div", { className: "stk-empty" },
@@ -4259,7 +4265,7 @@ useEffect(() => {
             updated_at: now(),
             timeline: newEvents.length > 0 ? [...existingTimeline, ...newEvents] : existingTimeline
         });
-        setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => p.id === w.id ? w : p) })));
+        forceWriteRef.current = true; setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => p.id === w.id ? w : p) })));
         setPopup(null); setActPot(null); notify('Saved'); logActivity('Updated pot: ' + (w.genotype || 'empty'));
     };
     /* delete pot = clear data, keep slot */
@@ -4320,12 +4326,12 @@ useEffect(() => {
     /* stock */
     const addStockItem = it => setData(d => (Object.assign(Object.assign({}, d), { stock: [...(d.stock || []), it] })));
     const addOrder    = o  => { forceWriteRef.current = true; setData(d => ({...d, orders: [...(d.orders||[]), o]})); };
-    const addMessage  = m  => { setData(d => ({...d, messages:[...(d.messages||[]),m]})); setLastMsgRead(r => ({...r, [activeLab?.id]: new Date().toISOString()})); };
+    const addMessage  = m  => { forceWriteRef.current = true; setData(d => ({...d, messages:[...(d.messages||[]),m]})); setLastMsgRead(r => ({...r, [activeLab?.id]: new Date().toISOString()})); };
     const editMessage = (id,text) => setData(d => ({...d, messages:(d.messages||[]).map(m=>m.id===id?{...m,text,edited:true}:m)}));
     const saveMeasures = (updated) => { forceWriteRef.current = true; setData(d => ({...d, measures:updated})); };
     const delMessage  = id => setData(d => ({...d, messages:(d.messages||[]).filter(m=>m.id!==id)}));
-    const addNote  = n   => setData(d => ({...d, notes:[...(d.notes||[]),n]}));
-    const editNote = (id,patch) => setData(d => ({...d, notes:(d.notes||[]).map(n=>n.id===id?Object.assign({},n,patch):n)}));
+    const addNote  = n   => { forceWriteRef.current = true; setData(d => ({...d, notes:[...(d.notes||[]),n]})); };
+    const editNote = (id,patch) => { forceWriteRef.current = true; setData(d => ({...d, notes:(d.notes||[]).map(n=>n.id===id?Object.assign({},n,patch):n)})); };
     const delNote  = id  => setData(d => ({...d, notes:(d.notes||[]).filter(n=>n.id!==id)}));
     const updOrder    = (id, fm) => setData(d => ({...d, orders: (d.orders||[]).map(o => o.id===id ? {...o,...fm, updated_at:now()} : o)}));
     const delOrder    = id => setData(d => ({...d, orders: (d.orders||[]).filter(o => o.id!==id)}));
