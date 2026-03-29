@@ -781,16 +781,18 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
     display:flex;align-items:stretch;
     position:fixed;bottom:0;left:0;right:0;z-index:400;
     background:#fff;border-top:1px solid #EBEBEB;
-    height:52px;padding:0;
+    height:52px;padding:0 env(safe-area-inset-right,0) 0 env(safe-area-inset-left,0);
     box-shadow:0 -2px 8px rgba(0,0,0,.06);
-    overflow:hidden;
+    overflow:visible;
+    width:100%;
   }
   .mob-bottom-nav .mbn-btn{
-    flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    flex:1 1 0;min-width:0;max-width:10%;display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:1px;border:none;background:none;cursor:pointer;
     padding:5px 2px 4px;
     font-size:min(9px,2.2vw);font-weight:500;color:#9CA3AF;
     font-family:'Poppins',sans-serif;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
     transition:color .15s;
     -webkit-tap-highlight-color:transparent;
   }
@@ -803,7 +805,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
   }
 
   /* Pad main content above bottom nav */
-  .main{padding-bottom:60px}
+  .main{padding-bottom:52px}
   .tab-bar{display:none!important}
 
   /* tab-bar hidden handled above */
@@ -1069,9 +1071,9 @@ function saveLabData(labId, d) { try {
     var slim = Object.assign({}, d, {
         plants: d.plants ? d.plants.map(function(p){var p2=Object.assign({},p);delete p2.image;return p2;}) : d.plants,
         stock:  d.stock  ? d.stock.map( function(s){
-            // Include image if small enough for JSONBin (< 15KB)
             var s2=Object.assign({},s);
-            if(s2.image && s2.image.length > 20000) delete s2.image; // ~15KB base64
+            // Include image in JSONBin if small enough (compressed images are ~3-8KB)
+            if(s2.image && s2.image.length > 25000) delete s2.image;
             return s2;
         }) : d.stock,
         orders: d.orders ? d.orders.map(function(o){var o2=Object.assign({},o);delete o2.item_image;delete o2.quotation_file;return o2;}) : d.orders,
@@ -2714,6 +2716,16 @@ function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel }) {
         if (sort==='arrival_desc')    res.sort((a,b)=>{ if(!a.expected_arrival_date) return 1; if(!b.expected_arrival_date) return -1; return b.expected_arrival_date.localeCompare(a.expected_arrival_date); });
         return res;
     }, [orders, filter, sort]);
+    // Pre-compute category boundaries for grouping headers
+    const ordCatHeaders = React.useMemo(() => {
+        var seen = new Set(); var headers = {};
+        (filtered||[]).forEach(function(o){
+            var cat = o.category||'Other';
+            if(!seen.has(cat)){ seen.add(cat); headers[o.id]=cat; }
+        });
+        return headers;
+    }, [filtered]);
+
 
     const statusCounts = React.useMemo(() => {
         const c = {all: (orders||[]).length};
@@ -2763,7 +2775,12 @@ function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel }) {
                 filter==='all' && React.createElement('button', {className:'btn btnp bsm', onClick:openAdd}, '+ Add first order')
               )
             : React.createElement('div', {className:'ord-body'},
-                filtered.map(o => React.createElement('div', {key:o.id, className:'ord-card'},
+                filtered.map(function(o){ return React.createElement(React.Fragment, {key:o.id},
+                    ordCatHeaders[o.id] && React.createElement('div', {style:{fontSize:10,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--i5)',padding:'6px 0 4px',display:'flex',alignItems:'center',gap:8,borderTop:filtered.indexOf(o)===0?'none':'1px solid var(--cr2)',marginTop:filtered.indexOf(o)===0?0:8}},
+                        ordCatHeaders[o.id],
+                        React.createElement('span',{style:{background:'var(--cr2)',borderRadius:20,padding:'1px 8px',fontWeight:600,color:'var(--i4)',fontSize:9}}, (filtered||[]).filter(function(x){return(x.category||'Other')===ordCatHeaders[o.id];}).length)
+                    ),
+                    React.createElement('div', {className:'ord-card'},
                     React.createElement('div', {className:'ord-card-top'},
                         React.createElement('div', {className:'ord-img', onClick:()=>o.item_image && window.open(o.item_image)},
                             o.item_image ? React.createElement('img',{src:o.item_image,alt:o.item_name}) : '📦'
@@ -2828,7 +2845,8 @@ function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel }) {
                     o.notes && React.createElement('div', {style:{padding:'0 16px 12px',fontSize:11,color:'var(--i4)',borderTop:'1px solid var(--cr2)',paddingTop:8,marginTop:0}},
                         React.createElement('span',{style:{fontWeight:600,color:'var(--i3)'}},'Notes: '), o.notes
                     )
-                ))
+                )
+                ); })
               ),
 
         React.createElement('div',{style:{flexShrink:0,borderTop:'2px solid var(--bo)',background:'#f8fafc'}},
