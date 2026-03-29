@@ -615,9 +615,10 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
   .selbtn{padding:7px 14px;font-size:13px}
   .btn{padding:8px 16px}
   .bsm{padding:7px 14px;font-size:12px}
-  .pop{width:100vw!important;max-width:100vw!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;transform:none!important;border-radius:20px 20px 0 0!important;max-height:96vh;overflow-y:auto}
+  .pop{width:100vw!important;max-width:100vw!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;transform:none!important;border-radius:20px 20px 0 0!important;max-height:92dvh;overflow-y:hidden;padding-bottom:env(safe-area-inset-bottom,0px)}
   /* bottom-sheet handles positioning */
-  .ppb{padding:8px 12px;gap:7px;max-height:calc(96vh - 130px)}
+  .ppb{padding:8px 12px;gap:7px;flex:1;min-height:0;overflow-y:auto;max-height:calc(92dvh - 120px)}
+    .ppf{padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
   .ppf{padding:10px 14px}
   .fi,.moi,.mota,.mosel,.fta{font-size:16px;padding:10px 12px}
   .fi.big{font-size:16px}
@@ -780,21 +781,20 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
     display:flex;align-items:stretch;
     position:fixed;bottom:0;left:0;right:0;z-index:400;
     background:#fff;border-top:1px solid #EBEBEB;
-    height:56px;padding:0;
-    box-shadow:0 -4px 16px rgba(0,0,0,.08);
+    height:52px;padding:0;
+    box-shadow:0 -2px 8px rgba(0,0,0,.06);
     overflow:hidden;
   }
   .mob-bottom-nav .mbn-btn{
     flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:1px;border:none;background:none;cursor:pointer;
     padding:5px 2px 4px;
-    font-size:9px;font-weight:500;color:#9CA3AF;
+    font-size:min(9px,2.2vw);font-weight:500;color:#9CA3AF;
     font-family:'Poppins',sans-serif;
     transition:color .15s;
     -webkit-tap-highlight-color:transparent;
   }
-  .mob-bottom-nav .mbn-btn.on{color:#78C043;flex:1.8}
-  .mob-bottom-nav .mbn-btn:not(.on){flex:0.75;opacity:0.85}
+  .mob-bottom-nav .mbn-btn.on{color:#78C043}
   .mob-bottom-nav .mbn-btn.on .mbn-ic{background:#78C04318}
   .mob-bottom-nav .mbn-btn .mbn-ic{
     width:20px;height:18px;border-radius:6px;
@@ -2678,6 +2678,7 @@ function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel }) {
     const [showForm, setShowForm] = React.useState(false);
     const [showReqForm, setShowReqForm] = React.useState(false);
     const [editId, setEditId] = React.useState(null);
+    const [ordSearch, setOrdSearch] = React.useState('');
     const EMPTY_ORDER = { item_name:'', category:'Equipment', description:'', ordered_by: curUser?.name||'', supplier:'', status:'Draft', quantity:1, order_date: new Date().toISOString().slice(0,10), expected_arrival_date:'', actual_arrival_date:'', estimated_cost:'', currency:'USD', catalog_number:'', supplier_link:'', notes:'', priority:'Normal', storage_location:'', received_by:'', item_image:null, quotation_file:null, quotation_file_name:'', experiment_id:'' };
     const [fm, setFm] = React.useState(EMPTY_ORDER);
     const EMPTY_REQ={item_name:'',requested_by:curUser?curUser.name:'',quantity:1,supplier:'',catalog_link:'',notes:'',priority:'Medium',pdf:null,pdf_name:''};
@@ -2706,6 +2707,7 @@ function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel }) {
     const filtered = React.useMemo(() => {
         let res = [...(orders||[])];
         if (filter !== 'all') res = res.filter(o => o.status === filter);
+        if (ordSearch.trim()) { const sq = ordSearch.toLowerCase(); res = res.filter(o => (o.item_name||'').toLowerCase().includes(sq) || (o.supplier||'').toLowerCase().includes(sq) || (o.ordered_by||'').toLowerCase().includes(sq) || (o.order_date||'').includes(sq) || (o.catalog_number||'').toLowerCase().includes(sq)); }
         if (sort==='order_date_desc') res.sort((a,b)=>(b.order_date||'').localeCompare(a.order_date||''));
         if (sort==='order_date_asc')  res.sort((a,b)=>(a.order_date||'').localeCompare(b.order_date||''));
         if (sort==='arrival_asc')     res.sort((a,b)=>{ if(!a.expected_arrival_date) return 1; if(!b.expected_arrival_date) return -1; return a.expected_arrival_date.localeCompare(b.expected_arrival_date); });
@@ -2724,8 +2726,11 @@ function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel }) {
     return React.createElement('div', {className:'ord-page'},
         React.createElement('div', {className:'ord-head'},
             React.createElement('div', null,
-                React.createElement('div', {className:'ord-tit'}, 'Orders'),
-                React.createElement('div', {className:'ord-sub'}, `${(orders||[]).length} order${(orders||[]).length!==1?'s':''} total`)
+                React.createElement('div', {style:{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',marginBottom:4}},
+                    React.createElement('div', {className:'ord-tit'}, 'Orders'),
+                    React.createElement('input', {className:'fi', placeholder:'Search orders…', value:ordSearch, onChange:function(e){setOrdSearch(e.target.value);}, style:{flex:1,maxWidth:220,padding:'6px 10px',fontSize:12}})
+                ),
+                React.createElement('div', {className:'ord-sub'}, (filtered||[]).length + ' of ' + (orders||[]).length + ' order' + ((orders||[]).length!==1?'s':'') + ' total')
             ),
             React.createElement('div', {style:{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}},
                 React.createElement('select', {className:'mosel', style:{width:'auto',fontSize:11,padding:'5px 10px',minWidth:160}, value:sort, onChange:e=>setSort(e.target.value)},
@@ -4332,7 +4337,7 @@ useEffect(() => {
     const delMessage  = id => setData(d => ({...d, messages:(d.messages||[]).filter(m=>m.id!==id)}));
     const addNote  = n   => { forceWriteRef.current = true; setData(d => ({...d, notes:[...(d.notes||[]),n]})); };
     const editNote = (id,patch) => { forceWriteRef.current = true; setData(d => ({...d, notes:(d.notes||[]).map(n=>n.id===id?Object.assign({},n,patch):n)})); };
-    const delNote  = id  => setData(d => ({...d, notes:(d.notes||[]).filter(n=>n.id!==id)}));
+    const delNote  = id  => { forceWriteRef.current = true; setData(d => ({...d, notes:(d.notes||[]).filter(n=>n.id!==id)})); };
     const updOrder    = (id, fm) => setData(d => ({...d, orders: (d.orders||[]).map(o => o.id===id ? {...o,...fm, updated_at:now()} : o)}));
     const delOrder    = id => setData(d => ({...d, orders: (d.orders||[]).filter(o => o.id!==id)}));
     const editStockItem = (id, fm) => setData(d => (Object.assign(Object.assign({}, d), { stock: (d.stock || []).map(s => s.id === id ? Object.assign(Object.assign(Object.assign({}, s), fm), { quantity: +fm.quantity || 0, image: fm.image !== undefined ? fm.image : s.image }) : s) })));
@@ -4776,7 +4781,7 @@ useEffect(() => {
                                 : React.createElement("span", {style:{marginLeft:'auto',color:'#78C043',fontSize:10}}, "✓ All clear");
                         })()
                     ),
-                    React.createElement("div", { ref: el => { vpRef.current = el; if (el) { el.removeEventListener('touchstart', hVpTouch); el.addEventListener('touchstart', hVpTouch, { passive: false }); } }, className: "cvp", onMouseDown: hVpMd, onContextMenu: e => e.preventDefault(), onClick: e => { if (e.target === e.currentTarget) {
+                    React.createElement("div", { ref: el => { vpRef.current = el; if (el) { el.removeEventListener('touchstart', hVpTouch); el.addEventListener('touchstart', hVpTouch, { passive: false }); el.removeEventListener('wheel', el._onWheel); el._onWheel = e => { e.preventDefault(); const r=el.getBoundingClientRect(); const mx=e.clientX-r.left, my=e.clientY-r.top; if(e.ctrlKey||e.metaKey){const factor=1-e.deltaY*0.008; const z=liveZoom.current; const nz=Math.max(0.05,Math.min(4,z*factor)); livePan.current={x:mx-(mx-livePan.current.x)*(nz/z),y:my-(my-livePan.current.y)*(nz/z)}; liveZoom.current=nz;}else{const isTP=Math.abs(e.deltaX)>0||Math.abs(e.deltaY)<50; if(isTP){livePan.current={x:livePan.current.x-e.deltaX,y:livePan.current.y-e.deltaY};}else{const factor=1-e.deltaY*0.001; const z=liveZoom.current; const nz=Math.max(0.05,Math.min(4,z*factor)); livePan.current={x:mx-(mx-livePan.current.x)*(nz/z),y:my-(my-livePan.current.y)*(nz/z)}; liveZoom.current=nz;}} scheduleFlush(); clearTimeout(el._onWheel._t); el._onWheel._t=setTimeout(commitTransform,120);}; el.addEventListener('wheel', el._onWheel, {passive:false}); } }, className: "cvp", onMouseDown: hVpMd, onContextMenu: e => e.preventDefault(), onClick: e => { if (e.target === e.currentTarget) {
                             setSelTbl(null);
                             setPopup(null);
                         } } },
