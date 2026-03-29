@@ -820,9 +820,9 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
   }
   .mob-bottom-nav::-webkit-scrollbar{display:none}
   .mob-bottom-nav .mbn-btn{
-    flex:0 0 auto;min-width:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:1px;border:none;background:none;cursor:pointer;
-    padding:5px 4px 4px;
+    flex:0 0 auto;min-width:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:2px;border:none;background:none;cursor:pointer;
+    padding:5px 6px 4px;
     font-size:9px;font-weight:500;color:#9CA3AF;
     font-family:'Poppins',sans-serif;
     white-space:nowrap;
@@ -932,65 +932,6 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .stk-drag-over{ border-color:#78C043!important; box-shadow:0 0 0 2px rgba(120,192,67,.3)!important; }
 .stk-item{ cursor:default; }
 
-/* ═══ STOCK v2: card-grid ═══════════════════════════════════ */
-.stk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;padding:18px 24px;flex:1;min-height:0;overflow-y:auto}
-.stk-card{background:#fff;border:1px solid var(--bo);border-radius:var(--r3);box-shadow:var(--sh-card);display:flex;flex-direction:column;overflow:hidden;transition:all .15s}
-.stk-card:hover{border-color:#c3e6a8;box-shadow:0 8px 24px rgba(120,192,67,.14);transform:translateY(-2px)}
-.stk-card-img{width:100%;height:110px;background:var(--cr2);display:flex;align-items:center;justify-content:center;font-size:38px;cursor:pointer;flex-shrink:0;overflow:hidden}
-.stk-card-img img{width:100%;height:100%;object-fit:cover}
-.stk-card-body{padding:12px 14px;flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
-.stk-card-name{font-size:14px;font-weight:700;color:var(--i1);line-height:1.3;word-break:break-word}
-.stk-card-cat{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--fo2);background:var(--ll);border-radius:20px;padding:2px 8px;display:inline-block;margin-bottom:2px}
-.stk-card-notes{font-size:11px;color:var(--i4);line-height:1.4}
-.stk-card-foot{display:flex;align-items:center;justify-content:space-between;padding:8px 14px 12px;border-top:1px solid var(--cr2);gap:8px;flex-shrink:0}
-.stk-card-qty{display:flex;align-items:center;gap:4px}
-.stk-card-qbtn{width:34px;height:34px;border-radius:8px;border:1.5px solid var(--bo);background:#fff;color:var(--i2);cursor:pointer;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .12s;-webkit-tap-highlight-color:transparent}
-.stk-card-qbtn:hover,.stk-card-qbtn:active{background:#edf7e3;border-color:#c3e6a8}
-.stk-card-qval{font-size:15px;font-weight:700;color:var(--i1);min-width:32px;text-align:center}
-.stk-card-acts{display:flex;gap:5px}
-@media(max-width:1024px){
-  .stk-grid{grid-template-columns:1fr;gap:8px;padding:10px 10px 80px}
-  .stk-card{flex-direction:row;border-radius:var(--r2);min-height:80px}
-  .stk-card-img{width:80px;height:auto;min-height:80px;flex-shrink:0;border-radius:0;border-right:1px solid var(--bo)}
-  .stk-card-body{padding:10px 12px;justify-content:center}
-  .stk-card-foot{padding:8px 12px;border-top:none;border-left:1px solid var(--cr2);flex-direction:column;justify-content:center;min-width:84px;flex-shrink:0;gap:6px}
-  .stk-card-qbtn{width:38px;height:38px;font-size:19px}
-}
-
-/* ═══ STATUS BOTTOM-SHEET ════════════════════════════════════ */
-.bs-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:900;display:flex;align-items:flex-end;animation:bs-fade-in .2s ease}
-@keyframes bs-fade-in{from{opacity:0}to{opacity:1}}
-.bs-sheet{background:#fff;border-radius:24px 24px 0 0;padding:0 0 env(safe-area-inset-bottom,12px);width:100%;max-height:72dvh;overflow-y:auto;animation:bs-slide-up .25s cubic-bezier(.32,.72,0,1)}
-@keyframes bs-slide-up{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.bs-handle{width:36px;height:4px;background:#E5E7EB;border-radius:2px;margin:12px auto 0}
-.bs-title{padding:14px 20px 10px;font-size:14px;font-weight:700;color:var(--i1);border-bottom:1px solid var(--bo)}
-.bs-option{display:flex;align-items:center;gap:14px;padding:14px 20px;cursor:pointer;transition:background .1s;font-size:14px;font-weight:500;color:var(--i2);border-bottom:1px solid var(--cr2);min-height:52px;-webkit-tap-highlight-color:transparent}
-.bs-option:last-child{border-bottom:none}
-.bs-option:active,.bs-option:hover{background:var(--ll)}
-.bs-option.sel{color:var(--fo2);font-weight:700}
-.bs-check{margin-left:auto;color:var(--fo2);font-size:16px}
-
-/* ═══ SYNC RING SPINNER ══════════════════════════════════════ */
-@keyframes spin360{to{transform:rotate(360deg)}}
-.sync-ring{display:inline-block;width:12px;height:12px;border:2px solid #bfdbfe;border-top-color:#1d4ed8;border-radius:50%;animation:spin360 .7s linear infinite;flex-shrink:0;vertical-align:middle}
-
-/* ═══ POT POPUP: iOS safe-area scroll fix ═══════════════════ */
-@media(max-width:1024px){
-  .pop.mobile-sheet{width:100%!important;max-width:100%!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;border-radius:24px 24px 0 0!important;max-height:92dvh!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;padding-bottom:0!important}
-  .pop.mobile-sheet .ppb{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))!important;overscroll-behavior:contain}
-  .pop.mobile-sheet .ppf{flex-shrink:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--bo);background:#fff}
-  .pop.mobile-sheet input,.pop.mobile-sheet select,.pop.mobile-sheet textarea{font-size:16px!important}
-}
-
-/* ═══ DESKTOP NAV: More overflow menu ═══════════════════════ */
-.tab-more-menu{position:absolute;top:calc(100% + 4px);right:0;background:#fff;border:1px solid var(--bo);border-radius:var(--r2);box-shadow:var(--sh2);z-index:600;min-width:160px;overflow:hidden;animation:pop .12s ease}
-.tab-more-item{display:flex;align-items:center;gap:8px;padding:10px 16px;cursor:pointer;font-size:12px;font-weight:500;color:var(--i2);transition:background .1s;white-space:nowrap}
-.tab-more-item:hover{background:var(--ll);color:var(--fo2)}
-.tab-more-item.on{color:var(--fo2);font-weight:700;background:var(--ll)}
-
-/* ═══ MOBILE NAV: More drawer ═══════════════════════════════ */
-/* mbn-more-drawer removed — all tabs now direct buttons */
-
 
 /* ═══════════ MESSAGES ════════════ */
 .msgs-page{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
@@ -1046,7 +987,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .notes-page{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;background:#F9FAFB}
 .notes-head{flex-shrink:0;padding:16px 20px;border-bottom:1px solid var(--bo);background:#fff;display:flex;align-items:center;justify-content:space-between}
 .notes-tit{font-size:20px;font-weight:700;color:var(--i1)}
-.notes-list{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 12px;display:flex;flex-direction:column;gap:10px}
+.notes-list{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 80px;display:flex;flex-direction:column;gap:10px}
 .note-card{background:#fff;border:1.5px solid var(--bo);border-radius:16px;padding:14px 16px}
 .note-card.pinned{border-color:#f59e0b;background:#fffbeb}
 .note-card.hl-green{border-left:4px solid #78C043;background:#f0fdf4}
@@ -1065,9 +1006,9 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .note-hl-dot{width:16px;height:16px;border-radius:50%;cursor:pointer;flex-shrink:0;border:2px solid rgba(0,0,0,.12);transition:transform .12s}
 .note-hl-dot:hover{transform:scale(1.25)}
 .note-hl-dot.on{box-shadow:0 0 0 2px #fff,0 0 0 4px #555}
-.note-compose{flex-shrink:0;background:#fff;border-top:1px solid var(--bo);padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:8px;position:sticky;bottom:0;z-index:10}
-.note-ta{width:100%;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:12px;color:#333;font-size:13px;padding:9px 12px;outline:none;resize:vertical;line-height:1.5;font-family:'Poppins',sans-serif;box-sizing:border-box;min-height:72px}
-.note-compose-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
+.note-compose{flex-shrink:0;background:#fff;border-top:1px solid var(--bo);padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.note-ta{width:100%;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:12px;color:#333;font-size:13px;padding:9px 12px;outline:none;resize:none;line-height:1.5;font-family:'Poppins',sans-serif;box-sizing:border-box}
+.note-compose-row{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;min-width:0}
 .note-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--i4);padding:40px;text-align:center}
 .ord-status.requested{background:#f0f9ff;color:#075985;border:1px solid #bae6fd}
 .ord-status.rejected{background:#fef2f2;color:#7f1d1d;border:1px solid #fca5a5}
@@ -1095,7 +1036,8 @@ function jbRead() {
 function jbWrite(data) {
     if (!JB_KEY || JB_KEY.indexOf('PASTE') !== -1) return Promise.reject(new Error('JSONBin not configured'));
     var url = 'https://api.jsonbin.io/v3/b/' + JB_BIN_ID;
-    function attempt(tries, delay) {
+    var DELAYS = [5000, 15000, 60000];
+    function attempt(triesLeft, delayIdx) {
         return fetch(url, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', 'X-Master-Key': JB_KEY, 'X-Bin-Versioning': 'false' },
@@ -1104,12 +1046,14 @@ function jbWrite(data) {
             if (!r.ok) return r.text().then(function(t){ throw new Error(r.status+':'+t); });
             return r.json();
         }).catch(function(err) {
-            if (tries <= 1) throw err;
-            console.warn('[DB] jbWrite failed ('+err.message+'), retrying in '+delay+'ms…');
-            return new Promise(function(res){ setTimeout(res, delay); }).then(function(){ return attempt(tries-1, delay*2); });
+            if (triesLeft <= 1) throw err;
+            var delay = DELAYS[delayIdx] || 60000;
+            console.warn('[DB] jbWrite failed (' + err.message + '), retrying in ' + Math.round(delay/1000) + 's');
+            return new Promise(function(res){ setTimeout(res, delay); })
+                .then(function(){ return attempt(triesLeft - 1, delayIdx + 1); });
         });
     }
-    return attempt(3, 1000);
+    return attempt(3, 0);
 }
 function jbCreate(data) {
     if (!JB_KEY || JB_KEY.indexOf('PASTE') !== -1) return Promise.reject(new Error('JSONBin not configured'));
@@ -1469,7 +1413,7 @@ function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onD
                     fontSize: fs - 1, color: '#c0ccc4', fontFamily: 'Inter,sans-serif', userSelect: 'none' } }, teMode ? '+' : '')));
     }
     const alertCls = hasPests ? ' alert-pest' : hasSick ? ' alert-sick' : '';
-    return (React.createElement("div", { className: 'pcw' + (isActive ? ' active' : '') + (isSel ? ' pot-sel' : '') + (selMode ? ' sel-mode' : '') + (teMode ? ' temode' : '') + alertCls, style: { width: ppx, height: ppx + LBH, position: 'relative', background: expBg || undefined, borderRadius: expBg ? 6 : undefined }, title: lbl + (plant.treatment ? ' | ' + plant.treatment : '') + (sc === 'sick' ? ' ⚠ SICK' : sc === 'pests' ? ' 🐛 PESTS' : ''), onClick: e => { e.stopPropagation(); if (selMode || true)
+    return (React.createElement("div", { className: 'pcw' + (isActive ? ' active' : '') + (isSel ? ' pot-sel' : '') + (selMode ? ' sel-mode' : '') + (teMode ? ' temode' : '') + alertCls, style: { width: ppx, height: ppx + LBH, position: 'relative', background: expBg || undefined, borderRadius: expBg ? 6 : undefined }, title: lbl + (plant.treatment ? ' | ' + plant.treatment : '') + (sc === 'sick' ? ' ⚠ SICK' : sc === 'pests' ? ' 🐛 PESTS' : ''), onClick: e => { e.stopPropagation(); if (selMode || !teMode)
             onPotClick(e, plant); },
         onMouseEnter: expInitials && onExpHover ? e => onExpHover(e.clientX, e.clientY) : undefined,
         onMouseMove:  expInitials && onExpHover ? e => onExpHover(e.clientX, e.clientY) : undefined,
@@ -1753,18 +1697,17 @@ function loadImages(d) {
     } catch(e) { return d; }
 }
 function saveData(d, labId, onOK, onFail) {
-    // Offline-first: always write locally before attempting network
+    // OFFLINE-FIRST: persist locally before any network call
     saveImages(d);
-    if (labId) { try { saveLabData(labId, d); } catch(e2) {} }
-    else       { try { localStorage.setItem('gl_v19', JSON.stringify(d)); } catch(e2) {} }
-    if (!labId) { if (onOK) onOK('local'); return Promise.resolve('local'); }
-
-    // Save note PDFs to localStorage (too large for JSONBin 100KB limit)
     try {
         var notePdfs = {};
-        (d.notes||[]).forEach(function(note){ if(note.pdf) notePdfs['np_'+note.id]=note.pdf; });
+        (d.notes||[]).forEach(function(note){ if(note.pdf) notePdfs['np_'+note.id] = note.pdf; });
         if(Object.keys(notePdfs).length) localStorage.setItem('gl_note_pdfs', JSON.stringify(notePdfs));
     } catch(ep){}
+    if (labId) { try { saveLabData(labId, d); } catch(e2){} }
+    else       { try { localStorage.setItem('gl_v19', JSON.stringify(d)); } catch(e2){} }
+    if (!labId) { if (onOK) onOK('local'); return Promise.resolve('local'); }
+
     var writeData = Object.assign({}, d, {
         plants: d.plants ? d.plants.map(function(p){var p2=Object.assign({},p);delete p2.image;return p2;}) : d.plants,
         stock:  d.stock  ? d.stock.map( function(s){var s2=Object.assign({},s);delete s2.image;return s2;}) : d.stock,
@@ -1776,11 +1719,11 @@ function saveData(d, labId, onOK, onFail) {
 
     if (JB_BIN_ID && JB_BIN_ID.indexOf('PASTE') === -1) {
         return jbWrite(writeData).then(function() {
-            console.log('[DB] Saved to JSONBin ('+sizeKB+'KB)');
+            console.log('[DB] Saved to JSONBin (' + sizeKB + 'KB)');
             if (onOK) onOK('remote');
         }).catch(function(e) {
             console.error('[DB] JSONBin write failed (all retries exhausted):', e.message);
-            if (onFail) onFail(e);  // data already safe in localStorage
+            if (onFail) onFail(e);
         });
     } else {
         if (onOK) onOK('local');
@@ -1807,7 +1750,6 @@ function seedIfEmpty(d) {
         messages: [],
         measures: [],
         schedules: [],
-        notes: [],
         users: [{ id: 'u1', name: 'Alice Chen', email: 'alice@lab.edu', role: 'admin', position: 'PI', color: '#4e9e72', photo: null }, { id: 'u2', name: 'Ben Levi', email: 'ben@lab.edu', role: 'member', position: 'PhD student', color: '#3b82f6', photo: null }, { id: 'u3', name: 'Sara Park', email: 'sara@lab.edu', role: 'member', position: 'Postdoc', color: '#ec4899', photo: null }],
         experiments: [{ id: e1, name: 'SA Treatment', owner_name: 'Alice Chen', description: 'SA response', created_at: '2025-03-01', color_index: 0 }, { id: e2, name: 'JA Response', owner_name: 'Ben Levi', description: 'JA pathway', created_at: '2025-03-05', color_index: 1 }],
         greenhouses: [
@@ -2145,24 +2087,32 @@ function NotesView({ notes, onAdd, onEdit, onDel, currentUser, users }) {
     const [pdfFile,setPdfFile]=React.useState(null);
     const [pdfName,setPdfName]=React.useState('');
     const [fileError,setFileError]=React.useState('');
+    const [uploadPct,setUploadPct]=React.useState(null);
     const pdfRef=React.useRef();
     const HL=[{id:'green',col:'#78C043'},{id:'yellow',col:'#f59e0b'},{id:'red',col:'#ef4444'},{id:'blue',col:'#3b82f6'},{id:'purple',col:'#8b5cf6'}];
-    var ALLOWED_TYPES=['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    var MAX_FILE_MB=5;
+    var ALLOWED_MIME=['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    var ALLOWED_EXT=/\.(pdf|doc|docx)$/i;
+    var MAX_FILE_BYTES=5*1024*1024;
     const handlePdf=function(e){
-        var fl=e.target.files[0];
-        if(!fl)return;
-        if(!ALLOWED_TYPES.includes(fl.type)&&!fl.name.match(/\.(pdf|doc|docx)$/i)){
-            setFileError('Unsupported file type. Please attach a PDF or Word document.');
+        var fl=e.target.files[0]; if(!fl)return;
+        if(!ALLOWED_MIME.includes(fl.type)&&!ALLOWED_EXT.test(fl.name)){
+            setFileError('Unsupported type. Attach a PDF or Word doc (.pdf, .doc, .docx).');
             e.target.value=''; return;
         }
-        if(fl.size>MAX_FILE_MB*1024*1024){
-            setFileError('File too large (max '+MAX_FILE_MB+'MB). Please compress or use a smaller file.');
+        if(fl.size>MAX_FILE_BYTES){
+            setFileError('File too large (max 5 MB). Please compress or choose a smaller file.');
             e.target.value=''; return;
         }
         setFileError('');
+        setUploadPct(0);
+        var steps=[10,30,55,75,90]; var si2=0;
+        var iv=setInterval(function(){ if(si2<steps.length){setUploadPct(steps[si2]);si2++;}else clearInterval(iv); },120);
         var r=new FileReader();
-        r.onload=function(ev){setPdfFile(ev.target.result);setPdfName(fl.name);};
+        r.onload=function(ev){
+            clearInterval(iv); setUploadPct(100);
+            setPdfFile(ev.target.result); setPdfName(fl.name);
+            setTimeout(function(){ setUploadPct(null); }, 700);
+        };
         r.readAsDataURL(fl);
     };
     const submit=function(){if(!text.trim())return;onAdd({id:uid(),text:text.trim(),author:currentUser?currentUser.name:'?',author_color:currentUser?currentUser.color:'#6b7280',highlight:hl,pinned:false,pdf:pdfFile||null,pdf_name:pdfName||'',created_at:new Date().toISOString(),edited:false});setText('');setHl('');setPdfFile(null);setPdfName('');};
@@ -2188,7 +2138,7 @@ function NotesView({ notes, onAdd, onEdit, onDel, currentUser, users }) {
                 var isMe=currentUser&&n.author===currentUser.name;
                 var avColor=n.author_color&&n.author_color.match(/^#[0-9a-fA-F]{3,6}$/)?n.author_color:'#6b7280';
                 var initials=(n.author||'?').charAt(0).toUpperCase();
-                var cardStyle={background:n.highlight&&hlBg[n.highlight]?hlBg[n.highlight]:'#fff',borderRadius:14,padding:'14px 16px',border:'1.5px solid var(--bo)'};
+                var cardStyle={background:n.highlight&&hlBg[n.highlight]?hlBg[n.highlight]:'#fff',borderRadius:14,padding:'14px 16px',overflow:'hidden',border:'1.5px solid var(--bo)'};
                 if(n.highlight&&hlBorder[n.highlight]) cardStyle.borderLeft='4px solid '+hlBorder[n.highlight];
                 if(n.pinned){cardStyle.borderColor='#f59e0b';cardStyle.background='#fffbeb';}
                 return React.createElement('div',{key:n.id,style:cardStyle},
@@ -2218,15 +2168,16 @@ function NotesView({ notes, onAdd, onEdit, onDel, currentUser, users }) {
         ),
         React.createElement('div',{className:'note-compose'},
             React.createElement('textarea',{className:'note-ta',rows:3,placeholder:'Write a note…',value:text,onChange:function(e){setText(e.target.value);},onKeyDown:function(e){if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();submit();}}}),
-            React.createElement('div',{className:'note-compose-row',style:{marginTop:6}},
+            React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6,flexWrap:'nowrap',minWidth:0,marginTop:6}},
                 React.createElement('span',{style:{fontSize:10,color:'var(--i4)',flexShrink:0}},'Color:'),
                 HL.map(function(h){return React.createElement('div',{key:h.id,title:h.id,onClick:function(){setHl(function(x){return x===h.id?'':h.id;});},style:{width:14,height:14,minWidth:14,borderRadius:'50%',cursor:'pointer',flexShrink:0,background:h.col,border:hl===h.id?'2px solid #fff':'2px solid transparent',boxShadow:hl===h.id?'0 0 0 2px '+h.col:'none'}});}),
                 React.createElement('button',{className:'btn btns bsm',style:{marginLeft:4,flexShrink:0},onClick:function(){pdfRef.current.click();}},pdfFile?'📄 '+pdfName.slice(0,12):'📎 PDF'),
                 pdfFile&&React.createElement('button',{className:'btn btnd bxs',style:{flexShrink:0},onClick:function(){setPdfFile(null);setPdfName('');}},'×'),
-                React.createElement('input',{ref:pdfRef,type:'file',accept:'application/pdf,.pdf,application/msword,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx',style:{display:'none'},onChange:handlePdf}),
-                fileError&&React.createElement('div',{style:{width:'100%',marginTop:4,padding:'6px 10px',background:'#fef2f2',border:'1px solid #fca5a5',borderRadius:8,fontSize:11,color:'#dc2626',display:'flex',alignItems:'center',gap:6}},
-                    React.createElement('span',null,'⚠️'),
-                    fileError,
+                React.createElement('input',{ref:pdfRef,type:'file',
+                    accept:'application/pdf,.pdf,application/msword,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx',
+                    style:{display:'none'},onChange:handlePdf}),
+                fileError&&React.createElement('div',{style:{width:'100%',marginTop:4,padding:'7px 10px',background:'#fef2f2',border:'1px solid #fca5a5',borderRadius:8,fontSize:11,color:'#dc2626',display:'flex',alignItems:'center',gap:5}},
+                    '⚠️ ',fileError,
                     React.createElement('span',{style:{marginLeft:'auto',cursor:'pointer',fontWeight:700},onClick:function(){setFileError('');}},'×')
                 ),
                 React.createElement('button',{className:'btn btnp bsm',style:{marginLeft:'auto',flexShrink:0},onClick:submit,disabled:!text.trim()},'Post'),
@@ -2293,7 +2244,7 @@ function MessagesView({ messages, onAdd, onEdit, onDel, currentUser, users }) {
 }
 
 /* Stock tab */
-function StockView({ stock, onAdd, onEdit, onRemove, onQty }) {
+function StockView({ stock, onAdd, onEdit, onRemove, onQty, lastSaved }) {
     const [showAdd, setShowAdd] = useState(false);
     const [editId, setEditId] = useState(null);
     const [stkSearch, setStkSearch] = useState('');
@@ -2346,58 +2297,43 @@ function StockView({ stock, onAdd, onEdit, onRemove, onQty }) {
     return (React.createElement("div", { className: "stk" },
         React.createElement("div", { className: "stk-head" },
             React.createElement("div", { className: "stk-tit" }, "Stock"),
-            React.createElement("div", { style:{position:'relative',flex:1,maxWidth:280} },
-                React.createElement("span", { style:{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',fontSize:13,color:'var(--i4)',pointerEvents:'none'} }, '🔍'),
-                React.createElement("input", { className:"fi", value:stkSearch, onChange:e=>setStkSearch(e.target.value),
-                    placeholder:"Search stock…", style:{paddingLeft:32,width:'100%',padding:'7px 10px 7px 32px',fontSize:13} })
-            ),
+            React.createElement("input", { className:"fi", placeholder:"Search stock…", value:stkSearch, onChange:e=>setStkSearch(e.target.value), style:{maxWidth:200,padding:'6px 10px',fontSize:12} }),
             React.createElement("button", { className: "btn btnp bsm", onClick: () => { setFm(EMPTY); setShowAdd(true); } }, "+ Add item")),
-        React.createElement("div", { className: "stk-grid" },
+        React.createElement("div", { className: "stk-list" },
             stock.length === 0 && React.createElement("div", { className: "stk-empty" },
-                React.createElement("div", { style:{fontSize:30,opacity:.3} }, "📦"),
-                React.createElement("div", { style:{fontSize:12} }, "No stock items yet")),
-            grouped.map(function(grp) {
-                var cat = grp.cat, items = grp.items;
-                return React.createElement("div", { key: cat },
-                    React.createElement("div", { style:{fontSize:10,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--i4)',padding:'10px 0 6px',display:'flex',alignItems:'center',gap:6} },
-                        React.createElement("span", null, cat),
-                        React.createElement("span", {style:{background:'var(--cr2)',borderRadius:20,padding:'1px 8px',fontSize:10,color:'var(--i3)',fontWeight:600}}, items.length)
-                    ),
-                    items.map(function(item) {
-                        var editing = function(){ setEditId(item.id); setFm({name:item.name,category:item.category,quantity:item.quantity,notes:item.notes||'',image:item.image||null}); };
-                        return React.createElement("div", { key: item.id,
-                            className: "stk-card"+(dragOver===item.id?' stk-drag-over':''),
-                            draggable: true,
-                            onDragStart: function(){ onDragStart(item.id); },
-                            onDragOver:  function(e){ e.preventDefault(); onDragOverItem(item.id); },
-                            onDrop:      function(){ onDrop(item.id); },
-                            onDragEnd:   function(){ setDragId(null); setDragOver(null); },
-                            style:{ opacity: dragId===item.id ? 0.5 : 1 }
-                        },
-                            React.createElement("div", { className:"stk-card-img", onClick:editing },
-                                item.image ? React.createElement("img", {src:item.image,alt:item.name,style:{width:'100%',height:'100%',objectFit:'cover'}}) : "📦"
-                            ),
-                            React.createElement("div", { className:"stk-card-body" },
-                                React.createElement("div", { className:"stk-card-cat" }, item.category),
-                                React.createElement("div", { className:"stk-card-name" }, item.name),
-                                item.notes && React.createElement("div", { className:"stk-card-notes" }, item.notes)
-                            ),
-                            React.createElement("div", { className:"stk-card-foot" },
-                                React.createElement("div", { className:"stk-card-qty" },
-                                    React.createElement("button", { className:"stk-card-qbtn", onClick:function(){ onQty(item.id,-1); }, "aria-label":"Less" }, "−"),
-                                    React.createElement("span",   { className:"stk-card-qval" }, item.quantity),
-                                    React.createElement("button", { className:"stk-card-qbtn", onClick:function(){ onQty(item.id,1);  }, "aria-label":"More" }, "+")
-                                ),
-                                React.createElement("div", { className:"stk-card-acts" },
-                                    React.createElement("button", { className:"medbtn", style:{minHeight:36,minWidth:44}, onClick:editing }, "Edit"),
-                                    React.createElement("button", { className:"stk-del", style:{minHeight:36,minWidth:44}, onClick:function(){ onRemove(item.id); } }, "Del")
-                                )
-                            )
-                        );
-                    })
-                );
-            })),
-                (showAdd || editId) && React.createElement(Modal, { title: editId ? 'Edit Item' : 'Add Stock Item', onClose: () => { setShowAdd(false); setEditId(null); }, onConfirm: editId ? doEdit : doAdd, confirmLabel: editId ? 'Save' : 'Add' },
+                React.createElement("div", { style: { fontSize: 30, opacity: .3 } }, "\uD83D\uDCE6"),
+                React.createElement("div", { style: { fontSize: 12 } }, "No stock items yet")),
+            grouped.map(({ cat, items }) => React.createElement("div", { key: cat },
+                React.createElement("div", { style:{fontSize:10,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--i4)',padding:'8px 4px 4px',display:'flex',alignItems:'center',gap:6} },
+                    React.createElement("span", null, cat),
+                    React.createElement("span", {style:{background:'var(--cr2)',borderRadius:20,padding:'1px 8px',fontSize:10,color:'var(--i3)',fontWeight:600}}, items.length)
+                ),
+                items.map(item => React.createElement("div", { key: item.id, className: "stk-item" + (dragOver===item.id?' stk-drag-over':''),
+                    draggable: true,
+                    onDragStart: () => onDragStart(item.id),
+                    onDragOver: e => { e.preventDefault(); onDragOverItem(item.id); },
+                    onDrop: () => onDrop(item.id),
+                    onDragEnd: () => { setDragId(null); setDragOver(null); },
+                    style: { opacity: dragId===item.id ? 0.5 : 1 }
+                },
+                    React.createElement("div", { style:{cursor:'grab',color:'var(--i5)',fontSize:16,flexShrink:0,padding:'0 4px',display:'flex',alignItems:'center'} }, "⠿"),
+                    React.createElement("div", { className: "stk-img", onClick: () => { setEditId(item.id); setFm({ name: item.name, category: item.category, quantity: item.quantity, notes: item.notes || '', image: item.image || null }); } }, item.image ? React.createElement("img", { src: item.image, alt: item.name }) : '📦'),
+                    React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+                        React.createElement("div", { style:{fontSize:14,fontWeight:600,color:'var(--i1)',wordBreak:'break-word',lineHeight:1.3} }, item.name),
+                        item.notes && React.createElement("div", { style:{fontSize:11,color:'var(--i4)',marginTop:2} }, item.notes)),
+                    React.createElement("div", { className: "stk-qty", style:{flexShrink:0} },
+                        React.createElement("button", { className: "stk-qbtn", onClick: () => onQty(item.id, -1) }, "-"),
+                        React.createElement("span", { className: "stk-qval" }, item.quantity),
+                        React.createElement("button", { className: "stk-qbtn", onClick: () => onQty(item.id, 1) }, "+")),
+                    React.createElement("div", {style:{display:'flex',flexDirection:'column',gap:4,flexShrink:0}},
+                        React.createElement("button", { className: "medbtn", onClick: () => { setEditId(item.id); setFm({ name: item.name, category: item.category, quantity: item.quantity, notes: item.notes || '', image: item.image || null }); } }, "Edit"),
+                        React.createElement("button", { className: "stk-del", onClick: () => onRemove(item.id) }, "Del"))
+                ))
+            ))),
+        lastSaved && React.createElement('div', { style:{flexShrink:0,padding:'5px 20px',borderTop:'1px solid var(--bo)',background:'#fafafa',fontSize:10,color:'var(--i5)',textAlign:'right',fontFamily:'Inter,sans-serif'} },
+            '✓ Last synced: ' + ago(lastSaved.toISOString())
+        ),
+        (showAdd || editId) && React.createElement(Modal, { title: editId ? 'Edit Item' : 'Add Stock Item', onClose: () => { setShowAdd(false); setEditId(null); }, onConfirm: editId ? doEdit : doAdd, confirmLabel: editId ? 'Save' : 'Add' },
             React.createElement("div", { className: "mof" },
                 React.createElement("label", { className: "mol" }, "Item photo"),
                 React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 } },
@@ -2817,38 +2753,13 @@ function SearchView({ plants, tables, ghs, exps, onSel }) {
 /* ═══════════════════════════════════
    ORDERS VIEW
 ═══════════════════════════════════ */
-
-/* ═══════════════════════════════════
-   BOTTOM SHEET + STATUS DOT  helpers
-═══════════════════════════════════ */
-var STATUS_COLORS={'Requested':'#7c3aed','Draft':'#6B7280','Waiting for approval':'#d97706','Ordered':'#1d4ed8','In process':'#5b21b6','Shipped':'#059669','Arrived':'#14532d','Received':'#166534','Cancelled':'#991b1b','Rejected':'#b91c1c'};
-function StatusDot(props){
-    return React.createElement('span',{style:{width:10,height:10,borderRadius:'50%',flexShrink:0,display:'inline-block',background:STATUS_COLORS[props.status]||'#9CA3AF',verticalAlign:'middle'}});
-}
-function BottomSheetPicker(props){
-    var title=props.title,options=props.options,value=props.value,onChange=props.onChange,onClose=props.onClose;
-    return React.createElement('div',{className:'bs-overlay',onClick:function(e){if(e.target===e.currentTarget)onClose();}},
-        React.createElement('div',{className:'bs-sheet'},
-            React.createElement('div',{className:'bs-handle'}),
-            React.createElement('div',{className:'bs-title'},title),
-            options.map(function(opt){
-                var sel=opt===value;
-                return React.createElement('div',{key:opt,className:'bs-option'+(sel?' sel':''),onClick:function(){onChange(opt);onClose();}},
-                    React.createElement(StatusDot,{status:opt}),
-                    React.createElement('span',{style:{flex:1,marginLeft:6}},opt),
-                    sel&&React.createElement('span',{className:'bs-check'},'✓')
-                );
-            })
-        )
-    );
-}
 const ORDER_STATUSES = ['Requested','Draft','Waiting for approval','Ordered','In process','Shipped','Arrived','Received','Cancelled','Rejected'];
 const ORDER_STATUS_KEY = {'Requested':'requested','Draft':'draft','Waiting for approval':'waiting','Ordered':'ordered','In process':'in-process','Shipped':'shipped','Arrived':'arrived','Received':'received','Cancelled':'cancelled','Rejected':'rejected'};
 const ORDER_CATS = ['Equipment','Consumables','Chemicals','Reagents','Plasticware','Software','Services','Other'];
 const ORDER_CURRENCIES = ['USD','EUR','ILS','GBP','CHF','Other'];
 const ORDER_PRIORITIES = ['Urgent','High','Normal','Low'];
 
-function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel, syncStatus }) {
+function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel, syncStatus, lastSaved }) {
     const [filter, setFilter] = React.useState('all');
     const [sort, setSort] = React.useState('order_date_desc');
     const [showForm, setShowForm] = React.useState(false);
@@ -2860,8 +2771,6 @@ function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel, syncSta
     const [pendingIds, setPendingIds] = React.useState(new Set());
     const [formErr, setFormErr] = React.useState('');
     const [localSyncStatus, setLocalSyncStatus] = React.useState(syncStatus || 'saved');
-    const [showStatusPicker, setShowStatusPicker] = React.useState(false);
-    var isMob = typeof window !== 'undefined' && window.innerWidth <= 1024;
 
     // Draft auto-save to localStorage
     const DRAFT_KEY = 'gl_ord_draft';
@@ -2967,13 +2876,8 @@ function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel, syncSta
         ),
         /* Sync status bar + date range filter */
         React.createElement('div', {className:'ord-sync-bar'},
-            React.createElement('div', {className:'ord-sync-icon '+localSyncStatus,
-                style:{display:'flex',alignItems:'center',gap:6,cursor:localSyncStatus==='error'?'pointer':'default'},
-                title:localSyncStatus==='error'?'Click to retry sync':undefined},
-                localSyncStatus==='saving' && React.createElement('span',{className:'sync-ring'}),
-                (localSyncStatus==='synced'||localSyncStatus==='saved') && React.createElement('span',{style:{color:'#15803d',fontWeight:700}},'✓'),
-                localSyncStatus==='error' && React.createElement('span',{style:{color:'#dc2626'}},'⚠'),
-                React.createElement('span',null,syncLabel)
+            React.createElement('div', {className:'ord-sync-icon ' + localSyncStatus, title: localSyncStatus==='error'?'Click to retry sync':undefined},
+                syncLabel
             ),
             React.createElement('div', {className:'ord-date-filter'},
                 React.createElement('span', null, 'From'),
@@ -3110,6 +3014,9 @@ function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel, syncSta
                 );});
             })())
         ),
+        lastSaved && React.createElement('div', { style:{flexShrink:0,padding:'5px 24px',borderTop:'1px solid var(--bo)',background:'#fafafa',fontSize:10,color:'var(--i5)',textAlign:'right',fontFamily:'Inter,sans-serif'} },
+            '✓ Last synced: ' + ago(lastSaved.toISOString())
+        ),
         showReqForm&&React.createElement('div',{className:'mov',onClick:function(e){if(e.target===e.currentTarget)setShowReqForm(false);}},
             React.createElement('div',{className:'mo',style:{maxHeight:'90vh',overflowY:'auto'}},
                 React.createElement('div',{className:'motit'},'Request an Item'),
@@ -3185,23 +3092,10 @@ function OrdersView({ orders, users, curUser, exps, onAdd, onUpd, onDel, syncSta
                 React.createElement('div',{className:'morow'},
                     React.createElement('div',{className:'mof'},
                         React.createElement('label',{className:'mol'},'Status'),
-                        isMob
-                            ? React.createElement('button',{
-                                style:{display:'flex',alignItems:'center',gap:8,padding:'9px 12px',border:'1.5px solid var(--bo)',borderRadius:'var(--r)',background:'#fff',width:'100%',cursor:'pointer',fontSize:13,minHeight:44,fontFamily:'inherit'},
-                                onClick:function(e){e.preventDefault();setShowStatusPicker(true);}
-                              },
-                                React.createElement(StatusDot,{status:fm.status}),
-                                React.createElement('span',{style:{flex:1,textAlign:'left',marginLeft:6}},fm.status),
-                                React.createElement('span',{style:{color:'var(--i4)',fontSize:11}},'▾')
-                              )
-                            : React.createElement('select',{className:'mosel',value:fm.status,onChange:e=>set('status',e.target.value)},
-                                ORDER_STATUSES.map(s=>React.createElement('option',{key:s,value:s},s))
-                              )
+                        React.createElement('select',{className:'mosel',value:fm.status,onChange:e=>set('status',e.target.value)},
+                            ORDER_STATUSES.map(s=>React.createElement('option',{key:s,value:s},s))
+                        )
                     ),
-                    showStatusPicker && React.createElement(BottomSheetPicker,{
-                        title:'Set order status',options:ORDER_STATUSES,value:fm.status,
-                        onChange:function(v){set('status',v);},onClose:function(){setShowStatusPicker(false);}
-                    }),
                     React.createElement('div',{className:'mof'},
                         React.createElement('label',{className:'mol'},'Ordered by'),
                         React.createElement('select',{className:'mosel',value:users.find(u=>u.name===fm.ordered_by)?fm.ordered_by:'__custom__',onChange:e=>e.target.value!=='__custom__'?set('ordered_by',e.target.value):set('ordered_by','')},
@@ -3897,21 +3791,44 @@ function DashView({ greenhouses, tables, structs, plants, experiments }) {
    2. Replace loadData() with onSnapshot listener
    3. The syncStatus state machine below stays the same
 ════════════════════════════════════════════════ */
-function SyncStatusChip({ status, lastSaved, lastBy, onClick }) {
-    const label = status === 'saving' ? 'Saving...'
-        : status === 'saved' ? 'Saved locally'
-            : status === 'synced' ? 'Synced'
-                : status === 'error' ? 'Sync failed — click to retry'
-                    : 'Not saved';
-    const timeStr = lastSaved ? ago(lastSaved.toISOString()) : null;
-    const byStr = lastBy ? ' by ' + lastBy : '';
-    const title = timeStr ? `Last saved ${timeStr}${byStr}` : label;
-    return (React.createElement("div", { className: `sync-chip ${status}`, title: title, onClick: onClick, style: { cursor: onClick ? 'pointer' : 'default' } },
-        React.createElement("div", { className: `sync-dot ${status}` }),
-        React.createElement("span", null, label),
-        timeStr && status !== 'saving' && React.createElement("span", { style: { opacity: .65 } },
-            "\u00B7 ",
-            timeStr)));
+function SyncStatusChip({ status, lastSaved, lastBy, onClick, uploadProgress }) {
+    var warnRef = React.useRef(null);
+    var [overdue, setOverdue] = React.useState(false);
+    React.useEffect(function() {
+        if (status === 'synced' || status === 'saved') {
+            setOverdue(false);
+            if (warnRef.current) { clearTimeout(warnRef.current); warnRef.current = null; }
+            return;
+        }
+        if (!warnRef.current) {
+            warnRef.current = setTimeout(function(){ setOverdue(true); }, 30000);
+        }
+        return function(){ if (warnRef.current) clearTimeout(warnRef.current); };
+    }, [status]);
+    var effectiveStatus = (overdue && status !== 'synced') ? 'error' : status;
+    var label = uploadProgress != null && status === 'saving' ? ('Uploading ' + uploadProgress + '%')
+        : status === 'saving'  ? 'Saving…'
+        : status === 'saved'   ? 'Saved locally'
+        : status === 'synced'  ? 'Synced'
+        : status === 'error'   ? 'Sync failed — tap to retry'
+        : overdue              ? 'Unsynced > 30s — tap to retry'
+        : 'Not saved';
+    var timeStr = lastSaved ? ago(lastSaved.toISOString()) : null;
+    var byStr   = lastBy ? ' by ' + lastBy : '';
+    var title   = timeStr ? ('Last saved ' + timeStr + byStr) : label;
+    return React.createElement('div', { className: 'sync-chip ' + effectiveStatus, title: title, onClick: onClick,
+        style: { cursor: onClick ? 'pointer' : 'default' } },
+        React.createElement('div', { className: 'sync-dot ' + effectiveStatus }),
+        uploadProgress != null && status === 'saving'
+            ? React.createElement('div', { style:{display:'flex',alignItems:'center',gap:5} },
+                React.createElement('span', null, label),
+                React.createElement('div', { style:{width:50,height:4,background:'#ddd',borderRadius:2,overflow:'hidden'} },
+                    React.createElement('div', { style:{width:uploadProgress+'%',height:'100%',background:'#1d4ed8',borderRadius:2,transition:'width .3s'} })
+                )
+              )
+            : React.createElement('span', null, label),
+        timeStr && status !== 'saving' && React.createElement('span', { style:{opacity:.65} }, '· ', timeStr)
+    );
 }
 const FB_CODE_SNIPPET = '// saveData(d): await db.collection("labs").doc("main").set(d,{merge:true})\n// loadData: db.collection("labs").doc("main").onSnapshot(snap=>{if(snap.exists)setData(snap.data());})';
 /* Firebase integration guide panel */
@@ -3972,7 +3889,7 @@ function App() {
     const [dimSpray, setDimSpray] = useState({});
     const [zoom, setZoom] = useState(1);
     const [pan, setPan] = useState({ x: 40, y: 40 });
-    const dataLoadedRef = useRef(false); const vpRef = useRef(), wrRef = useRef(), panRef = useRef(null), spRef = useRef(false), remoteUpdateRef = useRef(false), lastTblRef = useRef({ width: 230, length: 125, rows: 3, cols: 6 }), forceWriteRef = useRef(false), writeTimerRef = useRef(null), lastLocalWriteRef = useRef(0);
+    const dataLoadedRef = useRef(false); const vpRef = useRef(), wrRef = useRef(), panRef = useRef(null), spRef = useRef(false), remoteUpdateRef = useRef(false), lastTblRef = useRef({ width: 230, length: 125, rows: 3, cols: 6 }), forceWriteRef = useRef(false);
     const [showAGH, setShowAGH] = useState(false);
     const [showATbl, setShowATbl] = useState(false);
     const [showUL, setShowUL] = useState(false);
@@ -3995,7 +3912,6 @@ function App() {
     const [nStrFm, setNStrFm] = useState({ type: 'door', w: 20, h: 40 });
     const [delConfirm, setDelConfirm] = useState(null); // {type:'gh'|'tbl', id, name}
     const [menuOpen, setMenuOpen] = useState(false);
-    const [moreOpen, setMoreOpen] = useState(false);   // desktop More menu
     const [expTip, setExpTip] = useState(null); // {x,y,exp,owner} for hover tooltip
     const [colorByExp, setColorByExp] = useState(false); // toggle experiment color overlay
     const [tblSelMode, setTblSelMode] = useState(false); // multi-table selection mode
@@ -4154,17 +4070,15 @@ useEffect(() => {
                 });
         }
         fetchLabData();
-        var pollId = setInterval(fetchLabData, 120000); // 120s poll — prevent overwriting pending local writes
+        var pollId = setInterval(fetchLabData, 120000); // 120s — safe above 5s write guard
         return function() { clearInterval(pollId); };
     }, [activeLab ? activeLab.id : null]);
-    /* Write on every local data change — skip only if this exact update came from remote */
+    const writeTimerRef     = useRef(null);
+    const lastLocalWriteRef = useRef(0);
     useEffect(() => {
         if (!activeLab) return;
         if (!dataLoadedRef.current) return;
-        if (remoteUpdateRef.current && !forceWriteRef.current) {
-            remoteUpdateRef.current = false;
-            return;
-        }
+        if (remoteUpdateRef.current && !forceWriteRef.current) { remoteUpdateRef.current = false; return; }
         remoteUpdateRef.current = false;
         forceWriteRef.current = false;
         lastLocalWriteRef.current = Date.now();
@@ -4172,6 +4086,7 @@ useEffect(() => {
         if (writeTimerRef.current) clearTimeout(writeTimerRef.current);
         var sd = data, sl = activeLab, su = user;
         writeTimerRef.current = setTimeout(function() {
+            writeTimerRef.current = null;
             saveData(sd, sl ? sl.id : null,
                 function() { setSyncStatus('synced'); setLastSaved(new Date()); if (su) setLastBy(su.name); },
                 function() { setSyncStatus('error'); }
@@ -4917,24 +4832,24 @@ useEffect(() => {
                     ),
                     React.createElement("button", { key: 'measures', className: `tab-btn${tab === 'measures' ? ' on' : ''}`, onClick: () => { setTab('measures'); setMenuOpen(false); } },
                         React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='measures' ? 'rgba(255,255,255,.22)' : '#10B9811A', color: tab==='measures' ? '#fff' : '#10B981', marginRight:1 } },
-                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18"/></svg>' } })
+                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18\"/></svg>' } })
                         ),
                         "Measures"
                     ),
                     React.createElement("button", { key: 'messages', className: `tab-btn${tab === 'messages' ? ' on' : ''}`, onClick: () => { setTab('messages'); setMenuOpen(false); setLastMsgRead(r=>({...r,[activeLab?.id]:new Date().toISOString()})); } },
                         React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='messages' ? 'rgba(255,255,255,.22)' : '#F59E0B1A', color: tab==='messages' ? '#fff' : '#F59E0B', marginRight:1, position:'relative' } },
-                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' } }),
+                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\"/></svg>' } }),
                             (() => { const lastRead = lastMsgRead[activeLab?.id]; const unread = (data.messages||[]).filter(m=>!lastRead||m.created_at>lastRead).length; return unread>0 && React.createElement("span",{style:{position:'absolute',top:-5,right:-5,background:'#ef4444',color:'#fff',borderRadius:'50%',width:14,height:14,fontSize:8,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',border:'1.5px solid #fff'}},unread>9?'9+':unread); })()
                         ),
                         "Messages"
                     ),
-                    React.createElement("button", { key: 'dash', className: `tab-btn${tab === 'dash' ? ' on' : ''}`, onClick: () => { setTab('dash'); setMenuOpen(false); setTblSelMode(false); setSelTbls(new Set()); } },
+                    React.createElement("button", { key: 'dash', className: `tab-btn${tab === 'dash' ? ' on' : ''}`, onClick: () => { setTab('dash'); setMenuOpen(false); if ('dash' !== 'layout') { setTblSelMode(false); setSelTbls(new Set()); } } },
                         React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='dash' ? 'rgba(255,255,255,.22)' : '#4DB6AC1A', color: tab==='dash' ? '#fff' : '#4DB6AC', marginRight:1 } },
-                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>' } })
+                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"18\" y1=\"20\" x2=\"18\" y2=\"10\"/><line x1=\"12\" y1=\"20\" x2=\"12\" y2=\"4\"/><line x1=\"6\" y1=\"20\" x2=\"6\" y2=\"14\"/></svg>' } })
                         ),
                         "Dashboard"
                     ),
-                                        React.createElement("button", { key: 'notes', className: `tab-btn${tab === 'notes' ? ' on' : ''}`, onClick: () => { setTab('notes'); setMenuOpen(false); } },
+                    React.createElement("button", { key: 'notes', className: `tab-btn${tab === 'notes' ? ' on' : ''}`, onClick: () => { setTab('notes'); setMenuOpen(false); } },
                         React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='notes' ? 'rgba(255,255,255,.22)' : '#F472B61A', color: tab==='notes' ? '#fff' : '#F472B6', marginRight:1 } },
                             React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/></svg>' } })
                         ),
@@ -5090,47 +5005,47 @@ useEffect(() => {
 
             React.createElement("div", { className: "mob-bottom-nav" },
                 React.createElement("button", { className: `mbn-btn${tab==='layout'?' on':''}`, onClick: ()=>{ setTab('layout'); } },
-                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>'} })),
+                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\"/></svg>'} })),
                     "Layout"
                 ),
                 React.createElement("button", { className: `mbn-btn${tab==='search'?' on':''}`, onClick: ()=>{ setTab('search'); } },
-                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>'} })),
+                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><line x1=\"21\" y1=\"21\" x2=\"16.65\" y2=\"16.65\"/></svg>'} })),
                     "Plants"
                 ),
                 React.createElement("button", { className: `mbn-btn${tab==='schedule'?' on':''}`, onClick: ()=>{ setTab('schedule'); } },
-                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'} })),
+                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"18\" rx=\"2\"/><line x1=\"16\" y1=\"2\" x2=\"16\" y2=\"6\"/><line x1=\"8\" y1=\"2\" x2=\"8\" y2=\"6\"/><line x1=\"3\" y1=\"10\" x2=\"21\" y2=\"10\"/></svg>'} })),
                     "Schedule"
                 ),
-                React.createElement("button", { className: `mbn-btn${tab==='team'?' on':''}`, onClick: ()=>{ setTab('team'); } },
-                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'} })),
-                    "Team"
-                ),
                 React.createElement("button", { className: `mbn-btn${tab==='stock'?' on':''}`, onClick: ()=>{ setTab('stock'); } },
-                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>'} })),
+                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z\"/></svg>'} })),
                     "Stock"
                 ),
                 React.createElement("button", { className: `mbn-btn${tab==='orders'?' on':''}`, onClick: ()=>{ setTab('orders'); } },
-                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>'} })),
+                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"9\" cy=\"21\" r=\"1\"/><circle cx=\"20\" cy=\"21\" r=\"1\"/><path d=\"M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6\"/></svg>'} })),
                     "Orders"
                 ),
-                React.createElement("button", { className: `mbn-btn${tab==='measures'?' on':''}`, onClick: ()=>{ setTab('measures'); } },
+                React.createElement("button", { className: `mbn-btn${tab==='notes'?' on':''}`, onClick: ()=>setTab('notes') },
+                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/></svg>'} })),
+                    "Notes"
+                ),
+                React.createElement("button", { className: `mbn-btn${tab==='team'?' on':''}`, onClick: ()=>setTab('team') },
+                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'} })),
+                    "Team"
+                ),
+                React.createElement("button", { className: `mbn-btn${tab==='measures'?' on':''}`, onClick: ()=>setTab('measures') },
                     React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'} })),
                     "Measures"
                 ),
-                React.createElement("button", { className: `mbn-btn${tab==='notes'?' on':''}`, onClick: ()=>setTab('notes') },
-                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'} })),
-                    "Notes"
+                React.createElement("button", { className: `mbn-btn${tab==='dash'?' on':''}`, onClick: ()=>setTab('dash') },
+                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>'} })),
+                    "Dashboard"
                 ),
                 React.createElement("button", { className: `mbn-btn${tab==='messages'?' on':''}`, onClick: ()=>{ setTab('messages'); setLastMsgRead(r=>({...r,[activeLab?.id]:new Date().toISOString()})); } },
                     React.createElement("div", { className:"mbn-ic", style:{position:'relative'} },
-                        React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'} }),
+                        React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\"/></svg>'} }),
                         (() => { const lastRead = lastMsgRead[activeLab?.id]; const unread=(data.messages||[]).filter(m=>!lastRead||m.created_at>lastRead).length; return unread>0?React.createElement("span",{style:{position:'absolute',top:-4,right:-4,background:'#ef4444',color:'#fff',borderRadius:'50%',width:14,height:14,fontSize:8,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',border:'1.5px solid #fff'}},unread>9?'9+':unread):null;})()
                     ),
                     "Messages"
-                ),
-                React.createElement("button", { className: `mbn-btn${tab==='dash'?' on':''}`, onClick: ()=>{ setTab('dash'); } },
-                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>'} })),
-                    "Dashboard"
                 )
             ),
 
