@@ -227,7 +227,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 /* ═══════════════════════════════════
    CANVAS / LAYOUT VIEW
 ═══════════════════════════════════ */
-.cvp{flex:1;min-height:0;overflow:hidden;background:#F4F6F8;background-image:radial-gradient(circle,#D1D5DB 1px,transparent 1px);background-size:22px 22px;position:relative;touch-action:none;-webkit-user-select:none;user-select:none}
+.cvp{flex:1;min-height:0;overflow:hidden;background:#F4F6F8;background-image:radial-gradient(circle,#D1D5DB 1px,transparent 1px);background-size:22px 22px;position:relative;touch-action:none;-webkit-user-select:none;user-select:none;cursor:grab}.cvp:active{cursor:grabbing}
 .cvp.panning{cursor:grabbing!important}
 .cvp.space-mode{cursor:grab}
 .cvw{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform;touch-action:none}
@@ -779,18 +779,21 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
     display:flex;align-items:stretch;
     position:fixed;bottom:0;left:0;right:0;z-index:400;
     background:#fff;border-top:1px solid #EBEBEB;
-    height:60px;padding:0;
+    height:56px;padding:0;
     box-shadow:0 -4px 16px rgba(0,0,0,.08);
+    overflow-x:auto;overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
   }
+  .mob-bottom-nav::-webkit-scrollbar{display:none}
   .mob-bottom-nav .mbn-btn{
-    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:3px;border:none;background:none;cursor:pointer;
-    padding:6px 2px 4px;
+    flex:0 0 auto;min-width:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:2px;border:none;background:none;cursor:pointer;
+    padding:5px 2px 4px;
     font-size:9px;font-weight:500;color:#9CA3AF;
     font-family:'Poppins',sans-serif;
     transition:color .15s;
     -webkit-tap-highlight-color:transparent;
-    min-width:0;
   }
   .mob-bottom-nav .mbn-btn.on{color:#78C043}
   .mob-bottom-nav .mbn-btn.on .mbn-ic{background:#78C04318}
@@ -1643,7 +1646,7 @@ function saveData(d, labId) {
     // Strip large binary fields to stay under JSONBin 100KB free limit
     var writeData = Object.assign({}, d, {
         plants: d.plants ? d.plants.map(function(p){var p2=Object.assign({},p);delete p2.image;return p2;}) : d.plants,
-        stock:  d.stock  ? d.stock.map( function(s){var s2=Object.assign({},s);delete s2.image;return s2;}) : d.stock,
+        stock:  d.stock  ? d.stock.map( function(s){return s;}) : d.stock, // keep images (compressed to fit)
         orders: d.orders ? d.orders.map(function(o){var o2=Object.assign({},o);delete o2.item_image;delete o2.quotation_file;return o2;}) : d.orders
     });
     // Also compress user photos to tiny thumbnails for inline storage
@@ -2163,12 +2166,12 @@ function StockView({ stock, onAdd, onEdit, onRemove, onQty }) {
         const sou = URL.createObjectURL(fl);
         si.onload = () => {
             URL.revokeObjectURL(sou);
-            const SC = Math.min(1, 400 / Math.max(si.width, si.height));
+            const SC = Math.min(1, 200 / Math.max(si.width, si.height));
             const sw = Math.round(si.width*SC), sh = Math.round(si.height*SC);
             const sc3 = document.createElement('canvas');
             sc3.width = sw; sc3.height = sh;
             sc3.getContext('2d').drawImage(si, 0, 0, sw, sh);
-            set('image', sc3.toDataURL('image/jpeg', 0.85));
+            set('image', sc3.toDataURL('image/jpeg', 0.72));
         };
         si.src = sou;
     };
@@ -4094,7 +4097,8 @@ useEffect(() => {
         spRef.current = false;
         (_a = vpRef.current) === null || _a === void 0 ? void 0 : _a.classList.remove('space-mode');
     } }; window.addEventListener('keydown', kd); window.addEventListener('keyup', ku); return () => { window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); }; }, []);
-    const hVpMd = useCallback(e => { var _a; if (!(e.button === 1 || e.button === 2 || spRef.current))
+    const hVpMd = useCallback(e => { var _a; if (!(e.button === 0 || e.button === 1 || e.button === 2 || spRef.current))
+        return; if (e.button === 0 && e.target !== vpRef.current && e.target !== wrRef.current && !e.target.classList.contains('ghr') && !e.target.classList.contains('rgrid') && !e.target.classList.contains('cvp') && !e.target.classList.contains('cvw'))
         return; e.preventDefault(); panRef.current = { sx: e.clientX, sy: e.clientY, px: pan.x, py: pan.y }; (_a = vpRef.current) === null || _a === void 0 ? void 0 : _a.classList.add('panning'); const mv = e => { if (!panRef.current)
         return; setPan({ x: panRef.current.px + (e.clientX - panRef.current.sx), y: panRef.current.py + (e.clientY - panRef.current.sy) }); }; const up = () => { var _a; panRef.current = null; (_a = vpRef.current) === null || _a === void 0 ? void 0 : _a.classList.remove('panning'); window.removeEventListener('mousemove', mv); window.removeEventListener('mouseup', up); }; window.addEventListener('mousemove', mv); window.addEventListener('mouseup', up); }, [pan]);
     
@@ -4759,7 +4763,7 @@ useEffect(() => {
                             React.createElement("div", { style: { fontFamily: 'Inter', fontSize: 17, color: 'var(--i2)' } }, "No greenhouse selected"),
                             React.createElement("button", { className: "btn btnp", onClick: () => { setData(d => (Object.assign(Object.assign({}, d), { locked: false }))); setGhFm({ name: '', width: 600, length: 400 }); setShowAGH(true); } }, "Create greenhouse")),
                         aGh && React.createElement("div", { className: "cvhint" },
-                            "Scroll/pinch=zoom \u00B7 2-finger swipe=pan \u00B7 Space+drag=pan",
+                            "Scroll/pinch=zoom \u00B7 Drag=pan \u00B7 2-finger swipe=pan",
                             React.createElement("br", null),
                             "Click pot to edit \u00B7 \"Edit\" on table header")),
                     React.createElement("div", { className: "sbar" },
@@ -4810,6 +4814,18 @@ useEffect(() => {
                 React.createElement("button", { className: `mbn-btn${tab==='notes'?' on':''}`, onClick: ()=>setTab('notes') },
                     React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/></svg>'} })),
                     "Notes"
+                ),
+                React.createElement("button", { className: `mbn-btn${tab==='team'?' on':''}`, onClick: ()=>setTab('team') },
+                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'} })),
+                    "Team"
+                ),
+                React.createElement("button", { className: `mbn-btn${tab==='measures'?' on':''}`, onClick: ()=>setTab('measures') },
+                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'} })),
+                    "Measures"
+                ),
+                React.createElement("button", { className: `mbn-btn${tab==='dashboard'?' on':''}`, onClick: ()=>setTab('dashboard') },
+                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>'} })),
+                    "Dashboard"
                 ),
                 React.createElement("button", { className: `mbn-btn${tab==='messages'?' on':''}`, onClick: ()=>{ setTab('messages'); setLastMsgRead(r=>({...r,[activeLab?.id]:new Date().toISOString()})); } },
                     React.createElement("div", { className:"mbn-ic", style:{position:'relative'} },
