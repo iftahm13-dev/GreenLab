@@ -292,9 +292,9 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .pop{position:fixed;z-index:700;background:#fff;border:1px solid var(--bo);border-radius:var(--r3);box-shadow:var(--sh2);width:316px;animation:pop .15s ease;display:flex;flex-direction:column;max-height:90vh}
 .pop-handle{display:none;width:36px;height:4px;background:#D1D5DB;border-radius:2px;margin:10px auto 0;flex-shrink:0}
 @media(max-width:1024px){.pop-handle{display:block}}
-.pop-handle{display:none;width:36px;height:4px;background:#D1D5DB;border-radius:2px;margin:10px auto 4px;flex-shrink:0}
+.pop-handle{display:none;width:36px;height:4px;background:#D1D5DB;border-radius:2px;margin:6px auto 2px;flex-shrink:0}
 @media(max-width:1024px){.pop-handle{display:block}}
-.pph{padding:14px 16px 12px;border-bottom:1px solid var(--bo);display:flex;align-items:center;gap:10px;background:#f9fafb;border-radius:var(--r3) var(--r3) 0 0}
+.pph{padding:10px 14px 8px;border-bottom:1px solid var(--bo);display:flex;align-items:center;gap:10px;background:#f9fafb;border-radius:var(--r3) var(--r3) 0 0}
 .pppre{width:38px;height:38px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .pptit{font-size:13px;font-weight:700;color:var(--i1)}
 .ppsub{font-size:10px;color:var(--i4);margin-top:2px}
@@ -1762,8 +1762,11 @@ function Autocomplete({ value, onChange, onKeyDown, suggestions, placeholder, cl
     const updateRect = () => {
         if (wrap.current) {
             const r = wrap.current.getBoundingClientRect();
-            const spaceBelow = window.innerHeight - r.bottom;
-            const top = spaceBelow < 180 ? (r.top - 180) : (r.bottom + 2);
+            // Use visualViewport for accurate positioning when keyboard is open on iOS
+            const vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+            const vOffset = window.visualViewport ? window.visualViewport.offsetTop : 0;
+            const spaceBelow = vh - (r.bottom - vOffset);
+            const top = spaceBelow < 180 ? (r.top - vOffset - 180) : (r.bottom - vOffset + 2);
             setDropRect({ top, left: r.left, width: r.width });
         }
     };
@@ -1812,7 +1815,7 @@ function Autocomplete({ value, onChange, onKeyDown, suggestions, placeholder, cl
             className: className || (big ? 'fi big' : 'fi'),
             value: value,
             onChange: e => { onChange(e.target.value); setOpen(true); updateRect(); },
-            onFocus: () => { updateRect(); },
+            onFocus: () => { updateRect(); setOpen(true); },
             onKeyDown: hKey,
             placeholder: placeholder || '',
             autoComplete: 'off'
@@ -3779,9 +3782,9 @@ useEffect(() => {
             if (!JB_KEY || JB_KEY.indexOf('PASTE') !== -1) {
                 // No key at all — use localStorage only
                 var local = loadLabData(activeLab.id);
+                dataLoadedRef.current = true; // mark loaded even if empty
                 if (local && local.greenhouses && local.greenhouses.length > 0) {
                     remoteUpdateRef.current = true;
-                    dataLoadedRef.current = true;
                     setData(loadImages(local));
                     setGhId(local.greenhouses[0].id);
                 }
@@ -3808,6 +3811,7 @@ useEffect(() => {
                     var local = loadLabData(activeLab.id);
                     if (local && local.greenhouses && local.greenhouses.length > 0) {
                         remoteUpdateRef.current = true;
+                        dataLoadedRef.current = true;
                         setData(loadImages(local));
                         setGhId(local.greenhouses[0].id);
                     }
@@ -3827,6 +3831,7 @@ useEffect(() => {
                     } else {
                         if (!forceWriteRef.current) {
                             remoteUpdateRef.current = true;
+                            dataLoadedRef.current = true;
                             setData(loadImages(remote));
                             if (remote.greenhouses && remote.greenhouses.length > 0) {
                                 setGhId(function(cur) { return cur || remote.greenhouses[0].id; });
@@ -3857,6 +3862,7 @@ useEffect(() => {
                                 setNotif('Bin created! ID: ' + JB_BIN_ID + ' — see console');
                             }
                             remoteUpdateRef.current = true;
+                            dataLoadedRef.current = true;
                             setData(seeded);
                             if (seeded.greenhouses.length > 0) setGhId(seeded.greenhouses[0].id);
                         }).catch(function(e2) {
@@ -4835,7 +4841,7 @@ useEffect(() => {
                     React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'} })),
                     "Measures"
                 ),
-                React.createElement("button", { className: `mbn-btn${tab==='dashboard'?' on':''}`, onClick: ()=>setTab('dashboard') },
+                React.createElement("button", { className: `mbn-btn${tab==='dash'?' on':''}`, onClick: ()=>setTab('dash') },
                     React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>'} })),
                     "Dashboard"
                 ),
