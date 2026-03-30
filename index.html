@@ -310,7 +310,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .fta{width:100%;background:var(--cr2);border:1.5px solid var(--bo);border-radius:var(--r);color:var(--i1);font-size:12px;padding:8px 10px;outline:none;resize:none;line-height:1.5;transition:border-color .12s}
 .fta:focus{border-color:#78C043;background:#fff;box-shadow:0 0 0 3px rgba(120,192,67,.12)}
 .pills{display:flex;gap:5px;flex-wrap:wrap}
-.pill{padding:5px 12px;border-radius:20px;font-size:11px;cursor:pointer;border:1.5px solid var(--bo);color:var(--i4);font-weight:500;transition:all .12s;background:#fff}
+.pill{min-height:40px;-webkit-tap-highlight-color:transparent;touch-action:manipulation;padding:5px 12px;border-radius:20px;font-size:11px;cursor:pointer;border:1.5px solid var(--bo);color:var(--i4);font-weight:500;transition:all .12s;background:#fff}
 .pill:hover{border-color:var(--b2);color:var(--i2)}
 .ph{background:#edf7e3;border-color:#c3e6a8;color:#2d6a1f}
 .pill.sick{background:#fdf4ff;border-color:#a855f7;color:#6b21a8}
@@ -811,7 +811,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
     display:flex;align-items:stretch;
     position:fixed;bottom:0;left:0;right:0;z-index:400;
     background:#fff;border-top:1px solid #EBEBEB;
-    height:56px;padding:0 env(safe-area-inset-right,0) 0 env(safe-area-inset-left,0);
+    height:calc(56px + env(safe-area-inset-bottom,0px));padding:0 env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);
     box-shadow:0 -2px 8px rgba(0,0,0,.06);
     overflow-x:auto;overflow-y:hidden;
     -webkit-overflow-scrolling:touch;
@@ -838,7 +838,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
   }
 
   /* Pad main content above bottom nav */
-  .main{padding-bottom:56px}
+  .main{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px))}
   .tab-bar{display:none!important}
 
   /* tab-bar hidden handled above */
@@ -1001,6 +1001,44 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .note-author{font-size:11px;font-weight:600;color:var(--i2)}
 .note-date{font-size:10px;color:var(--i5);margin-left:auto}
 .note-body{font-size:13px;color:var(--i1);line-height:1.55;white-space:pre-wrap;word-break:break-word}
+/* note expand — 10 lines ≈ 16px line-height × 10 × 1.55 = 248px */
+/* Note body — scrollable with RTL scrollbar support */
+.note-body-wrap{max-height:450px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;position:relative;border-radius:6px}
+/* LTR: scrollbar on right */
+.note-body-wrap.ltr{direction:ltr;padding-right:5px}
+.note-body-wrap.ltr::-webkit-scrollbar{width:4px}
+.note-body-wrap.ltr::-webkit-scrollbar-thumb{background:#c8cdd5;border-radius:2px}
+.note-body-wrap.ltr::-webkit-scrollbar-track{background:transparent}
+/* RTL: scrollbar on LEFT — direction:rtl on wrapper flips it */
+.note-body-wrap.rtl{direction:rtl;padding-left:5px}
+.note-body-wrap.rtl::-webkit-scrollbar{width:4px}
+.note-body-wrap.rtl::-webkit-scrollbar-thumb{background:#c8cdd5;border-radius:2px}
+.note-body-wrap.rtl::-webkit-scrollbar-track{background:transparent}
+/* Inner text always reads correctly regardless of wrapper direction */
+.note-body-wrap .note-body{direction:inherit;text-align:inherit}
+.note-body-wrap.rtl .note-body{direction:rtl;text-align:right;unicode-bidi:plaintext}
+.note-body-wrap.ltr .note-body{direction:ltr;text-align:left}
+/* Icon action buttons in note header */
+.note-icon-btn{background:none;border:none;cursor:pointer;padding:3px 4px;border-radius:6px;display:flex;align-items:center;justify-content:center;opacity:.45;transition:opacity .15s,background .15s;flex-shrink:0;line-height:1}
+.note-icon-btn:hover{opacity:1;background:rgba(0,0,0,.06)}
+.note-icon-btn.del:hover{background:#fef2f2;opacity:1}
+/* ── Weather Widget ── */
+.weather-widget{background:#fff;border:1px solid var(--bo);border-radius:14px;padding:14px 16px;margin-top:2px}
+.weather-now{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.weather-icon{font-size:32px;line-height:1;flex-shrink:0}
+.weather-temps{flex:1;min-width:0}
+.weather-temp{font-size:24px;font-weight:700;color:var(--i1);line-height:1}
+.weather-loc{font-size:10px;color:var(--i4);margin-top:1px;font-family:'Inter',sans-serif}
+.weather-detail{display:flex;gap:10px;font-size:10px;color:var(--i3);font-family:'Inter',sans-serif;margin-top:2px}
+.weather-detail span{display:flex;align-items:center;gap:3px}
+.weather-forecast{display:flex;gap:6px}
+.weather-day{flex:1;background:#F9FAFB;border:1px solid var(--bo);border-radius:10px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.weather-day-name{font-size:9px;font-weight:600;color:var(--i3);text-transform:uppercase;letter-spacing:.04em}
+.weather-day-icon{font-size:18px;line-height:1}
+.weather-day-hi{font-size:11px;font-weight:700;color:var(--i1)}
+.weather-day-lo{font-size:10px;color:var(--i4)}
+.weather-err{font-size:10px;color:var(--i5);text-align:center;padding:8px 0;font-family:'Inter',sans-serif}
+.weather-loading{font-size:10px;color:var(--i5);padding:6px 0;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:5px}
 .note-pdf-link{display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:4px 10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:20px;font-size:11px;color:#1d4ed8;text-decoration:none}
 .note-actions{display:flex;gap:6px;margin-top:10px;border-top:1px solid var(--bo);padding-top:8px;flex-wrap:wrap;align-items:center}
 .note-hl-dot{width:16px;height:16px;border-radius:50%;cursor:pointer;flex-shrink:0;border:2px solid rgba(0,0,0,.12);transition:transform .12s}
@@ -1029,23 +1067,30 @@ var JB_BIN_ID = '69c3ce37c3097a1dd55b1533';       // created automatically on fi
 function jbRead() {
     if (!JB_KEY || JB_KEY.indexOf('PASTE') !== -1) return Promise.reject(new Error('JSONBin not configured'));
     var url = 'https://api.jsonbin.io/v3/b/' + JB_BIN_ID + '/latest';
-    return fetch(url, { headers: { 'X-Master-Key': JB_KEY } })
-        .then(function(r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-        .then(function(j) { return j.record || j; });
+    var ctrl = new AbortController();
+    var tid = setTimeout(function(){ ctrl.abort(); }, 30000);
+    return fetch(url, { headers: { 'X-Master-Key': JB_KEY }, signal: ctrl.signal })
+        .then(function(r) { clearTimeout(tid); if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function(j) { return j.record || j; })
+        .catch(function(e){ clearTimeout(tid); throw e; });
 }
 function jbWrite(data) {
     if (!JB_KEY || JB_KEY.indexOf('PASTE') !== -1) return Promise.reject(new Error('JSONBin not configured'));
     var url = 'https://api.jsonbin.io/v3/b/' + JB_BIN_ID;
     var DELAYS = [5000, 15000, 60000];
     function attempt(triesLeft, delayIdx) {
+        var wc = new AbortController();
+        var wt = setTimeout(function(){ wc.abort(); }, 45000);
         return fetch(url, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', 'X-Master-Key': JB_KEY, 'X-Bin-Versioning': 'false' },
-            body: JSON.stringify(data)
-        }).then(function(r) {
+            body: JSON.stringify(data),
+            signal: wc.signal
+        }).then(function(r) { clearTimeout(wt);
             if (!r.ok) return r.text().then(function(t){ throw new Error(r.status+':'+t); });
             return r.json();
         }).catch(function(err) {
+            clearTimeout(wt);
             if (triesLeft <= 1) throw err;
             var delay = DELAYS[delayIdx] || 60000;
             console.warn('[DB] jbWrite failed (' + err.message + '), retrying in ' + Math.round(delay/1000) + 's');
@@ -1111,11 +1156,11 @@ function loadLabData(labId) { try {
     if (r)
         return JSON.parse(r);
 }
-catch (_a) { } return { greenhouses: [], tables: [], plants: [], experiments: [], users: [], structs: [], stock: [], orders: [], schedules: [], messages: [], measures: [], notes: [], locked: true }; }
+catch (_a) { } return { greenhouses: [], tables: [], plants: [], experiments: [], users: [], structs: [], stock: [], orders: [], schedules: [], messages: [], measures: [], notes: [], genotypes: [], locked: true }; }
 function saveLabData(labId, d) { try {
     // Strip large images to prevent localStorage quota overflow
     var slim = Object.assign({}, d, {
-        plants: d.plants ? d.plants.map(function(p){var p2=Object.assign({},p);delete p2.image;return p2;}) : d.plants,
+        plants: d.plants ? d.plants.map(function(p){var p2=Object.assign({},p);delete p2.image;delete p2.genotype_description;return p2;}) : d.plants,
         stock:  d.stock  ? d.stock.map( function(s){
             var s2=Object.assign({},s);
             // Include image in JSONBin if small enough (compressed images are ~3-8KB)
@@ -1639,7 +1684,7 @@ function loadData(labId) {
             return JSON.parse(r);
     }
     catch (_a) { }
-    return { greenhouses: [], tables: [], plants: [], experiments: [], users: [], structs: [], stock: [], orders: [], schedules: [], messages: [], measures: [], notes: [], locked: true };
+    return { greenhouses: [], tables: [], plants: [], experiments: [], users: [], structs: [], stock: [], orders: [], schedules: [], messages: [], measures: [], notes: [], genotypes: [], locked: true };
 }
 /* ── Photo subcollection helpers ──────────────────────────────
    User photos stored at: labs/{labId}/users/{userId}/private/photo
@@ -1732,7 +1777,7 @@ function saveData(d, labId, onOK, onFail) {
 }
 function seedIfEmpty(d) {
     if (d.greenhouses.length > 0)
-        return Object.assign(Object.assign({ structs: [], stock: [], schedules: [], orders: [], messages: [], measures: [], notes: [] }, d), { users: d.users.map(u => (Object.assign({ position: '', photo: null }, u))), greenhouses: d.greenhouses.map(g => (Object.assign({ notes: '' }, g))) });
+        return Object.assign(Object.assign({ structs: [], stock: [], schedules: [], orders: [], messages: [], measures: [], notes: [], genotypes: [] }, d), { users: d.users.map(u => (Object.assign({ position: '', photo: null }, u))), greenhouses: d.greenhouses.map(g => (Object.assign({ notes: '' }, g))) });
     const g1 = uid(), g2 = uid(), t1 = uid(), t2 = uid(), t3 = uid(), e1 = uid(), e2 = uid();
     const GN = ['Col-0', 'Col-0', 'wrky33', 'wrky33', 'npr1-1', 'sid2'], TR = ['Control', '+SA', '+JA', 'Mock', 'Control', '+SA'], ST = ['healthy', 'healthy', 'healthy', 'wilting', 'healthy', 'dead'];
     const plants = [];
@@ -2079,7 +2124,80 @@ function MeasureRow({ plant, table, existing, unit, trait, onAdd, onDel }) {
 /* ═══════════════════════════════════
    MESSAGES TAB
 ═══════════════════════════════════ */
-function NotesView({ notes, onAdd, onEdit, onDel, currentUser, users }) {
+
+function NoteBody({ text }) {
+    // Detect RTL scripts (Hebrew, Arabic)
+    var isRTL = /[\u0590-\u05FF\u0600-\u06FF\uFB1D-\uFB4F]/.test(text || '');
+    return React.createElement('div', {
+        className: 'note-body-wrap ' + (isRTL ? 'rtl' : 'ltr')
+    },
+        React.createElement('div', {
+            className: 'note-body',
+            style: { direction: isRTL ? 'rtl' : 'ltr', textAlign: isRTL ? 'right' : 'left' }
+        }, text)
+    );
+}
+
+
+function NoteDeleteModal({ labId, onConfirm, onClose }) {
+    var [pw, setPw] = React.useState('');
+    var [err, setErr] = React.useState('');
+    var inputRef = React.useRef(null);
+    React.useEffect(function() {
+        setTimeout(function(){ if(inputRef.current) inputRef.current.focus(); }, 60);
+        var esc = function(e){ if(e.key==='Escape') onClose(); };
+        window.addEventListener('keydown', esc);
+        return function(){ window.removeEventListener('keydown', esc); };
+    }, []);
+    var check = function() {
+        if (!pw.trim()) { setErr('Please enter the password.'); return; }
+        if (hashPw(pw) === getDelPwHash(labId)) {
+            onConfirm();
+            onClose();
+        } else {
+            setErr('Incorrect password. Note not deleted.');
+            setPw('');
+            if(inputRef.current) inputRef.current.focus();
+        }
+    };
+    return React.createElement('div', {
+        className: 'mov',
+        onClick: function(e){ if(e.target===e.currentTarget) onClose(); },
+        style: { zIndex: 9999 }
+    },
+        React.createElement('div', { className: 'mo', style: { maxWidth: 340 } },
+            React.createElement('div', { className: 'motit' }, '🔒 Confirm Note Deletion'),
+            React.createElement('div', { style: { fontSize:12, color:'var(--i3)', marginBottom:14, lineHeight:1.5 } },
+                'This note will be permanently removed. Enter the lab password to confirm.'
+            ),
+            React.createElement('label', { className: 'mol' }, 'Delete password'),
+            React.createElement('input', {
+                ref: inputRef,
+                className: 'moi',
+                type: 'password',
+                value: pw,
+                placeholder: 'Enter password…',
+                onChange: function(e){ setPw(e.target.value); setErr(''); },
+                onKeyDown: function(e){ if(e.key==='Enter') check(); if(e.key==='Escape') onClose(); }
+            }),
+            err && React.createElement('div', {
+                style: { fontSize:11, color:'#dc2626', background:'#fef2f2', border:'1px solid #fca5a5',
+                         borderRadius:8, padding:'6px 10px', marginTop:6 }
+            }, '⚠ ', err),
+            React.createElement('div', { style: { fontSize:10, color:'var(--i5)', marginTop:6 } },
+                'Default password: ',
+                React.createElement('code', { style:{ background:'var(--cr2)', padding:'1px 5px', borderRadius:3, fontFamily:'Inter' } },
+                    'greenlab2025')
+            ),
+            React.createElement('div', { className: 'moacts', style:{ marginTop:16 } },
+                React.createElement('button', { className:'btn btns', onClick: onClose }, 'Cancel'),
+                React.createElement('button', { className:'btn btnd', onClick: check }, 'Delete Note')
+            )
+        )
+    );
+}
+
+function NotesView({ notes, onAdd, onEdit, onDel, currentUser, users, labId }) {
     const [text,setText]=React.useState('');
     const [hl,setHl]=React.useState('');
     const [editId,setEditId]=React.useState(null);
@@ -2088,6 +2206,7 @@ function NotesView({ notes, onAdd, onEdit, onDel, currentUser, users }) {
     const [pdfName,setPdfName]=React.useState('');
     const [fileError,setFileError]=React.useState('');
     const [uploadPct,setUploadPct]=React.useState(null);
+    const [delPending,setDelPending]=React.useState(null); // noteId awaiting pw confirm
     const pdfRef=React.useRef();
     const HL=[{id:'green',col:'#78C043'},{id:'yellow',col:'#f59e0b'},{id:'red',col:'#ef4444'},{id:'blue',col:'#3b82f6'},{id:'purple',col:'#8b5cf6'}];
     var ALLOWED_MIME=['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
@@ -2138,16 +2257,23 @@ function NotesView({ notes, onAdd, onEdit, onDel, currentUser, users }) {
                 var isMe=currentUser&&n.author===currentUser.name;
                 var avColor=n.author_color&&n.author_color.match(/^#[0-9a-fA-F]{3,6}$/)?n.author_color:'#6b7280';
                 var initials=(n.author||'?').charAt(0).toUpperCase();
-                var cardStyle={background:n.highlight&&hlBg[n.highlight]?hlBg[n.highlight]:'#fff',borderRadius:14,padding:'14px 16px',overflow:'hidden',border:'1.5px solid var(--bo)'};
+                var cardStyle={background:n.highlight&&hlBg[n.highlight]?hlBg[n.highlight]:'#fff',borderRadius:14,padding:'14px 16px',overflow:'visible',border:'1.5px solid var(--bo)'};
                 if(n.highlight&&hlBorder[n.highlight]) cardStyle.borderLeft='4px solid '+hlBorder[n.highlight];
                 if(n.pinned){cardStyle.borderColor='#f59e0b';cardStyle.background='#fffbeb';}
                 return React.createElement('div',{key:n.id,style:cardStyle},
-                    React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,marginBottom:8}},
+                    React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6,marginBottom:10}},
                         React.createElement('div',{style:{width:22,height:22,minWidth:22,minHeight:22,borderRadius:'50%',background:avColor,display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:'#fff',flexShrink:0,overflow:'hidden'}},initials),
-                        React.createElement('span',{style:{fontSize:11,fontWeight:600,color:'var(--i2)',flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},n.author),
-                        n.edited&&React.createElement('span',{style:{fontSize:9,color:'var(--i5)'}},'(edited)'),
-                        React.createElement('span',{style:{fontSize:10,color:'var(--i5)',flexShrink:0,whiteSpace:'nowrap'}},fmtDate(n.created_at)),
-                        React.createElement('span',{onClick:function(){togglePin(n);},title:n.pinned?'Unpin':'Pin',style:{cursor:'pointer',fontSize:13,opacity:n.pinned?1:.25,marginLeft:6,flexShrink:0}},'📌')
+                        React.createElement('div',{style:{flex:1,minWidth:0}},
+                            React.createElement('span',{style:{fontSize:11,fontWeight:600,color:'var(--i2)',display:'block',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},n.author),
+                            React.createElement('span',{style:{fontSize:9,color:'var(--i5)'}},(n.edited?'(edited) ':'')+fmtDate(n.created_at))
+                        ),
+                        React.createElement('span',{onClick:function(){togglePin(n);},title:n.pinned?'Unpin':'Pin',style:{cursor:'pointer',fontSize:14,opacity:n.pinned?1:.22,flexShrink:0}},'📌'),
+                        editId!==n.id&&React.createElement('button',{className:'note-icon-btn',title:'Edit note',onClick:function(){setEditId(n.id);setEditText(n.text);},style:{fontSize:13}},
+                            React.createElement('span',{dangerouslySetInnerHTML:{__html:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 1-2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'}})
+                        ),
+                        React.createElement('button',{className:'note-icon-btn del',title:'Delete note',onClick:function(e){e.stopPropagation();setDelPending(n.id);},style:{fontSize:13}},
+                            React.createElement('span',{dangerouslySetInnerHTML:{__html:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>'}})
+                        )
                     ),
                     editId===n.id
                         ?React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:6}},
@@ -2156,16 +2282,20 @@ function NotesView({ notes, onAdd, onEdit, onDel, currentUser, users }) {
                                 React.createElement('button',{className:'btn btnp bsm',onClick:function(){saveEdit(n.id);}},'Save'),
                                 React.createElement('button',{className:'btn btns bsm',onClick:function(){setEditId(null);}},'Cancel')
                             ))
-                        :React.createElement('div',{style:{fontSize:13,color:'var(--i1)',lineHeight:1.55,whiteSpace:'pre-wrap',wordBreak:'break-word'}},n.text),
+                        :React.createElement(NoteBody,{text:n.text}),
                     n.pdf&&React.createElement('a',{href:n.pdf,download:n.pdf_name||'attachment',target:'_blank',rel:'noopener noreferrer',style:{display:'inline-flex',alignItems:'center',gap:5,marginTop:8,padding:'4px 10px',background:'#eff6ff',border:'1px solid #bfdbfe',borderRadius:20,fontSize:11,color:'#1d4ed8',textDecoration:'none'}},'📄 ',n.pdf_name||'Attachment'),
-                    React.createElement('div',{style:{display:'flex',gap:6,marginTop:10,borderTop:'1px solid var(--bo)',paddingTop:8,alignItems:'center',flexWrap:'nowrap',minWidth:0}},
-                        HL.map(function(h){return React.createElement('div',{key:h.id,title:h.id,onClick:function(){toggleHL(n,h.id);},style:{width:14,height:14,minWidth:14,borderRadius:'50%',cursor:'pointer',flexShrink:0,background:h.col,border:n.highlight===h.id?'2px solid #fff':'2px solid transparent',boxShadow:n.highlight===h.id?'0 0 0 2px '+h.col:'none'}});}),
-                        isMe&&editId!==n.id&&React.createElement('button',{className:'eli-btn',style:{marginLeft:'auto'},onClick:function(){setEditId(n.id);setEditText(n.text);}},'Edit'),
-                        React.createElement('button',{className:'eli-btn del',style:{marginLeft:isMe?4:'auto'},onClick:function(){window.confirm('Delete?')&&onDel(n.id);}},'✕')
+                    React.createElement('div',{style:{display:'flex',gap:5,marginTop:8,borderTop:'1px solid var(--bo)',paddingTop:8,alignItems:'center'}},
+                        React.createElement('span',{style:{fontSize:9,color:'var(--i5)',marginRight:2}},'Color:'),
+                        HL.map(function(h){return React.createElement('div',{key:h.id,title:h.id,onClick:function(){toggleHL(n,h.id);},style:{width:13,height:13,minWidth:13,borderRadius:'50%',cursor:'pointer',flexShrink:0,background:h.col,border:n.highlight===h.id?'2px solid #fff':'2px solid transparent',boxShadow:n.highlight===h.id?'0 0 0 2px '+h.col:'none'}});})
                     )
                 );
             })
         ),
+        delPending && React.createElement(NoteDeleteModal, {
+            labId: labId,
+            onConfirm: function(){ onDel(delPending); setDelPending(null); },
+            onClose: function(){ setDelPending(null); }
+        }),
         React.createElement('div',{className:'note-compose'},
             React.createElement('textarea',{className:'note-ta',rows:3,placeholder:'Write a note…',value:text,onChange:function(e){setText(e.target.value);},onKeyDown:function(e){if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();submit();}}}),
             React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6,flexWrap:'nowrap',minWidth:0,marginTop:6}},
@@ -2396,7 +2526,7 @@ function tlDiff(oldP, newP, userName, exps) {
 
 
 function TimelineSection({ timeline }) {
-    const [open, setOpen] = React.useState(true);
+    const [open, setOpen] = React.useState(false);
     const sorted = (timeline || []).slice().sort(function(a,b){return b.date.localeCompare(a.date);});
     const fmtDate = function(iso) {
         try { return new Date(iso).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'}); }
@@ -2447,11 +2577,23 @@ function PlannedGenotypesEditor({ value, onChange }) {
 }
 
 /* Pot popup */
-function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, users }) {
+function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, users, genotypes, onSaveGenoDesc }) {
     const CROPS = ['Tomato', 'Cucumber', 'Eggplant', 'Basil', 'Arabidopsis', 'Pepper', 'Lettuce', 'Strawberry', 'Wheat', 'Maize', 'Other'];
     const CROP_ICONS = {'Tomato':'🍅','Cucumber':'🥒','Eggplant':'🍆','Basil':'🌿','Arabidopsis':'🌱','Pepper':'🫑','Lettuce':'🥬','Strawberry':'🍓','Wheat':'🌾','Maize':'🌽','Other':'🪴'};
     const [f, setF] = useState({ genotype: plant.genotype || '', treatment: plant.treatment || '', treatments: plant.treatments || [], cross_parent1: plant.cross_parent1 || '', cross_parent2: plant.cross_parent2 || '', planting_date: plant.planting_date || '', status: plant.status || 'empty', statuses: plant.statuses || (plant.status && plant.status !== 'empty' ? [plant.status] : []), disease_name: plant.disease_name || '', pest_name: plant.pest_name || '', crop: plant.crop || 'Tomato', owner: plant.owner || '', date_moved_in: plant.date_moved_in || '', date_until: plant.date_until || '', notes: plant.notes || '', pot_style: plant.pot_style || 'conic', pot_color: plant.pot_color || 'terra', image: plant.image || null, photos: plant.photos || (plant.image ? [{id:'i0',data:plant.image,date:''}] : []), experiment_id: plant.experiment_id || null });
     const [lbIdx, setLbIdx] = React.useState(null);
+    // Genotype Description: read from global genotypes table, write back globally
+    const [genoDesc, setGenoDesc] = React.useState(function(){
+        if (!plant.genotype) return '';
+        var rec = (genotypes||[]).find(function(g){ return g.name === plant.genotype; });
+        return rec ? (rec.description||'') : '';
+    });
+    // When genotype selection changes, load its global description
+    React.useEffect(function(){
+        if (!f.genotype) { setGenoDesc(''); return; }
+        var rec = (genotypes||[]).find(function(g){ return g.name === f.genotype; });
+        setGenoDesc(rec ? (rec.description||'') : '');
+    }, [f.genotype]);
     const allGenos = useMemo(() => [...new Set((allPlants || []).map(p => p.genotype).filter(Boolean))], [allPlants]);
     const allTrts = useMemo(() => [...new Set((allPlants || []).map(p => p.treatment).filter(Boolean))], [allPlants]);
     const userNames = useMemo(() => (users || []).map(u => u.name), [users]);
@@ -2468,7 +2610,10 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
         t = 8; return { top: t, left: l }; }, [rect]);
     useEffect(() => { const fn = e => { if (ref.current && !ref.current.contains(e.target) && !e.target.closest('.ac-drop'))
         onClose(); }; setTimeout(() => window.addEventListener('mousedown', fn), 100); return () => window.removeEventListener('mousedown', fn); }, [onClose]);
-    const doSave = () => onSave(Object.assign(Object.assign({}, plant), f));
+    const doSave = () => {
+        if (onSaveGenoDesc && f.genotype) onSaveGenoDesc(f.genotype, genoDesc);
+        onSave(Object.assign(Object.assign({}, plant), f));
+    };
     const onKey = e => { if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
         e.preventDefault();
         doSave();
@@ -2668,6 +2813,21 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
             React.createElement("div", null,
                 React.createElement("label", { className: "fl" }, "Notes"),
                 React.createElement("textarea", { className: "fta", rows: 2, value: f.notes, onChange: e => set('notes', e.target.value), placeholder: "Observations..." })),
+            f.genotype && React.createElement("div", null,
+                React.createElement("label", { className: "fl", style:{display:'flex',alignItems:'center',justifyContent:'space-between'} },
+                    React.createElement("span", null, "Genotype Description"),
+                    React.createElement("span", { style:{fontSize:9,color:'var(--lf)',fontWeight:600,letterSpacing:'.04em'} }, "GLOBAL · all pots with this genotype")
+                ),
+                React.createElement("textarea", {
+                    className: "fta",
+                    rows: 3,
+                    value: genoDesc,
+                    onChange: function(e){ setGenoDesc(e.target.value); },
+                    onBlur: function(){
+                        if (onSaveGenoDesc && f.genotype) onSaveGenoDesc(f.genotype, genoDesc);
+                    },
+                    placeholder: "Describe the genotype, mutation, phenotype, relevant background…\n(Shared across all pots with this genotype)"
+                })),
             React.createElement("div", { style: { borderTop: '1px solid var(--bo)', paddingTop: 8, marginTop: 2 } },
                 React.createElement("div", { style: { fontSize: 10, fontWeight: 600, color: 'var(--i4)', marginBottom: 6 } }, "Tracking"),
                 React.createElement("div", null,
@@ -2686,11 +2846,12 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
                 React.createElement("div", { style: { marginTop: 5 } },
                     React.createElement("label", { className: "fl" }, "Stays until"),
                     React.createElement("input", { className: "fi", type: "date", value: f.date_until, onChange: e => set('date_until', e.target.value) })))),
-        React.createElement(TimelineSection, { timeline: plant.timeline || [] }),
         React.createElement("div", { className: "ppf" },
             React.createElement("button", { className: "btn btnp bsm", style: { flex: 1 }, onClick: doSave }, "Save"),
             (f.genotype || f.treatment) && React.createElement("button", { className: "btn btnd bxs", onClick: () => onSave(Object.assign(Object.assign({}, plant), { genotype: '', treatment: '', notes: '', status: 'empty', image: null })) }, "Clear"),
-            React.createElement("span", { style: { fontSize: 10, color: 'var(--i5)', marginLeft: 'auto', fontFamily: 'Inter' } }, "Enter to save"))));
+            React.createElement("span", { style: { fontSize: 10, color: 'var(--i5)', marginLeft: 'auto', fontFamily: 'Inter' } }, "Enter to save")),
+        React.createElement("div", { style: { borderTop: '1px solid var(--bo)' } },
+            React.createElement(TimelineSection, { timeline: plant.timeline || [] }))));
 }
 /* Plants search */
 function SearchView({ plants, tables, ghs, exps, onSel }) {
@@ -3860,6 +4021,143 @@ function FirebasePanel({ onClose, activityLog }) {
                 React.createElement("button", { className: "btn btnp bsm", onClick: onClose }, "Close")))));
 }
 /* Main App */
+
+var ISRAEL_CITIES = [
+    { name: 'Tel Aviv',    lat: 32.07, lon: 34.78 },
+    { name: 'Jerusalem',   lat: 31.77, lon: 35.23 },
+    { name: 'Haifa',       lat: 32.82, lon: 34.99 },
+    { name: 'Rehovot',     lat: 31.90, lon: 34.81 },
+    { name: 'Beer Sheva',  lat: 31.25, lon: 34.79 },
+    { name: 'Eilat',       lat: 29.56, lon: 34.95 },
+    { name: 'Tiberias',    lat: 32.79, lon: 35.53 },
+    { name: 'Nazareth',    lat: 32.70, lon: 35.30 },
+    { name: 'Ashdod',      lat: 31.80, lon: 34.65 },
+    { name: 'Netanya',     lat: 32.33, lon: 34.86 },
+];
+var WEATHER_CITY_KEY = 'gl_weather_city';
+
+function WeatherWidget() {
+    var defaultCity = (function(){
+        try { var s = localStorage.getItem(WEATHER_CITY_KEY); if (s) return JSON.parse(s); } catch(e){}
+        return ISRAEL_CITIES[0];
+    })();
+    var [city, setCity] = React.useState(defaultCity);
+    var [weather, setWeather] = React.useState(null);
+    var [error, setError] = React.useState(null);
+    var [loading, setLoading] = React.useState(true);
+    var [showPicker, setShowPicker] = React.useState(false);
+
+    function wmoIcon(code) {
+        if (code === 0) return '☀️';
+        if (code <= 2) return '⛅';
+        if (code <= 3) return '☁️';
+        if (code <= 48) return '🌫️';
+        if (code <= 67) return '🌧️';
+        if (code <= 77) return '❄️';
+        if (code <= 82) return '🌦️';
+        if (code <= 86) return '❄️';
+        if (code <= 99) return '⛈️';
+        return '🌡️';
+    }
+
+    function fetchWeather(c) {
+        setLoading(true); setError(null); setWeather(null);
+        var url = 'https://api.open-meteo.com/v1/forecast?latitude='+c.lat+'&longitude='+c.lon
+            +'&current=temperature_2m,relative_humidity_2m,weathercode'
+            +'&daily=weathercode,temperature_2m_max,temperature_2m_min'
+            +'&forecast_days=4&timezone=Asia%2FJerusalem';
+        fetch(url)
+            .then(function(r){ return r.json(); })
+            .then(function(d){
+                var cur = d.current, daily = d.daily, days = [];
+                for (var i = 1; i <= 3; i++) {
+                    var dt = new Date(daily.time[i]);
+                    days.push({ name: dt.toLocaleDateString('en-US',{weekday:'short'}), icon: wmoIcon(daily.weathercode[i]), hi: Math.round(daily.temperature_2m_max[i]), lo: Math.round(daily.temperature_2m_min[i]) });
+                }
+                setWeather({ temp: Math.round(cur.temperature_2m), humidity: cur.relative_humidity_2m, icon: wmoIcon(cur.weathercode), forecast: days });
+                setLoading(false);
+            })
+            .catch(function(){ setError('Unable to load weather'); setLoading(false); });
+    }
+
+    React.useEffect(function(){ fetchWeather(city); }, [city.name]);
+
+    function selectCity(c) {
+        try { localStorage.setItem(WEATHER_CITY_KEY, JSON.stringify(c)); } catch(e){}
+        setCity(c); setShowPicker(false);
+    }
+
+    return React.createElement('div', { className: 'weather-widget' },
+        // Header row with city selector toggle
+        React.createElement('div', { style:{display:'flex',alignItems:'center',marginBottom:8} },
+            React.createElement('div', { style:{fontSize:10,fontWeight:700,color:'var(--i3)',letterSpacing:'.06em',textTransform:'uppercase',flex:1,fontFamily:'Inter,sans-serif'} }, '🌤 Weather'),
+            React.createElement('button', {
+                onClick: function(){ setShowPicker(function(x){return !x;}); },
+                style:{fontSize:10,fontWeight:600,color:'var(--lf)',background:'var(--ll)',border:'1px solid var(--ld)',borderRadius:6,padding:'2px 8px',cursor:'pointer',fontFamily:'Inter,sans-serif',flexShrink:0}
+            }, city.name + ' ▾')
+        ),
+        // City picker dropdown
+        showPicker && React.createElement('div', {
+            style:{background:'#fff',border:'1px solid var(--bo)',borderRadius:10,boxShadow:'0 4px 16px rgba(0,0,0,.1)',marginBottom:8,overflow:'hidden',zIndex:10,position:'relative'}
+        },
+            ISRAEL_CITIES.map(function(c){
+                return React.createElement('div', {
+                    key: c.name,
+                    onClick: function(){ selectCity(c); },
+                    style:{padding:'7px 12px',cursor:'pointer',fontSize:11,fontWeight:city.name===c.name?700:400,
+                           color:city.name===c.name?'var(--lf)':'var(--i2)',
+                           background:city.name===c.name?'var(--ll)':'transparent',
+                           borderBottom:'1px solid var(--bo)'}
+                }, (city.name===c.name?'✓ ':'')+c.name);
+            })
+        ),
+        loading && React.createElement('div', {className:'weather-loading'}, '⟳ Loading…'),
+        error && React.createElement('div', {className:'weather-err'}, error),
+        weather && React.createElement('div', null,
+            React.createElement('div', {className:'weather-now'},
+                React.createElement('div', {className:'weather-icon'}, weather.icon),
+                React.createElement('div', {className:'weather-temps'},
+                    React.createElement('div', {className:'weather-temp'}, weather.temp+'°C'),
+                    React.createElement('div', {className:'weather-detail'},
+                        React.createElement('span', null, '💧 '+weather.humidity+'%'),
+                        React.createElement('span', null, 'Humidity')
+                    )
+                )
+            ),
+            React.createElement('div', {className:'weather-forecast'},
+                weather.forecast.map(function(day,i){
+                    return React.createElement('div', {key:i, className:'weather-day'},
+                        React.createElement('div', {className:'weather-day-name'}, day.name),
+                        React.createElement('div', {className:'weather-day-icon'}, day.icon),
+                        React.createElement('div', {className:'weather-day-hi'}, day.hi+'°'),
+                        React.createElement('div', {className:'weather-day-lo'}, day.lo+'°')
+                    );
+                })
+            )
+        )
+    );
+}
+
+
+// ── Genotype metadata helpers ─────────────────────────────────────
+// Upsert a genotype record by name. Returns new data state.
+function upsertGenotypeDesc(data, name, description) {
+    if (!name) return data;
+    var existing = (data.genotypes || []);
+    var idx = existing.findIndex(function(g){ return g.name === name; });
+    var updated;
+    if (idx >= 0) {
+        updated = existing.map(function(g, i){ return i === idx ? Object.assign({}, g, { description: description, updated_at: new Date().toISOString() }) : g; });
+    } else {
+        updated = existing.concat([{ name: name, description: description, updated_at: new Date().toISOString() }]);
+    }
+    return Object.assign({}, data, { genotypes: updated });
+}
+function lookupGenotypeDesc(data, name) {
+    if (!name) return '';
+    var rec = (data.genotypes || []).find(function(g){ return g.name === name; });
+    return rec ? (rec.description || '') : '';
+}
 function App() {
     var _a, _b;
     const [activeLab, setActiveLab] = useState(() => {
@@ -3981,7 +4279,7 @@ useEffect(() => {
             // If BIN_ID is placeholder, skip read and go straight to create
             if (JB_BIN_ID && JB_BIN_ID.indexOf('PASTE') !== -1) {
                 var seeded = seedIfEmpty({ greenhouses:[], tables:[], plants:[],
-                    experiments:[], users:[], structs:[], stock:[], orders:[], locked:true });
+                    experiments:[], users:[], structs:[], stock:[], orders:[], genotypes:[], locked:true });
                 jbCreate(seeded).then(function(res) {
                     if (res && res.metadata && res.metadata.id) {
                         JB_BIN_ID = res.metadata.id;
@@ -4091,7 +4389,7 @@ useEffect(() => {
                 function() { setSyncStatus('synced'); setLastSaved(new Date()); if (su) setLastBy(su.name); },
                 function() { setSyncStatus('error'); }
             );
-        }, 1200);
+        }, 2500);
     }, [data]);
     const notify = useCallback(m => { setNotif(m); setTimeout(() => setNotif(null), 2500); }, []);
     const logActivity = useCallback((what) => {
@@ -4105,7 +4403,7 @@ useEffect(() => {
         try { localStorage.setItem('gl_last_lab', lab.id); } catch(e) {}
         setActiveLab(lab);
         setData({ greenhouses:[], tables:[], plants:[], experiments:[],
-                  users:[], structs:[], stock:[], locked:true });
+                  users:[], structs:[], stock:[], genotypes:[], locked:true });
         setGhId(null);
         setUser(null);
     }, []);
@@ -4158,8 +4456,8 @@ useEffect(() => {
             const mx = e.clientX - r.left;
             const my = e.clientY - r.top;
             if (e.ctrlKey || e.metaKey) {
-                // Pinch-to-zoom on trackpad / mouse wheel zoom
-                const factor = 1 - e.deltaY * 0.008;
+                // Pinch-to-zoom on trackpad / Cmd+scroll / mouse wheel zoom
+                const factor = e.deltaMode === 1 ? (1 - e.deltaY * 0.05) : (1 - e.deltaY * 0.008);
                 const z  = readZoom();
                 const nz = clamp(z * factor, MINZ, MAXZ);
                 const p  = readPan();
@@ -4300,9 +4598,14 @@ useEffect(() => {
         spRef.current = false;
         (_a = vpRef.current) === null || _a === void 0 ? void 0 : _a.classList.remove('space-mode');
     } }; window.addEventListener('keydown', kd); window.addEventListener('keyup', ku); return () => { window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); }; }, []);
-    const hVpMd = useCallback(e => { var _a; if (!(e.button === 0 || e.button === 1 || e.button === 2 || spRef.current))
-        return; if (e.button === 0 && e.target !== vpRef.current && e.target !== wrRef.current && !e.target.classList.contains('ghr') && !e.target.classList.contains('rgrid') && !e.target.classList.contains('cvp') && !e.target.classList.contains('cvw'))
-        return; e.preventDefault(); panRef.current = { sx: e.clientX, sy: e.clientY, px: pan.x, py: pan.y }; (_a = vpRef.current) === null || _a === void 0 ? void 0 : _a.classList.add('panning'); const mv = e => { if (!panRef.current)
+    const hVpMd = useCallback(e => { var _a;
+        // Allow pan: middle-click anywhere, right-click anywhere, left-click on canvas background or with Space
+        var isCanvasBg = e.target === vpRef.current || e.target === wrRef.current ||
+            e.target.classList.contains('ghr') || e.target.classList.contains('rgrid') ||
+            e.target.classList.contains('cvp') || e.target.classList.contains('cvw');
+        var allowPan = e.button === 1 || e.button === 2 || spRef.current || (e.button === 0 && isCanvasBg);
+        if (!allowPan) return;
+        e.preventDefault(); panRef.current = { sx: e.clientX, sy: e.clientY, px: pan.x, py: pan.y }; (_a = vpRef.current) === null || _a === void 0 ? void 0 : _a.classList.add('panning'); const mv = e => { if (!panRef.current)
         return; setPan({ x: panRef.current.px + (e.clientX - panRef.current.sx), y: panRef.current.py + (e.clientY - panRef.current.sy) }); }; const up = () => { var _a; panRef.current = null; (_a = vpRef.current) === null || _a === void 0 ? void 0 : _a.classList.remove('panning'); window.removeEventListener('mousemove', mv); window.removeEventListener('mouseup', up); }; window.addEventListener('mousemove', mv); window.addEventListener('mouseup', up); }, [pan]);
     
     const fitRoom = useCallback(() => { if (!aGh || !vpRef.current)
@@ -4753,6 +5056,7 @@ useEffect(() => {
                                     React.createElement("button", { className: "eli-btn", onClick: () => startEditExp(ex) }, "Edit"),
                                     React.createElement("button", { className: "eli-btn del", onClick: () => deleteExp(ex.id) }, "Del"))));
                         }))),
+                React.createElement(WeatherWidget, null),
                 React.createElement("div", { className: "sb-bottom" },
 
                     React.createElement("div", { className: "sb-user", onClick: () => setUser(null) },
@@ -4998,7 +5302,7 @@ useEffect(() => {
                 tab === 'stock' && React.createElement(StockView, { stock: data.stock || [], onAdd: addStockItem, onEdit: editStockItem, onRemove: removeStockItem, onQty: qtyStockItem }),
                 tab === 'measures' && React.createElement(MeasuresView, { measures:data.measures||[], experiments:data.experiments||[], plants:data.plants||[], tables:data.tables||[], users:data.users||[], onSave:saveMeasures, currentUser:user }),
                 tab === 'messages' && React.createElement(MessagesView, { messages:data.messages||[], onAdd:addMessage, onEdit:editMessage, onDel:delMessage, currentUser:user, users:data.users }),
-                tab === 'notes' && React.createElement(NotesView, { notes:data.notes||[], onAdd:addNote, onEdit:editNote, onDel:delNote, currentUser:user, users:data.users }),
+                tab === 'notes' && React.createElement(NotesView, { notes:data.notes||[], onAdd:addNote, onEdit:editNote, onDel:delNote, currentUser:user, users:data.users, labId: activeLab?.id }),
                 tab === 'orders' && React.createElement(OrdersView, { orders: data.orders||[], users: data.users, curUser: user, exps: data.experiments||[], onAdd: addOrder, onUpd: updOrder, onDel: delOrder, syncStatus: syncStatus }),
                 tab === 'schedule' && React.createElement(ScheduleView, { tables: data.tables, users: data.users, schedules: data.schedules||[], onAdd: addSchedule, onDel: delSchedule, currentUser: user ? user.name : '' }),
                 tab === 'dash' && React.createElement(DashView, { greenhouses: data.greenhouses, tables: data.tables, structs: data.structs || [], plants: data.plants || [], experiments: data.experiments || [] }))),
@@ -5049,7 +5353,7 @@ useEffect(() => {
                 )
             ),
 
-        popup && React.createElement(PotPopup, { plant: popup.plant, tblNm: popup.tblNm, ghNm: popup.ghNm, rect: popup.rect, exps: data.experiments, allPlants: data.plants, users: data.users, onSave: savePlant, onClose: () => { setPopup(null); setActPot(null); } }),
+        popup && React.createElement(PotPopup, { plant: popup.plant, tblNm: popup.tblNm, ghNm: popup.ghNm, rect: popup.rect, exps: data.experiments, allPlants: data.plants, users: data.users, genotypes: data.genotypes || [], onSave: savePlant, onSaveGenoDesc: function(name, desc){ forceWriteRef.current=true; setData(function(d){ return upsertGenotypeDesc(d, name, desc); }); }, onClose: () => { setPopup(null); setActPot(null); } }),
         expTip && React.createElement("div", { className: "exp-tip", style: {
             left: Math.min(expTip.x + 14, window.innerWidth - 220),
             top: Math.max(8, expTip.y - 10)
