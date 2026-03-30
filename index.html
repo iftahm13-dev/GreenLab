@@ -1071,10 +1071,20 @@ function jbRead() {
     var url = 'https://api.jsonbin.io/v3/b/' + JB_BIN_ID + '/latest';
     var ctrl = new AbortController();
     var tid = setTimeout(function(){ ctrl.abort(); }, 30000);
+    console.log('[DB] Reading from JSONBin...');
     return fetch(url, { headers: { 'X-Master-Key': JB_KEY }, signal: ctrl.signal })
-        .then(function(r) { clearTimeout(tid); if (!r.ok) throw new Error(r.status); return r.json(); })
-        .then(function(j) { return j.record || j; })
-        .catch(function(e){ clearTimeout(tid); throw e; });
+        .then(function(r) {
+            clearTimeout(tid);
+            if (!r.ok) { console.error('[DB] jbRead HTTP error:', r.status); throw new Error(r.status); }
+            return r.json();
+        })
+        .then(function(j) {
+            var rec = j.record || j;
+            var keys = rec ? Object.keys(rec) : [];
+            console.log('[DB] JSONBin read OK — keys:', keys.join(', '), '| notes:', (rec.notes||[]).length, '| plants:', (rec.plants||[]).length);
+            return rec;
+        })
+        .catch(function(e){ clearTimeout(tid); console.error('[DB] jbRead failed:', e.message); throw e; });
 }
 function jbWrite(data) {
     if (!JB_KEY || JB_KEY.indexOf('PASTE') !== -1) return Promise.reject(new Error('JSONBin not configured'));
@@ -1175,7 +1185,7 @@ function drainQueue() {
     var BACKOFF = [0, 3000, 8000, 20000, 60000];
     var delay   = BACKOFF[Math.min(entry.attempts, BACKOFF.length - 1)];
     function attempt() {
-        jbWrite(entry.data)
+        try { jbWrite(entry.data)
             .then(function() {
                 // Success — clear pending IDB entry
                 idbPut('queue', 'pending_' + entry.labId, null);
@@ -1198,6 +1208,7 @@ function drainQueue() {
                 _syncRunning = false;
                 _drainTimer = setTimeout(drainQueue, wait);
             });
+        } catch(syncErr) { _syncRunning = false; if (entry.onFail) entry.onFail(syncErr); drainQueue(); }
     }
     if (delay > 0) {
         setTimeout(attempt, delay);
@@ -3565,6 +3576,38 @@ function LabSelectScreen({onSelectLab}){
   const [pwMsg, setPwMsg] = React.useState('');
   const photoRef = React.useRef();
 
+  // ── Password gate ───────────────────────────────────────────────
+  const [pendingLab, setPendingLab] = React.useState(null);
+  const [entryPw,    setEntryPw]    = React.useState('');
+  const [entryErr,   setEntryErr]   = React.useState('');
+  const entryRef = React.useRef();
+
+  const handleLabClick = function(lab) {
+    if (settingsId === lab.id) return;
+    const stored = (function(){ try { return JSON.parse(localStorage.getItem('gl_delpw')||'{}'); } catch(e){ return {}; } })();
+    if (stored[lab.id]) {
+      // Lab has a password set — show prompt
+      setPendingLab(lab); setEntryPw(''); setEntryErr('');
+      setTimeout(function(){ if (entryRef.current) entryRef.current.focus(); }, 80);
+    } else {
+      onSelectLab(lab); // first-run: no password yet, enter freely
+    }
+  };
+
+  const submitEntryPw = function() {
+    if (!pendingLab) return;
+    if (!entryPw.trim()) { setEntryErr('Please enter the lab password.'); return; }
+    if (hashPw(entryPw) === getDelPwHash(pendingLab.id)) {
+      var lab = pendingLab;
+      setPendingLab(null); setEntryPw(''); setEntryErr('');
+      onSelectLab(lab);
+    } else {
+      setEntryErr('Incorrect password. Please try again.');
+      setEntryPw('');
+      if (entryRef.current) entryRef.current.focus();
+    }
+  };
+
   // Load labs from Firestore on mount
   React.useEffect(() => {
     // JSONBin stores one bin per lab — lab list lives in localStorage
@@ -3663,7 +3706,7 @@ function LabSelectScreen({onSelectLab}){
               )
             )
           ),
-          React.createElement('div', {className:'lab-item', style:{marginBottom:0}, onClick:function(){if(settingsId!==lab.id)onSelectLab(lab);}},
+          React.createElement('div', {className:'lab-item', style:{marginBottom:0}, onClick:function(){ handleLabClick(lab); }},
             React.createElement('div', {className:'lab-ic', style:{overflow:'hidden'}},
               lab.photo ? React.createElement('img',{src:lab.photo,alt:lab.name,style:{width:'100%',height:'100%',objectFit:'cover'}}) : (lab.icon||'🌿')
             ),
@@ -3686,6 +3729,44 @@ function LabSelectScreen({onSelectLab}){
       ) : React.createElement('button',{className:'btn btns btnw bsm',style:{marginTop:8},onClick:function(){setShowAdd(true);}}, '+ Add another lab'),
       React.createElement('div',{style:{marginTop:14,fontSize:10,color:'var(--i5)',fontFamily:'Poppins',textAlign:'center'}},
         'Each lab has its own members, greenhouses and data'
+      )
+    ),
+    pendingLab && React.createElement('div', {
+      style:{position:'fixed',inset:0,zIndex:200,display:'flex',alignItems:'center',
+             justifyContent:'center',background:'rgba(0,0,0,.55)',backdropFilter:'blur(4px)'},
+      onClick:function(e){ if(e.target===e.currentTarget){ setPendingLab(null); setEntryErr(''); } }
+    },
+      React.createElement('div', {
+        style:{background:'#fff',borderRadius:20,padding:'32px 28px',width:340,maxWidth:'92vw',
+               boxShadow:'0 24px 60px rgba(0,0,0,.35)',animation:'mi .18s ease'}
+      },
+        React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10,marginBottom:20}},
+          React.createElement('div',{style:{width:40,height:40,borderRadius:12,background:'#f0fdf4',
+            border:'1.5px solid #c3e6a8',display:'flex',alignItems:'center',justifyContent:'center',
+            fontSize:20,flexShrink:0}}, pendingLab.icon||'🌿'),
+          React.createElement('div',null,
+            React.createElement('div',{style:{fontSize:15,fontWeight:700,color:'#111827',fontFamily:'Poppins,sans-serif'}}, pendingLab.name),
+            React.createElement('div',{style:{fontSize:11,color:'#6b7280',fontFamily:'Inter,sans-serif'}}, 'Enter lab password to continue')
+          )
+        ),
+        React.createElement('input',{
+          ref:entryRef, type:'password', value:entryPw, placeholder:'Lab password…', className:'moi',
+          style:{width:'100%',boxSizing:'border-box',marginBottom:8},
+          onChange:function(e){ setEntryPw(e.target.value); setEntryErr(''); },
+          onKeyDown:function(e){ if(e.key==='Enter') submitEntryPw(); if(e.key==='Escape'){ setPendingLab(null); setEntryErr(''); } }
+        }),
+        entryErr && React.createElement('div',{
+          style:{fontSize:11,color:'#dc2626',background:'#fef2f2',border:'1px solid #fca5a5',
+                 borderRadius:8,padding:'6px 10px',marginBottom:8}
+        }, '⚠ ', entryErr),
+        React.createElement('div',{style:{fontSize:10,color:'#9ca3af',marginBottom:14,fontFamily:'Inter,sans-serif'}},
+          'Default password: ',
+          React.createElement('code',{style:{background:'#f3f4f6',padding:'1px 5px',borderRadius:3}},'greenlab2025')
+        ),
+        React.createElement('div',{style:{display:'flex',gap:8}},
+          React.createElement('button',{className:'btn btns',style:{flex:1},onClick:function(){ setPendingLab(null); setEntryErr(''); }},'Cancel'),
+          React.createElement('button',{className:'btn btnp',style:{flex:1},onClick:submitEntryPw},'Enter Lab →')
+        )
       )
     )
   );
@@ -4275,13 +4356,7 @@ function lookupGenotypeDesc(data, name) {
 }
 function App() {
     var _a, _b;
-    const [activeLab, setActiveLab] = useState(() => {
-        try {
-            const lastId = localStorage.getItem('gl_last_lab');
-            if (lastId) { const labs = loadLabs(); return labs.find(l=>l.id===lastId) || null; }
-        } catch(e) {}
-        return null;
-    }); // null = lab not chosen yet
+    const [activeLab, setActiveLab] = useState(null); // always start at landing page
     const [data, setData] = useState({ greenhouses:[], tables:[], plants:[], experiments:[], users:[], structs:[], stock:[], orders:[], schedules:[], messages:[], measures:[], notes:[], locked:true });
     const [user, setUser] = useState(null);
     const [tab, setTab] = useState('layout');
@@ -4442,12 +4517,11 @@ useEffect(() => {
                         setData(seeded);
                         if (seeded.greenhouses.length > 0) setGhId(seeded.greenhouses[0].id);
                     } else {
-                        var remoteLww = remote._lww_ts || 0;
                         var msSinceWrite = Date.now() - lastLocalWriteRef.current;
-                        // LWW: if our local write is more recent than the server record, skip remote
-                        if (!forceWriteRef.current && msSinceWrite > 5000 && remoteLww >= lastLocalWriteRef.current) {
+                        // Only apply remote data if we haven't written locally in the last 5s
+                        dataLoadedRef.current = true; // always mark loaded, even if we skip the remote data
+                        if (!forceWriteRef.current && msSinceWrite > 5000) {
                             remoteUpdateRef.current = true;
-                            dataLoadedRef.current = true;
                             setData(loadImages(remote));
                             if (remote.greenhouses && remote.greenhouses.length > 0) {
                                 setGhId(function(cur) { return cur || remote.greenhouses[0].id; });
@@ -4534,7 +4608,6 @@ useEffect(() => {
     }, [user]);
     /* Called when user selects a lab from LabSelectScreen */
     const selectLab = useCallback(lab => {
-        try { localStorage.setItem('gl_last_lab', lab.id); } catch(e) {}
         setActiveLab(lab);
         setData({ greenhouses:[], tables:[], plants:[], experiments:[],
                   users:[], structs:[], stock:[], genotypes:[], locked:true });
@@ -5197,7 +5270,25 @@ useEffect(() => {
                         React.createElement("div", { className: "uav", style: { background: user.color } }, user.photo ? React.createElement("img", { src: user.photo, alt: user.name }) : user.name.charAt(0)),
                         React.createElement("div", { style: { flex: 1, minWidth: 0 } },
                             React.createElement("div", { className: "sb-user-name" }, user.name),
-                            React.createElement("div", { className: "sb-user-role" }, user.position || user.role))))),
+                            React.createElement("div", { className: "sb-user-role" }, user.position || user.role))),
+                    React.createElement("button", {
+                        title: "Return to lab selection",
+                        onClick: () => { setActiveLab(null); setUser(null); },
+                        style: {
+                            width:'100%', marginTop:8, padding:'8px 12px',
+                            background:'none', border:'1.5px solid #E5E7EB',
+                            borderRadius:10, cursor:'pointer',
+                            display:'flex', alignItems:'center', justifyContent:'center', gap:6,
+                            fontSize:11, fontWeight:600, color:'#6B7280',
+                            fontFamily:'Poppins,sans-serif', transition:'all .13s',
+                            WebkitTapHighlightColor:'transparent'
+                        },
+                        onMouseEnter: e => { e.currentTarget.style.cssText += ';background:#fef2f2!important;border-color:#fca5a5!important;color:#dc2626!important'; },
+                        onMouseLeave: e => { e.currentTarget.style.background=''; e.currentTarget.style.borderColor='#E5E7EB'; e.currentTarget.style.color='#6B7280'; }
+                    },
+                        React.createElement("span", { dangerouslySetInnerHTML:{ __html:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>' } }),
+                        "Exit Lab"
+                    ))),
             React.createElement("div", { className: "main" },
                 React.createElement("div", { className: "mob-top-bar" },
                     React.createElement("div", { className: "mob-top-logo" },
