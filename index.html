@@ -4234,7 +4234,7 @@ function DashView({ greenhouses, tables, structs, plants, experiments }) {
    2. Replace loadData() with onSnapshot listener
    3. The syncStatus state machine below stays the same
 ════════════════════════════════════════════════ */
-function SyncStatusChip({ status, lastSaved, lastBy, onClick, uploadProgress }) {
+function SyncStatusChip({ status, lastSaved, lastBy, onClick, uploadProgress, queueLen }) {
     var warnRef = React.useRef(null);
     var [overdue, setOverdue] = React.useState(false);
     React.useEffect(function() {
@@ -4272,6 +4272,9 @@ function SyncStatusChip({ status, lastSaved, lastBy, onClick, uploadProgress }) 
                 )
               )
             : React.createElement('span', null, label),
+        queueLen > 0 && React.createElement('span', {
+            style:{ background:'#ef4444', color:'#fff', borderRadius:10, fontSize:8, fontWeight:700, padding:'1px 5px', marginLeft:2, letterSpacing:'.02em' }
+        }, queueLen + ' queued'),
         timeStr && status !== 'saving' && React.createElement('span', { style:{opacity:.65} }, '· ', timeStr)
     );
 }
@@ -4646,8 +4649,9 @@ function DebugOverlay() {
                 React.createElement('div', { style:{display:'flex',flexDirection:'column',gap:2} },
                     React.createElement('span', { style:{color:'#78C043',fontWeight:700,fontFamily:'monospace',fontSize:13} }, '🛠 Debug Log'),
                     React.createElement('span', { style:{color:'#94a3b8',fontSize:10,fontFamily:'monospace'} },
-                        'Remote tables: ' + (window._glRemoteTblCount != null ? window._glRemoteTblCount : '—') +
-                        ' | Local tables: ' + (window._glLocalTblCount != null ? window._glLocalTblCount : '—') +
+                        'Remote tbls: ' + (window._glRemoteTblCount != null ? window._glRemoteTblCount : '—') +
+                        ' | Local tbls: ' + (window._glLocalTblCount != null ? window._glLocalTblCount : '—') +
+                        ' | Q: ' + _syncQueue.length +
                         ' | Mobile: ' + (typeof IS_MOBILE !== 'undefined' ? IS_MOBILE : '?')
                     )
                 ),
@@ -4949,17 +4953,14 @@ useEffect(() => {
                         window._glLastRemote = remote;
                         window._glRemoteTblCount = (remote.tables||[]).length;
 
-                        // NEVER apply remote data if writes are queued — ghost deletion prevention
-                        // On mobile: only block if actual network writes are queued
-                        // On desktop: also block if write debounce timer is running
-                        var hasNetworkWrites = _syncQueue.length > 0;
-                        var hasPendingWrites = IS_MOBILE ? hasNetworkWrites : (hasNetworkWrites || writeTimerRef.current !== null);
-                        dbgLog('[State] mobile=' + IS_MOBILE + ' msSince=' + msSinceWrite + ' netQ=' + _syncQueue.length + ' timer=' + !!writeTimerRef.current + ' newer=' + serverIsNewer + ' tbls=' + (remote.tables||[]).length);
+                        // Dirty-state protection — same rule on all platforms:
+                        // Block if: queue has entries OR debounce timer running OR wrote < 10s ago
+                        var hasPendingWrites = _syncQueue.length > 0 || writeTimerRef.current !== null;
+                        var isDirty = hasPendingWrites || msSinceWrite < 10000;
+                        dbgLog('[State] Q=' + _syncQueue.length + ' timer=' + !!writeTimerRef.current + ' msSince=' + msSinceWrite + ' dirty=' + isDirty + ' newer=' + serverIsNewer + ' remoteTbls=' + (remote.tables||[]).length);
 
-                        // Mobile: always apply server data unless actively uploading
-                        // Desktop: apply if no recent local write OR server is newer
-                        var shouldApply = !forceWriteRef.current && !hasPendingWrites &&
-                                          (IS_MOBILE || msSinceWrite > 5000 || serverIsNewer);
+                        // Apply server data only when local state is clean
+                        var shouldApply = !forceWriteRef.current && !isDirty;
 
                         if (shouldApply) {
                             dbgLog('[State] APPLYING — ' + (IS_MOBILE ? 'MOBILE(server-auth)' : 'DESKTOP(LWW)') + ' tables:' + (remote.tables||[]).length + ' notes:' + (remote.notes||[]).length);
@@ -4990,10 +4991,11 @@ useEffect(() => {
                         } else {
                             dbgWarn('[State] SKIPPED — forceWrite=' + forceWriteRef.current + ' pendingWrites=' + hasPendingWrites + ' mobile=' + IS_MOBILE + ' msSinceWrite=' + msSinceWrite);
                         }
-                        // Only show synced if we are not mid-write
-                        // (a pending/saving write status takes precedence over a read ACK)
+                        // Synced = queue empty + server responded. Never overwrite pending/saving.
                         setSyncStatus(function(cur) {
-                            return (cur === 'pending' || cur === 'saving') ? cur : 'synced';
+                            if (cur === 'pending' || cur === 'saving') return cur;
+                            if (_syncQueue.length > 0 || writeTimerRef.current !== null) return 'pending';
+                            return 'synced';
                         });
                         setLastSaved(new Date());
                     }
@@ -5056,6 +5058,10 @@ useEffect(() => {
             var interval = IS_MOBILE ? 15000 : ((Date.now() - lastInteraction > 300000) ? 60000 : 30000);
             pollId = setInterval(function() {
                 if (document.visibilityState === 'hidden') return; // skip while backgrounded
+                if (_syncQueue.length > 0 || writeTimerRef.current !== null) {
+                    dbgLog('[Poll] Skipped — dirty state (Q=' + _syncQueue.length + ' timer=' + !!writeTimerRef.current + ')');
+                    return; // pause poll while writes are pending
+                }
                 // Re-evaluate interval each tick
                 var nextInterval = IS_MOBILE ? 15000 : ((Date.now() - lastInteraction > 300000) ? 60000 : 30000);
                 if (nextInterval !== interval) { startPoll(); return; } // restart with new interval
@@ -5956,7 +5962,7 @@ useEffect(() => {
                             },
                             style:{background:'none',border:'1.5px solid #E5E7EB',borderRadius:20,padding:'4px 10px',fontSize:11,fontWeight:600,color:'var(--i2)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}
                         }, '👤 ', user.name.split(' ')[0]),
-                        React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, onClick: syncStatus==='error' ? ()=>{saveData(data,activeLab?.id);setSyncStatus('saved');} : ()=>setShowFbPanel(true) }),
+                        React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, queueLen: _syncQueue.length, onClick: syncStatus==='error' ? ()=>{saveData(data,activeLab?.id);setSyncStatus('saved');} : ()=>setShowFbPanel(true) }),
                         React.createElement("button", {
                             title: "Force refresh (hold 2s for Nuclear Sync)",
                             onClick: function() { if (fetchNowRef.current) { setSyncStatus('loading'); fetchNowRef.current(); } },
@@ -6040,7 +6046,7 @@ useEffect(() => {
                         React.createElement("span", { className: "hbadge" },
                             totPlants,
                             " plants"),
-                        React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, onClick: syncStatus === 'error' ? () => { saveData(data, activeLab === null || activeLab === void 0 ? void 0 : activeLab.id); setSyncStatus('saved'); } : () => setShowFbPanel(true) }),
+                        React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, queueLen: _syncQueue.length, onClick: syncStatus === 'error' ? () => { saveData(data, activeLab === null || activeLab === void 0 ? void 0 : activeLab.id); setSyncStatus('saved'); } : () => setShowFbPanel(true) }),
                         React.createElement("button", { className: `lkbtn${!locked ? ' edit' : ''}`, onClick: togLock }, locked ? 'Locked' : 'Edit mode'))),
                 alerts.length > 0 && React.createElement("div", { className: "alerts-bar" },
                     alerts.map(function(a, i) {
