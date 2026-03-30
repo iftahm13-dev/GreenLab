@@ -481,6 +481,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .sync-dot.error{background:#ef4444;animation:pulse-dot .6s ease-in-out infinite}
 .sync-dot.nosync{background:var(--i5)}
 @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
+@keyframes spin-ptr{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
 /* ═══════════════════════════════════
    FIREBASE PANEL
@@ -1074,7 +1075,7 @@ var JB_BIN_ID = '69c3ce37c3097a1dd55b1533';       // created automatically on fi
 
 function jbRead() {
     if (!JB_KEY || JB_KEY.indexOf('PASTE') !== -1) return Promise.reject(new Error('JSONBin not configured'));
-    var url = 'https://api.jsonbin.io/v3/b/' + JB_BIN_ID + '/latest';
+    var url = 'https://api.jsonbin.io/v3/b/' + JB_BIN_ID + '/latest?t=' + Date.now();
     var ctrl = new AbortController();
     var tid = setTimeout(function(){ ctrl.abort(); }, 30000);
     console.log('[DB] Reading from JSONBin...');
@@ -1256,6 +1257,7 @@ function sbUpsert(){return Promise.reject(new Error('unused'));}
 
 window._fbReady = true;
 console.log('[GreenLab] JSONBin mode. Bin ID:', JB_BIN_ID);
+console.log('[GreenLab] Real-time: polling every 30s (active) / 60s (idle). WebSockets/SSE require a different backend (e.g. Supabase Realtime, Firebase). Immediate fetch on foreground/focus/bfcache/broadcast.');
 
 const { useState, useEffect, useRef, useCallback, useMemo, useLayoutEffect } = React;
 const WS = 3, HDR = 26, MINP = 44, LBH = 16, MINZ = .15, MAXZ = 4;
@@ -2427,7 +2429,7 @@ function NotesView({ notes, onAdd, onEdit, onDel, currentUser, users, labId }) {
             React.createElement('div',{className:'notes-tit'},'📌 Lab Notes'),
             React.createElement('div',{style:{fontSize:11,color:'var(--i4)'}},sorted.length+' note'+(sorted.length!==1?'s':''))
         ),
-        React.createElement('div',{className:'notes-list'},
+        React.createElement(PullToRefresh,{className:'notes-list',onRefresh:function(){return new Promise(function(res){if(window._glForceRefresh)window._glForceRefresh();setTimeout(res,1500);});}},
             sorted.length===0&&React.createElement('div',{className:'note-empty'},
                 React.createElement('div',{style:{fontSize:36,opacity:.3}},'📝'),
                 React.createElement('div',{style:{fontSize:13,fontWeight:600,color:'var(--i2)'}},'No notes yet'),
@@ -2609,7 +2611,7 @@ function StockView({ stock, onAdd, onEdit, onRemove, onQty, lastSaved }) {
             React.createElement("div", { className: "stk-tit" }, "Stock"),
             React.createElement("input", { className:"fi", placeholder:"Search stock…", value:stkSearch, onChange:e=>setStkSearch(e.target.value), style:{maxWidth:200,padding:'6px 10px',fontSize:12} }),
             React.createElement("button", { className: "btn btnp bsm", onClick: () => { setFm(EMPTY); setShowAdd(true); } }, "+ Add item")),
-        React.createElement("div", { className: "stk-list" },
+        React.createElement(PullToRefresh, { className: "stk-list", onRefresh: function(){ return new Promise(function(res){ if(window._glForceRefresh) window._glForceRefresh(); setTimeout(res, 1500); }); } },
             stock.length === 0 && React.createElement("div", { className: "stk-empty" },
                 React.createElement("div", { style: { fontSize: 30, opacity: .3 } }, "\uD83D\uDCE6"),
                 React.createElement("div", { style: { fontSize: 12 } }, "No stock items yet")),
@@ -4442,6 +4444,102 @@ function mergeRemoteData(remote, localData) {
     return merged;
 }
 
+// ── Pull-to-Refresh wrapper ───────────────────────────────────────────────
+function PullToRefresh({ onRefresh, children, style, className }) {
+    var THRESHOLD    = 72;  // px of pull needed to trigger refresh
+    var MAX_PULL     = 100; // max visual travel
+    var [pullY, setPullY]     = React.useState(0);
+    var [phase, setPhase]     = React.useState('idle'); // idle|pulling|ready|refreshing
+    var startYRef  = React.useRef(0);
+    var isPullingRef = React.useRef(false);
+    var containerRef = React.useRef(null);
+
+    var onTouchStart = function(e) {
+        var el = containerRef.current;
+        if (!el) return;
+        var scrollTop = el.scrollTop;
+        // Only activate PTR when already scrolled to the very top
+        if (scrollTop > 2) return;
+        startYRef.current = e.touches[0].clientY;
+        isPullingRef.current = true;
+    };
+
+    var onTouchMove = function(e) {
+        if (!isPullingRef.current) return;
+        var el = containerRef.current;
+        if (!el || el.scrollTop > 2) { isPullingRef.current = false; return; }
+        var dy = e.touches[0].clientY - startYRef.current;
+        if (dy <= 0) { isPullingRef.current = false; setPullY(0); setPhase('idle'); return; }
+        // Prevent native scroll while we're pulling
+        e.preventDefault();
+        var travel = Math.min(dy * 0.5, MAX_PULL); // rubber-band damping
+        setPullY(travel);
+        setPhase(travel >= THRESHOLD ? 'ready' : 'pulling');
+    };
+
+    var onTouchEnd = function() {
+        if (!isPullingRef.current) return;
+        isPullingRef.current = false;
+        if (phase === 'ready') {
+            setPhase('refreshing');
+            setPullY(THRESHOLD); // hold at threshold height while refreshing
+            Promise.resolve(onRefresh()).then(function() {
+                setPhase('idle');
+                setPullY(0);
+            }).catch(function() {
+                setPhase('idle');
+                setPullY(0);
+            });
+        } else {
+            setPhase('idle');
+            setPullY(0);
+        }
+    };
+
+    var indicatorStyle = {
+        position: 'absolute',
+        top: 0, left: 0, right: 0,
+        height: pullY,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+        transition: phase === 'idle' ? 'height .25s ease' : 'none',
+        background: 'linear-gradient(180deg, #f0fdf4 0%, transparent 100%)',
+        zIndex: 20,
+        pointerEvents: 'none',
+        fontSize: 11,
+        fontWeight: 600,
+        color: '#78C043',
+        gap: 6,
+        fontFamily: 'Poppins,sans-serif'
+    };
+
+    var spinStyle = {
+        display: 'inline-block',
+        fontSize: 18,
+        animation: phase === 'refreshing' ? 'spin-ptr 0.8s linear infinite' : 'none',
+        transform: phase !== 'refreshing' ? 'rotate(' + Math.min(pullY / THRESHOLD * 360, 360) + 'deg)' : undefined,
+        transition: phase === 'refreshing' ? 'none' : 'transform .1s'
+    };
+
+    return React.createElement('div', {
+        ref: containerRef,
+        className: className,
+        style: Object.assign({ position: 'relative', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }, style),
+        onTouchStart: onTouchStart,
+        onTouchMove: onTouchMove,
+        onTouchEnd: onTouchEnd
+    },
+        (pullY > 0 || phase === 'refreshing') && React.createElement('div', { style: indicatorStyle },
+            React.createElement('span', { style: spinStyle }, '↻'),
+            phase === 'ready'       ? 'Release to refresh' :
+            phase === 'refreshing'  ? 'Refreshing…' : 'Pull to refresh'
+        ),
+        children
+    );
+}
+
 function App() {
     var _a, _b;
     const [activeLab, setActiveLab] = useState(null); // always start at landing page
@@ -4695,6 +4793,10 @@ useEffect(() => {
                 });
         }
         fetchNowRef.current = fetchLabData; // expose for manual refresh button
+        window._glForceRefresh = function() {
+            console.log('[Sync] Manual pull-to-refresh triggered');
+            fetchLabData();
+        };
         fetchLabData();
         // If previous session had unsynced data, mark forceWrite so the next data-effect write fires
         if (_pendingOnLaunch) {
@@ -4737,7 +4839,8 @@ useEffect(() => {
                 // Foreground — immediate fetch if we were hidden for >5s
                 var hiddenMs = Date.now() - lastHiddenAt;
                 console.log('[Sync] App foregrounded after ' + Math.round(hiddenMs/1000) + 's');
-                if (hiddenMs > 5000) {
+                // Fetch on ANY foreground resume — no minimum hidden time required
+                if (hiddenMs >= 0) {
                     console.log('[Sync] Force-fetching after resume...');
                     fetchLabData();
                 }
@@ -4746,6 +4849,19 @@ useEffect(() => {
             }
         }
         document.addEventListener('visibilitychange', onVisibilityChange);
+
+        // 'focus' fires when window/tab gets focus — catches PWA + some iOS edge cases
+        // where visibilitychange alone may not fire (e.g. notification shade dismissed)
+        var lastFocusFetch = 0;
+        function onWindowFocus() {
+            var now = Date.now();
+            // Debounce: don't double-fire if visibilitychange already handled it
+            if (now - lastFocusFetch < 3000) return;
+            lastFocusFetch = now;
+            console.log('[Sync] Window focus — fetching...');
+            fetchLabData();
+        }
+        window.addEventListener('focus', onWindowFocus);
 
         // ── pageshow: fires on iOS when page restored from bfcache ──
         // bfcache = browser back/forward cache — page restored from memory snapshot
@@ -4777,11 +4893,13 @@ useEffect(() => {
         return function() {
             if (pollId) clearInterval(pollId);
             document.removeEventListener('visibilitychange', onVisibilityChange);
+            window.removeEventListener('focus', onWindowFocus);
             window.removeEventListener('pageshow', onPageShow);
             window.removeEventListener('pointerdown', onInteraction);
             window.removeEventListener('keydown', onInteraction);
             if (bc) { try { bc.close(); } catch(e){} }
             window._glBroadcast = null;
+            window._glForceRefresh = null;
         };
     }, [activeLab ? activeLab.id : null]);
     const writeTimerRef     = useRef(null);
