@@ -1078,7 +1078,7 @@ function jbRead() {
     var ctrl = new AbortController();
     var tid = setTimeout(function(){ ctrl.abort(); }, 30000);
     console.log('[DB] Reading from JSONBin...');
-    return fetch(url, { headers: { 'X-Master-Key': JB_KEY }, signal: ctrl.signal })
+    return fetch(url, { headers: { 'X-Master-Key': JB_KEY }, signal: ctrl.signal, cache: 'no-store' })
         .then(function(r) {
             clearTimeout(tid);
             if (!r.ok) { console.error('[DB] jbRead HTTP error:', r.status); throw new Error(r.status); }
@@ -1942,6 +1942,8 @@ function saveData(d, labId, onOK, onFail) {
         // Step 4: enqueue to retry-aware background sync queue
         enqueueSave(labId, writeData, function() {
             console.log('[DB] Saved to JSONBin (' + sizeKB + 'KB) — server 200 OK ✓');
+            // Notify other tabs (same device) to fetch latest
+            if (window._glBroadcast) window._glBroadcast({ type: 'wrote', ts: Date.now(), labId: labId });
             if (onOK) onOK('remote');
         }, function(e) {
             console.error('[DB] JSONBin write failed (all retries exhausted):', e.message);
@@ -4604,6 +4606,15 @@ useEffect(() => {
                         if (seeded.greenhouses.length > 0) setGhId(seeded.greenhouses[0].id);
                     } else {
                         var msSinceWrite = Date.now() - lastLocalWriteRef.current;
+                        // Versioning: compare server _lww_ts against local cache
+                        var remoteLwwTs = remote._lww_ts || 0;
+                        var localCache = loadLabData(activeLab.id);
+                        var localLwwTs = localCache ? (localCache._lww_ts || 0) : 0;
+                        var serverIsNewer = remoteLwwTs > localLwwTs;
+                        if (serverIsNewer) {
+                            console.log('[Sync] Server is newer (' + new Date(remoteLwwTs).toISOString() + ') vs local (' + new Date(localLwwTs).toISOString() + ') — applying server data');
+                        }
+
                         // Only apply remote data if we haven't written locally in the last 5s
                         dataLoadedRef.current = true; // always mark loaded, even if we skip the remote data
                         // Startup diff: compare server vs local counts
@@ -4623,7 +4634,8 @@ useEffect(() => {
                         })();
                         // NEVER apply remote data if writes are queued — ghost deletion prevention
                         var hasPendingWrites = _syncQueue.length > 0 || writeTimerRef.current !== null;
-                        if (!forceWriteRef.current && msSinceWrite > 5000 && !hasPendingWrites) {
+                        // Apply remote if: no pending writes AND (no recent local write OR server is explicitly newer)
+                        if (!forceWriteRef.current && !hasPendingWrites && (msSinceWrite > 5000 || serverIsNewer)) {
                             remoteUpdateRef.current = true;
                             // LOCAL-FIRST MERGE: preserve local-only objects not yet on server
                             setData(function(localData) {
@@ -4682,6 +4694,7 @@ useEffect(() => {
                     }
                 });
         }
+        fetchNowRef.current = fetchLabData; // expose for manual refresh button
         fetchLabData();
         // If previous session had unsynced data, mark forceWrite so the next data-effect write fires
         if (_pendingOnLaunch) {
@@ -4689,11 +4702,91 @@ useEffect(() => {
             forceWriteRef.current = true;
             console.log('[Sync] Replaying pending write from previous session...');
         }
-        var pollId = setInterval(fetchLabData, 120000); // 120s — safe above 5s write guard
-        return function() { clearInterval(pollId); };
+
+        // ── Adaptive polling ─────────────────────────────────────────
+        // Visible & active: every 30s. Idle (>5min no touch): 60s.
+        // Tab hidden: polling suspended. Immediately resumes on foreground.
+        var pollId = null;
+        var lastInteraction = Date.now();
+        var onInteraction = function() { lastInteraction = Date.now(); };
+        window.addEventListener('pointerdown', onInteraction, { passive: true });
+        window.addEventListener('keydown',     onInteraction, { passive: true });
+
+        function startPoll() {
+            if (pollId) clearInterval(pollId);
+            var interval = (Date.now() - lastInteraction > 300000) ? 60000 : 30000;
+            pollId = setInterval(function() {
+                if (document.visibilityState === 'hidden') return; // skip while backgrounded
+                // Re-evaluate interval each tick
+                var nextInterval = (Date.now() - lastInteraction > 300000) ? 60000 : 30000;
+                if (nextInterval !== interval) { startPoll(); return; } // restart with new interval
+                fetchLabData();
+            }, interval);
+        }
+        startPoll();
+
+        // ── Visibility change: force-fetch on foreground resume ──────
+        // This is the primary fix for iPhone: when user switches back to the app
+        // or lifts the phone, document.visibilityState changes to 'visible'.
+        var lastHiddenAt = 0;
+        function onVisibilityChange() {
+            if (document.visibilityState === 'hidden') {
+                lastHiddenAt = Date.now();
+                console.log('[Sync] App backgrounded');
+            } else {
+                // Foreground — immediate fetch if we were hidden for >5s
+                var hiddenMs = Date.now() - lastHiddenAt;
+                console.log('[Sync] App foregrounded after ' + Math.round(hiddenMs/1000) + 's');
+                if (hiddenMs > 5000) {
+                    console.log('[Sync] Force-fetching after resume...');
+                    fetchLabData();
+                }
+                // Restart poll at appropriate interval
+                startPoll();
+            }
+        }
+        document.addEventListener('visibilitychange', onVisibilityChange);
+
+        // ── pageshow: fires on iOS when page restored from bfcache ──
+        // bfcache = browser back/forward cache — page restored from memory snapshot
+        // visibilitychange alone may not fire on all iOS versions in this case
+        function onPageShow(e) {
+            if (e.persisted) {
+                console.log('[Sync] Page restored from bfcache — force-fetching...');
+                fetchLabData();
+            }
+        }
+        window.addEventListener('pageshow', onPageShow);
+
+        // ── BroadcastChannel: cross-tab sync on same device ─────────
+        // When this tab writes, notify other tabs to re-read.
+        // When another tab writes, this tab re-reads immediately.
+        var bc = null;
+        try {
+            bc = new BroadcastChannel('gl_sync_' + activeLab.id);
+            bc.onmessage = function(e) {
+                if (e.data && e.data.type === 'wrote' && e.data.ts) {
+                    console.log('[Sync] Another tab wrote — fetching update...');
+                    fetchLabData();
+                }
+            };
+        } catch(e) { /* BroadcastChannel not available (private browsing) */ }
+        // Store bc ref so saveData can broadcast after a successful write
+        window._glBroadcast = bc ? function(msg) { try { bc.postMessage(msg); } catch(e){} } : null;
+
+        return function() {
+            if (pollId) clearInterval(pollId);
+            document.removeEventListener('visibilitychange', onVisibilityChange);
+            window.removeEventListener('pageshow', onPageShow);
+            window.removeEventListener('pointerdown', onInteraction);
+            window.removeEventListener('keydown', onInteraction);
+            if (bc) { try { bc.close(); } catch(e){} }
+            window._glBroadcast = null;
+        };
     }, [activeLab ? activeLab.id : null]);
     const writeTimerRef     = useRef(null);
     const lastLocalWriteRef = useRef(0);
+    const fetchNowRef       = useRef(null); // set by the data-loading useEffect
 
     // Register global sync-failure callback so drainQueue can reach App state
     useEffect(function() {
@@ -5489,6 +5582,11 @@ useEffect(() => {
                             style:{background:'none',border:'1.5px solid #E5E7EB',borderRadius:20,padding:'4px 10px',fontSize:11,fontWeight:600,color:'var(--i2)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}
                         }, '👤 ', user.name.split(' ')[0]),
                         React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, onClick: syncStatus==='error' ? ()=>{saveData(data,activeLab?.id);setSyncStatus('saved');} : ()=>setShowFbPanel(true) }),
+                        React.createElement("button", {
+                            title: "Force refresh from server",
+                            onClick: function() { if (fetchNowRef.current) { setSyncStatus('loading'); fetchNowRef.current(); } },
+                            style: { background:'none', border:'1.5px solid #E5E7EB', borderRadius:8, width:32, height:32, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', fontSize:15, color:'#6B7280', flexShrink:0, WebkitTapHighlightColor:'transparent' }
+                        }, '↺'),
                         React.createElement("button", { className: `lkbtn${!locked?' edit':''}`, onClick: togLock, style:{fontSize:11,padding:'5px 12px'} }, locked ? '🔒' : '✏️')
                     )
                 ),
