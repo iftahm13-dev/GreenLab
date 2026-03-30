@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GreenLab</title>
 
@@ -1073,6 +1076,13 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 var JB_KEY    = '$2a$10$VdByQrrh52qhtymuGH3N9uggACh.2hEbbh78qw0tH3.0pbn3QN71O';  // your JSONBin Master Key
 var JB_BIN_ID = '69c3ce37c3097a1dd55b1533';       // created automatically on first run
 var APP_VERSION = 'gl-2026-03-30-v1'; // bump this string when deploying a new build
+// True on any touch-primary device (iPhone, iPad, Android)
+var IS_MOBILE = (function() {
+    try {
+        return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+               (navigator.maxTouchPoints > 1 && /Mac/i.test(navigator.userAgent)); // iPad with desktop UA
+    } catch(e) { return false; }
+})();
 
 function jbRead() {
     if (!JB_KEY || JB_KEY.indexOf('PASTE') !== -1) return Promise.reject(new Error('JSONBin not configured'));
@@ -1257,6 +1267,15 @@ function sbSelect(){return Promise.reject(new Error('unused'));}
 function sbUpsert(){return Promise.reject(new Error('unused'));}
 
 window._fbReady = true;
+// Unregister any stale service workers immediately on load
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(regs) {
+        if (regs.length > 0) {
+            console.log('[SW] Found ' + regs.length + ' SW registration(s) — unregistering...');
+            regs.forEach(function(r) { r.unregister(); });
+        }
+    }).catch(function(){});
+}
 console.log('[GreenLab] JSONBin mode. Bin ID:', JB_BIN_ID);
 console.log('[GreenLab] Real-time: polling every 30s (active) / 60s (idle). WebSockets/SSE require a different backend (e.g. Supabase Realtime, Firebase). Immediate fetch on foreground/focus/bfcache/broadcast.');
 
@@ -4604,7 +4623,14 @@ function DebugOverlay() {
             React.createElement('div', {
                 style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:4 }
             },
-                React.createElement('span', { style:{color:'#78C043',fontWeight:700,fontFamily:'monospace',fontSize:13} }, '🛠 Debug Log'),
+                React.createElement('div', { style:{display:'flex',flexDirection:'column',gap:2} },
+                    React.createElement('span', { style:{color:'#78C043',fontWeight:700,fontFamily:'monospace',fontSize:13} }, '🛠 Debug Log'),
+                    React.createElement('span', { style:{color:'#94a3b8',fontSize:10,fontFamily:'monospace'} },
+                        'Remote tables: ' + (window._glRemoteTblCount != null ? window._glRemoteTblCount : '—') +
+                        ' | Local tables: ' + (window._glLocalTblCount != null ? window._glLocalTblCount : '—') +
+                        ' | Mobile: ' + (typeof IS_MOBILE !== 'undefined' ? IS_MOBILE : '?')
+                    )
+                ),
                 React.createElement('div', { style:{display:'flex',gap:8} },
                     React.createElement('button', {
                         onClick: function(){ _dbgLog.length=0; setLogs([]); },
@@ -4631,17 +4657,63 @@ function DebugOverlay() {
                         return React.createElement('div', {key:i, style:{color:color, marginBottom:2, wordBreak:'break-all'}}, line);
                     })
             ),
-            // Quick-fire manual fetch button inside overlay
-            React.createElement('button', {
-                onClick: function(){
-                    dbgLog('Manual fetch triggered from debug overlay');
-                    if(window._glForceRefresh) window._glForceRefresh();
-                },
-                style:{background:'#78C043',border:'none',color:'#fff',borderRadius:8,padding:'10px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Poppins'}
-            }, '↺ Force Fetch Now')
+            React.createElement('div', {style:{display:'flex',gap:8}},
+                React.createElement('button', {
+                    onClick: function(){
+                        dbgLog('Manual fetch triggered from debug overlay');
+                        if(window._glForceRefresh) window._glForceRefresh();
+                    },
+                    style:{flex:1,background:'#78C043',border:'none',color:'#fff',borderRadius:8,padding:'10px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Poppins'}
+                }, '↺ Force Fetch Now'),
+                React.createElement('button', {
+                    onClick: function(){
+                        if(window.confirm('⚠️ NUCLEAR SYNC\n\nThis will erase all local data, kill service workers, and force-reload the app from scratch.\n\nProceed?')) {
+                            if(window._nuclearSync) window._nuclearSync();
+                        }
+                    },
+                    style:{flex:1,background:'#ef4444',border:'none',color:'#fff',borderRadius:8,padding:'10px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Poppins'}
+                }, '☢ Nuclear Sync')
+            )
         )
     );
 }
+
+// ── Nuclear sync: clear all caches, kill SW, hard reload ─────────────────
+function nuclearSync() {
+    dbgLog('[Nuclear] Starting nuclear sync...');
+    var ts = Date.now();
+    // 1. Clear localStorage (preserves nothing — full reset)
+    try { localStorage.clear(); dbgLog('[Nuclear] localStorage cleared'); } catch(e) { dbgErr('[Nuclear] localStorage clear failed: ' + e.message); }
+    // 2. Clear sessionStorage
+    try { sessionStorage.clear(); dbgLog('[Nuclear] sessionStorage cleared'); } catch(e) {}
+    // 3. Clear IDB greenlab database
+    try {
+        var req = indexedDB.deleteDatabase('greenlab_v1');
+        req.onsuccess = function(){ dbgLog('[Nuclear] IDB deleted'); };
+        req.onerror   = function(){ dbgErr('[Nuclear] IDB delete failed'); };
+    } catch(e) { dbgErr('[Nuclear] IDB delete error: ' + e.message); }
+    // 4. Unregister all service workers
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+            dbgLog('[Nuclear] SW registrations found: ' + regs.length);
+            return Promise.all(regs.map(function(r){ return r.unregister(); }));
+        }).then(function() {
+            dbgLog('[Nuclear] All SWs unregistered — reloading...');
+            doReload(ts);
+        }).catch(function(e) {
+            dbgErr('[Nuclear] SW unregister error: ' + e.message);
+            doReload(ts);
+        });
+    } else {
+        doReload(ts);
+    }
+    function doReload(ts) {
+        // ?nocache= param makes the URL unique so the browser can't serve from cache
+        var url = window.location.pathname + '?nocache=' + ts;
+        window.location.replace(url);
+    }
+}
+window._nuclearSync = nuclearSync;
 
 function App() {
     var _a, _b;
@@ -4842,20 +4914,28 @@ useEffect(() => {
                                 console.log('[Sync] Diff OK — server and local counts match.');
                             }
                         })();
+                        // Track counts for debug overlay
+                        window._glLastRemote = remote;
+                        window._glRemoteTblCount = (remote.tables||[]).length;
+
                         // NEVER apply remote data if writes are queued — ghost deletion prevention
                         var hasPendingWrites = _syncQueue.length > 0 || writeTimerRef.current !== null;
-                        dbgLog('[State] msSinceWrite=' + msSinceWrite + ' hasPending=' + hasPendingWrites + ' serverNewer=' + serverIsNewer + ' force=' + forceWriteRef.current);
-                        // Apply remote if: no pending writes AND (no recent local write OR server is explicitly newer)
-                        if (!forceWriteRef.current && !hasPendingWrites && (msSinceWrite > 5000 || serverIsNewer)) {
-                            dbgLog('[State] APPLYING remote data — tables:' + (remote.tables||[]).length + ' notes:' + (remote.notes||[]).length);
+                        dbgLog('[State] mobile=' + IS_MOBILE + ' msSinceWrite=' + msSinceWrite + ' hasPending=' + hasPendingWrites + ' serverNewer=' + serverIsNewer + ' remoteTbls=' + (remote.tables||[]).length);
+
+                        // Mobile: server-authoritative — apply immediately unless writes pending
+                        // Desktop: apply if no recent local write OR server is explicitly newer
+                        var shouldApply = !forceWriteRef.current && !hasPendingWrites &&
+                                          (IS_MOBILE || msSinceWrite > 5000 || serverIsNewer);
+
+                        if (shouldApply) {
+                            dbgLog('[State] APPLYING — ' + (IS_MOBILE ? 'MOBILE(server-auth)' : 'DESKTOP(LWW)') + ' tables:' + (remote.tables||[]).length + ' notes:' + (remote.notes||[]).length);
                             remoteUpdateRef.current = true;
-                            // If server is explicitly newer, update IDB cache so next launch starts fresh
-                            if (serverIsNewer && activeLab) {
+                            // Always update cache with fresh server data
+                            if (activeLab) {
                                 idbSave(activeLab.id, remote).catch(function(){});
                                 try { saveLabData(activeLab.id, remote); } catch(e){}
-                                dbgLog('[Cache] IDB + localStorage updated with fresh server data');
                             }
-                            // LOCAL-FIRST MERGE: preserve local-only objects not yet on server
+                            // Merge: server is authoritative, but preserve _localOnly items not yet confirmed
                             setData(function(localData) {
                                 var merged = mergeRemoteData(remote, localData);
                                 return loadImages(merged);
@@ -4872,9 +4952,8 @@ useEffect(() => {
                                 } catch(e) {}
                                 return null;
                             });
-                        }
-                        if (forceWriteRef.current || hasPendingWrites || (msSinceWrite <= 5000 && !serverIsNewer)) {
-                            dbgWarn('[State] SKIPPED applying remote — reason: forceWrite=' + forceWriteRef.current + ' pendingWrites=' + hasPendingWrites + ' msSinceWrite=' + msSinceWrite);
+                        } else {
+                            dbgWarn('[State] SKIPPED — forceWrite=' + forceWriteRef.current + ' pendingWrites=' + hasPendingWrites + ' mobile=' + IS_MOBILE + ' msSinceWrite=' + msSinceWrite);
                         }
                         // Only show synced if we are not mid-write
                         // (a pending/saving write status takes precedence over a read ACK)
@@ -5028,6 +5107,11 @@ useEffect(() => {
     const writeTimerRef     = useRef(null);
     const lastLocalWriteRef = useRef(0);
     const fetchNowRef       = useRef(null); // set by the data-loading useEffect
+
+    // Expose live table counts for debug overlay
+    useEffect(function() {
+        window._glLocalTblCount = data.tables ? data.tables.length : 0;
+    }, [data.tables]);
 
     // Register global sync-failure callback so drainQueue can reach App state
     useEffect(function() {
@@ -5825,8 +5909,9 @@ useEffect(() => {
                         }, '👤 ', user.name.split(' ')[0]),
                         React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, onClick: syncStatus==='error' ? ()=>{saveData(data,activeLab?.id);setSyncStatus('saved');} : ()=>setShowFbPanel(true) }),
                         React.createElement("button", {
-                            title: "Force refresh from server",
+                            title: "Force refresh (hold 2s for Nuclear Sync)",
                             onClick: function() { if (fetchNowRef.current) { setSyncStatus('loading'); fetchNowRef.current(); } },
+                            onContextMenu: function(e){ e.preventDefault(); if(window._nuclearSync && window.confirm('Nuclear Sync: clear all caches and reload?')) window._nuclearSync(); },
                             style: { background:'none', border:'1.5px solid #E5E7EB', borderRadius:8, width:32, height:32, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', fontSize:15, color:'#6B7280', flexShrink:0, WebkitTapHighlightColor:'transparent' }
                         }, '↺'),
                         React.createElement("button", { className: `lkbtn${!locked?' edit':''}`, onClick: togLock, style:{fontSize:11,padding:'5px 12px'} }, locked ? '🔒' : '✏️')
