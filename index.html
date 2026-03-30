@@ -1072,13 +1072,14 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 ════════════════════════════════════════════════ */
 var JB_KEY    = '$2a$10$VdByQrrh52qhtymuGH3N9uggACh.2hEbbh78qw0tH3.0pbn3QN71O';  // your JSONBin Master Key
 var JB_BIN_ID = '69c3ce37c3097a1dd55b1533';       // created automatically on first run
+var APP_VERSION = 'gl-2026-03-30-v1'; // bump this string when deploying a new build
 
 function jbRead() {
     if (!JB_KEY || JB_KEY.indexOf('PASTE') !== -1) return Promise.reject(new Error('JSONBin not configured'));
     var url = 'https://api.jsonbin.io/v3/b/' + JB_BIN_ID + '/latest?t=' + Date.now();
     var ctrl = new AbortController();
     var tid = setTimeout(function(){ ctrl.abort(); }, 30000);
-    console.log('[DB] Reading from JSONBin...');
+    dbgLog('[Fetch] jbRead START — ' + new Date().toLocaleTimeString());
     return fetch(url, { headers: { 'X-Master-Key': JB_KEY }, signal: ctrl.signal, cache: 'no-store' })
         .then(function(r) {
             clearTimeout(tid);
@@ -1088,10 +1089,10 @@ function jbRead() {
         .then(function(j) {
             var rec = j.record || j;
             var keys = rec ? Object.keys(rec) : [];
-            console.log('[DB] JSONBin read OK — keys:', keys.join(', '), '| notes:', (rec.notes||[]).length, '| plants:', (rec.plants||[]).length);
+            dbgLog('[Fetch] RECEIVED — tables:' + (rec.tables||[]).length + ' notes:' + (rec.notes||[]).length + ' plants:' + (rec.plants||[]).length + ' ts:' + (rec._lww_ts ? new Date(rec._lww_ts).toLocaleTimeString() : 'none'));
             return rec;
         })
-        .catch(function(e){ clearTimeout(tid); console.error('[DB] jbRead failed:', e.message); throw e; });
+        .catch(function(e){ clearTimeout(tid); dbgErr('[Fetch] jbRead FAILED: ' + e.message); throw e; });
 }
 function jbWrite(data) {
     if (!JB_KEY || JB_KEY.indexOf('PASTE') !== -1) return Promise.reject(new Error('JSONBin not configured'));
@@ -1886,7 +1887,7 @@ function loadImages(d) {
 }
 function saveData(d, labId, onOK, onFail) {
     // Step 1: stamp with LWW timestamp
-    var stamped = Object.assign({}, d, { _lww_ts: Date.now() });
+    var stamped = Object.assign({}, d, { _lww_ts: Date.now(), _appVersion: APP_VERSION });
 
     // Step 2: persist to IndexedDB immediately (survives localStorage quota)
     saveImages(stamped);
@@ -4540,6 +4541,108 @@ function PullToRefresh({ onRefresh, children, style, className }) {
     );
 }
 
+// ── In-app debug log ring (survives without DevTools on iPhone) ───────────
+var _dbgLog = [];
+var _dbgListeners = [];
+function dbg(level, msg) {
+    var ts = new Date().toISOString().slice(11,23); // HH:MM:SS.mmm
+    var line = '[' + ts + '] ' + (level === 'e' ? '❌' : level === 'w' ? '⚠️' : 'ℹ️') + ' ' + msg;
+    _dbgLog.push(line);
+    if (_dbgLog.length > 30) _dbgLog.shift();
+    // Mirror to real console
+    if (level === 'e') console.error(msg);
+    else if (level === 'w') console.warn(msg);
+    else console.log(msg);
+    _dbgListeners.forEach(function(fn){ try{fn();}catch(e){} });
+}
+function dbgLog(msg)  { dbg('i', msg); }
+function dbgWarn(msg) { dbg('w', msg); }
+function dbgErr(msg)  { dbg('e', msg); }
+
+function DebugOverlay() {
+    var [open, setOpen]   = React.useState(false);
+    var [logs, setLogs]   = React.useState([]);
+    var [taps, setTaps]   = React.useState(0);
+    var tapTimer = React.useRef(null);
+
+    React.useEffect(function() {
+        // Register as a listener so new log lines re-render the overlay
+        var refresh = function() { setLogs(_dbgLog.slice()); };
+        _dbgListeners.push(refresh);
+        return function() { _dbgListeners = _dbgListeners.filter(function(f){ return f !== refresh; }); };
+    }, []);
+
+    // Triple-tap the version badge to open overlay
+    function onTap() {
+        var n = taps + 1;
+        setTaps(n);
+        clearTimeout(tapTimer.current);
+        if (n >= 3) { setOpen(true); setTaps(0); setLogs(_dbgLog.slice()); }
+        else { tapTimer.current = setTimeout(function(){ setTaps(0); }, 800); }
+    }
+
+    return React.createElement(React.Fragment, null,
+        // Small version badge always visible (tap 3× to open debug)
+        React.createElement('div', {
+            onClick: onTap,
+            style: {
+                position:'fixed', bottom: 68, right: 8, zIndex: 9000,
+                background:'rgba(0,0,0,.55)', color:'#fff', borderRadius:6,
+                fontSize: 9, padding:'2px 6px', fontFamily:'Inter,monospace',
+                cursor:'pointer', userSelect:'none', letterSpacing:'.04em',
+                WebkitTapHighlightColor:'transparent'
+            }
+        }, APP_VERSION),
+
+        open && React.createElement('div', {
+            style: {
+                position:'fixed', inset:0, zIndex:10000,
+                background:'rgba(0,0,0,.88)', display:'flex',
+                flexDirection:'column', padding:16, gap:8
+            }
+        },
+            React.createElement('div', {
+                style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:4 }
+            },
+                React.createElement('span', { style:{color:'#78C043',fontWeight:700,fontFamily:'monospace',fontSize:13} }, '🛠 Debug Log'),
+                React.createElement('div', { style:{display:'flex',gap:8} },
+                    React.createElement('button', {
+                        onClick: function(){ _dbgLog.length=0; setLogs([]); },
+                        style:{background:'#333',border:'none',color:'#aaa',borderRadius:6,padding:'4px 10px',fontSize:11,cursor:'pointer'}
+                    }, 'Clear'),
+                    React.createElement('button', {
+                        onClick: function(){ setOpen(false); },
+                        style:{background:'#333',border:'none',color:'#fff',borderRadius:6,padding:'4px 10px',fontSize:11,cursor:'pointer'}
+                    }, '✕ Close')
+                )
+            ),
+            React.createElement('div', {
+                style:{
+                    flex:1, overflowY:'auto', fontFamily:'monospace', fontSize:10,
+                    color:'#e2e8f0', lineHeight:1.7, background:'#0f172a',
+                    borderRadius:8, padding:'8px 10px',
+                    WebkitOverflowScrolling:'touch'
+                }
+            },
+                logs.length === 0
+                    ? React.createElement('div', {style:{color:'#64748b',textAlign:'center',marginTop:20}}, 'No logs yet')
+                    : logs.slice().reverse().map(function(line, i) {
+                        var color = line.includes('❌') ? '#f87171' : line.includes('⚠️') ? '#fbbf24' : '#a7f3d0';
+                        return React.createElement('div', {key:i, style:{color:color, marginBottom:2, wordBreak:'break-all'}}, line);
+                    })
+            ),
+            // Quick-fire manual fetch button inside overlay
+            React.createElement('button', {
+                onClick: function(){
+                    dbgLog('Manual fetch triggered from debug overlay');
+                    if(window._glForceRefresh) window._glForceRefresh();
+                },
+                style:{background:'#78C043',border:'none',color:'#fff',borderRadius:8,padding:'10px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Poppins'}
+            }, '↺ Force Fetch Now')
+        )
+    );
+}
+
 function App() {
     var _a, _b;
     const [activeLab, setActiveLab] = useState(null); // always start at landing page
@@ -4694,6 +4797,15 @@ useEffect(() => {
             }
             jbRead()
                 .then(function(remote) {
+                    // ── Version check: if server carries a newer build, force reload ────
+                    // This kills stale PWA/bfcache. Server version only matters if it's
+                    // a DIFFERENT string (could be older or newer build on server).
+                    if (remote && remote._appVersion && remote._appVersion !== APP_VERSION) {
+                        console.warn('[Version] App mismatch: local=' + APP_VERSION + ' server=' + remote._appVersion + ' — reloading to get fresh code...');
+                        // Small delay so the log is visible in DevTools before reload
+                        setTimeout(function() { window.location.reload(true); }, 800);
+                        return; // don't apply stale state
+                    }
                     if (!remote || !remote.greenhouses || !remote.users || remote.users.length === 0) {
                         // Bin is empty or has no users — seed it
                         var seeded = seedIfEmpty({ greenhouses:[], tables:[], plants:[],
@@ -4732,9 +4844,17 @@ useEffect(() => {
                         })();
                         // NEVER apply remote data if writes are queued — ghost deletion prevention
                         var hasPendingWrites = _syncQueue.length > 0 || writeTimerRef.current !== null;
+                        dbgLog('[State] msSinceWrite=' + msSinceWrite + ' hasPending=' + hasPendingWrites + ' serverNewer=' + serverIsNewer + ' force=' + forceWriteRef.current);
                         // Apply remote if: no pending writes AND (no recent local write OR server is explicitly newer)
                         if (!forceWriteRef.current && !hasPendingWrites && (msSinceWrite > 5000 || serverIsNewer)) {
+                            dbgLog('[State] APPLYING remote data — tables:' + (remote.tables||[]).length + ' notes:' + (remote.notes||[]).length);
                             remoteUpdateRef.current = true;
+                            // If server is explicitly newer, update IDB cache so next launch starts fresh
+                            if (serverIsNewer && activeLab) {
+                                idbSave(activeLab.id, remote).catch(function(){});
+                                try { saveLabData(activeLab.id, remote); } catch(e){}
+                                dbgLog('[Cache] IDB + localStorage updated with fresh server data');
+                            }
                             // LOCAL-FIRST MERGE: preserve local-only objects not yet on server
                             setData(function(localData) {
                                 var merged = mergeRemoteData(remote, localData);
@@ -4752,6 +4872,9 @@ useEffect(() => {
                                 } catch(e) {}
                                 return null;
                             });
+                        }
+                        if (forceWriteRef.current || hasPendingWrites || (msSinceWrite <= 5000 && !serverIsNewer)) {
+                            dbgWarn('[State] SKIPPED applying remote — reason: forceWrite=' + forceWriteRef.current + ' pendingWrites=' + hasPendingWrites + ' msSinceWrite=' + msSinceWrite);
                         }
                         // Only show synced if we are not mid-write
                         // (a pending/saving write status takes precedence over a read ACK)
@@ -5430,6 +5553,7 @@ useEffect(() => {
         return React.createElement(LoginScreen, { users: data.users, onLogin: u => { setUser(u); if (!data.users.find(x => x.id === u.id))
                 setData(d => (Object.assign(Object.assign({}, d), { users: [...d.users, u] }))); try { localStorage.setItem('gl_last_user', u.id); } catch(e) {} }, labName: activeLab.name });
     return (React.createElement(React.Fragment, null,
+        React.createElement(DebugOverlay, null),
         swarn && React.createElement("div", { className: "swarn" },
             React.createElement("span", { style: { fontSize: 16 } }, "\u26A0\uFE0F"),
             React.createElement("div", { style: { fontSize: 12, fontWeight: 600, color: '#fff', flex: 1 } }, aGh === null || aGh === void 0 ? void 0 :
@@ -5902,6 +6026,10 @@ useEffect(() => {
                             React.createElement("strong", null,
                                 Math.round(zoom * 100),
                                 "%")),
+                        data._lww_ts && React.createElement("div", { className: "si", title: "Server last_modified timestamp — changes when server data updates", style:{fontSize:9,color:'var(--i5)',fontFamily:'Inter'} },
+                            "Updated: ",
+                            React.createElement("strong", {style:{fontFamily:'monospace',fontSize:9}},
+                                new Date(data._lww_ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}))),
                         ((_a = data.plants.find(p => p.id === actPot)) === null || _a === void 0 ? void 0 : _a.genotype) && React.createElement("div", { className: "si" },
                             "Selected: ",
                             React.createElement("strong", null, data.plants.find(p => p.id === actPot).genotype)),
