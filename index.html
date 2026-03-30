@@ -464,6 +464,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .sync-chip{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:var(--r);font-size:10px;font-weight:600;cursor:default;transition:all .3s;flex-shrink:0;border:1.5px solid transparent}
 .sync-chip.saving{background:#fffbeb;border-color:#fcd34d;color:#92400e}
 .sync-chip.pending{background:#eff6ff;border-color:#93c5fd;color:#1d4ed8}
+.sync-chip.loading{background:#f9fafb;border-color:#e5e7eb;color:#6b7280}
 .sync-chip.saved{background:#edf7e3;border-color:#c3e6a8;color:#2d6a1f}
 .sync-chip.error{background:#fef2f2;border-color:#fca5a5;color:#991b1b;cursor:pointer}
 .sync-chip.nosync{background:var(--cr2);border-color:var(--bo);color:var(--i4)}
@@ -471,6 +472,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .sync-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;transition:background .3s}
 .sync-dot.saving{background:#f59e0b;animation:pulse-dot 1s ease-in-out infinite}
 .sync-dot.pending{background:#3b82f6;animation:pulse-dot .8s ease-in-out infinite}
+.sync-dot.loading{background:#9ca3af;animation:pulse-dot 1.2s ease-in-out infinite}
 .sync-dot.saved,.sync-dot.synced{background:#78C043}
 .sync-dot.error{background:#ef4444;animation:pulse-dot .6s ease-in-out infinite}
 .sync-dot.nosync{background:var(--i5)}
@@ -1182,7 +1184,7 @@ function drainQueue() {
     if (_syncRunning || _syncQueue.length === 0) return;
     _syncRunning = true;
     var entry = _syncQueue.shift();
-    var BACKOFF = [0, 3000, 8000, 20000, 60000];
+    var BACKOFF = [0, 3000, 8000, 20000, 60000, 120000, 300000, 600000];
     var delay   = BACKOFF[Math.min(entry.attempts, BACKOFF.length - 1)];
     function attempt() {
         try { jbWrite(entry.data)
@@ -1196,7 +1198,10 @@ function drainQueue() {
             .catch(function(err) {
                 entry.attempts++;
                 console.warn('[Sync] write failed (attempt ' + entry.attempts + '):', err.message);
-                if (entry.attempts >= 5) {
+                if (entry.attempts >= 8) {
+                    // Exhausted — persist to IDB for next session and report error
+                    console.error('[Sync] Giving up after ' + entry.attempts + ' attempts. Entry preserved in IDB for next launch.');
+                    idbPut('queue', 'pending_' + entry.labId, { data: entry.data, ts: entry.ts, attempts: entry.attempts });
                     _syncRunning = false;
                     if (entry.onFail) entry.onFail(err);
                     drainQueue();
@@ -1217,10 +1222,24 @@ function drainQueue() {
     }
 }
 // On startup: reload any pending queue entry from IDB and retry
+// On startup: if a pending write survived a crash/close, log it so App can see it
+var _pendingOnLaunch = false;
 idbOpen().then(function(db) {
     if (!db) return;
-    // We don't re-queue on startup automatically — the app will rewrite on next data change
-    // This is intentional: we don't want to overwrite with stale data
+    return new Promise(function(res) {
+        var tx = db.transaction('queue', 'readonly');
+        var req = tx.objectStore('queue').getAllKeys();
+        req.onsuccess = function() {
+            var keys = req.result || [];
+            var hasPending = keys.some(function(k){ return String(k).indexOf('pending_') === 0; });
+            if (hasPending) {
+                _pendingOnLaunch = true;
+                console.warn('[Sync] Unsynced data detected from previous session — will retry on next write.');
+            }
+            res();
+        };
+        req.onerror = res;
+    });
 });
 
 // Keep these as stubs so existing calls don't break — they now go through jbRead/jbWrite
@@ -1884,11 +1903,36 @@ function saveData(d, labId, onOK, onFail) {
         notes:  d.notes  ? d.notes.map(function(note){var n2=Object.assign({},note);delete n2.pdf;return n2;}) : d.notes
     });
     var sizeKB = Math.round(JSON.stringify(writeData).length / 1024);
+    var MAX_KB = 480; // JSONBin free tier safe limit
+
+    // If payload is too large, progressively strip largest blobs
+    if (sizeKB > MAX_KB) {
+        console.warn('[DB] Payload ' + sizeKB + 'KB exceeds limit — stripping photos from plants');
+        writeData = Object.assign({}, writeData, {
+            plants: (writeData.plants||[]).map(function(p){ var p2=Object.assign({},p); delete p2.image; return p2; }),
+        });
+        sizeKB = Math.round(JSON.stringify(writeData).length / 1024);
+    }
+    if (sizeKB > MAX_KB) {
+        console.warn('[DB] Still ' + sizeKB + 'KB — stripping stock images');
+        writeData = Object.assign({}, writeData, {
+            stock: (writeData.stock||[]).map(function(s){ var s2=Object.assign({},s); delete s2.image; return s2; }),
+        });
+        sizeKB = Math.round(JSON.stringify(writeData).length / 1024);
+    }
+    if (sizeKB > MAX_KB) {
+        console.warn('[DB] Still ' + sizeKB + 'KB — stripping user photos');
+        writeData = Object.assign({}, writeData, {
+            users: (writeData.users||[]).map(function(u){ var u2=Object.assign({},u); delete u2.photo; return u2; }),
+        });
+        sizeKB = Math.round(JSON.stringify(writeData).length / 1024);
+    }
+    console.log('[DB] Final payload: ' + sizeKB + 'KB');
 
     if (JB_BIN_ID && JB_BIN_ID.indexOf('PASTE') === -1) {
         // Step 4: enqueue to retry-aware background sync queue
         enqueueSave(labId, writeData, function() {
-            console.log('[DB] Saved to JSONBin (' + sizeKB + 'KB)');
+            console.log('[DB] Saved to JSONBin (' + sizeKB + 'KB) — server 200 OK ✓');
             if (onOK) onOK('remote');
         }, function(e) {
             console.error('[DB] JSONBin write failed (all retries exhausted):', e.message);
@@ -4161,14 +4205,15 @@ function SyncStatusChip({ status, lastSaved, lastBy, onClick, uploadProgress }) 
         }
         return function(){ if (warnRef.current) clearTimeout(warnRef.current); };
     }, [status]);
-    var effectiveStatus = (overdue && status !== 'synced' && status !== 'pending') ? 'error' : status;
+    var effectiveStatus = (overdue && status !== 'synced' && status !== 'pending' && status !== 'loading') ? 'error' : status;
     var label = uploadProgress != null && status === 'saving' ? ('Uploading ' + uploadProgress + '%')
-        : status === 'saving'  ? 'Saving…'
-        : status === 'pending' ? 'Sending…'
-        : status === 'saved'   ? 'Saved locally'
-        : status === 'synced'  ? '✓ Synced'
-        : status === 'error'   ? 'Sync failed — tap to retry'
-        : overdue              ? 'Unsynced > 30s — tap to retry'
+        : status === 'saving'   ? 'Saving…'
+        : status === 'pending'  ? 'Sending to server…'
+        : status === 'loading'  ? 'Loading…'
+        : status === 'saved'    ? 'Saved locally (not synced)'
+        : status === 'synced'   ? '✓ Synced'
+        : status === 'error'    ? 'Sync failed — tap to retry'
+        : overdue               ? 'Unsynced > 30s — tap to retry'
         : 'Not saved';
     var timeStr = lastSaved ? ago(lastSaved.toISOString()) : null;
     var byStr   = lastBy ? ' by ' + lastBy : '';
@@ -4461,7 +4506,7 @@ useEffect(() => {
                     remoteUpdateRef.current = true;
                     setData(loadImages(cached));
                     setGhId(function(cur){ return cur || cached.greenhouses[0].id; });
-                    setSyncStatus('saved');
+                    setSyncStatus('loading');
                 }
             }).catch(function(){});
         }
@@ -4520,6 +4565,21 @@ useEffect(() => {
                         var msSinceWrite = Date.now() - lastLocalWriteRef.current;
                         // Only apply remote data if we haven't written locally in the last 5s
                         dataLoadedRef.current = true; // always mark loaded, even if we skip the remote data
+                        // Startup diff: compare server vs local counts
+                        (function() {
+                            var local = loadLabData(activeLab.id);
+                            if (!local) return;
+                            var diffs = [];
+                            ['notes','orders','plants','messages'].forEach(function(k) {
+                                var rc = (remote[k]||[]).length, lc = (local[k]||[]).length;
+                                if (rc !== lc) diffs.push(k + ': server=' + rc + ' local=' + lc);
+                            });
+                            if (diffs.length) {
+                                console.warn('[Sync] Diff mismatch on load:', diffs.join(' | '));
+                            } else {
+                                console.log('[Sync] Diff OK — server and local counts match.');
+                            }
+                        })();
                         if (!forceWriteRef.current && msSinceWrite > 5000) {
                             remoteUpdateRef.current = true;
                             setData(loadImages(remote));
@@ -4536,7 +4596,11 @@ useEffect(() => {
                                 return null;
                             });
                         }
-                        setSyncStatus('synced');
+                        // Only show synced if we are not mid-write
+                        // (a pending/saving write status takes precedence over a read ACK)
+                        setSyncStatus(function(cur) {
+                            return (cur === 'pending' || cur === 'saving') ? cur : 'synced';
+                        });
                         setLastSaved(new Date());
                     }
                 })
@@ -4572,6 +4636,12 @@ useEffect(() => {
                 });
         }
         fetchLabData();
+        // If previous session had unsynced data, mark forceWrite so the next data-effect write fires
+        if (_pendingOnLaunch) {
+            _pendingOnLaunch = false;
+            forceWriteRef.current = true;
+            console.log('[Sync] Replaying pending write from previous session...');
+        }
         var pollId = setInterval(fetchLabData, 120000); // 120s — safe above 5s write guard
         return function() { clearInterval(pollId); };
     }, [activeLab ? activeLab.id : null]);
@@ -4599,6 +4669,20 @@ useEffect(() => {
             );
         }, 2000);
     }, [data]);
+
+    // Warn user before closing tab if a write is still in-flight
+    useEffect(() => {
+        var handler = function(e) {
+            if (syncStatus === 'pending' || syncStatus === 'saving' || _syncQueue.length > 0) {
+                e.preventDefault();
+                e.returnValue = 'Changes are still syncing to the server. If you close now, data may be lost.';
+                return e.returnValue;
+            }
+        };
+        window.addEventListener('beforeunload', handler);
+        return function() { window.removeEventListener('beforeunload', handler); };
+    }, [syncStatus]);
+
     const notify = useCallback(m => { setNotif(m); setTimeout(() => setNotif(null), 2500); }, []);
     const logActivity = useCallback((what) => {
         if (!user)
