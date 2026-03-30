@@ -245,15 +245,17 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .sobj.locked{cursor:default}
 
 /* Table blocks */
-.tbl{position:absolute;background:#fff;border:1.5px solid #e5e7eb;border-radius:14px;display:flex;flex-direction:column;overflow:visible;transition:border-color .15s;box-shadow:var(--sh)}
+.tbl{position:absolute;background:#fff;border:1.5px solid #e5e7eb;border-radius:14px;display:flex;flex-direction:column;overflow:visible;transition:border-color .15s;box-shadow:var(--sh);z-index:1;visibility:visible}
 .tbl:hover{border-color:#c3e6a8;box-shadow:0 4px 16px rgba(120,192,67,.1)}
-.tbl.sel{border-color:#78C043;box-shadow:0 0 0 3px rgba(120,192,67,.25),var(--sh-card);background:#edf7e3}
-.tbl.tedit{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+.tbl.sel{border-color:#78C043;box-shadow:0 0 0 3px rgba(120,192,67,.25),var(--sh-card);background:#edf7e3;z-index:3}
+.tbl.tedit{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12);z-index:3}
 .tbl.sync-failed{border-color:#ef4444!important;box-shadow:0 0 0 3px rgba(239,68,68,.15),var(--sh)!important;background:#fff5f5!important}
 .tbl.sync-failed .thd{background:#fef2f2!important;border-bottom-color:#fca5a5!important}
 .tbl-sync-banner{position:absolute;bottom:100%;left:0;right:0;background:#ef4444;color:#fff;font-size:9px;font-weight:700;padding:3px 8px;border-radius:6px 6px 0 0;text-align:center;cursor:pointer;white-space:nowrap;z-index:10}
 .tbl-sync-banner:hover{background:#dc2626}
 .tbl.dragging{box-shadow:var(--sh2);opacity:.93;z-index:200;cursor:grabbing!important}
+.tbl.dbg-highlight{border:3px solid #ef4444!important;background:rgba(239,68,68,.08)!important;z-index:100!important}
+.tbl.dbg-highlight .thd{background:#fef2f2!important}
 .tbl.locked .thd{cursor:default}
 .thd{flex-shrink:0;background:#f9fafb;border-bottom:1px solid #e5e7eb;padding:6px 10px;display:flex;align-items:center;justify-content:space-between;cursor:grab;user-select:none;border-radius:12px 12px 0 0}
 .tbl.tedit .thd{background:#eff6ff;border-bottom-color:#bfdbfe}
@@ -1089,11 +1091,19 @@ function jbRead() {
     var url = 'https://api.jsonbin.io/v3/b/' + JB_BIN_ID + '/latest?t=' + Date.now();
     var ctrl = new AbortController();
     var tid = setTimeout(function(){ ctrl.abort(); }, 30000);
+    if (!jbRead._logged) { jbRead._logged = true; dbgLog('[Auth] X-Master-Key set, starts: ' + (JB_KEY ? JB_KEY.slice(0,8) + '...' : 'MISSING')); }
     dbgLog('[Fetch] jbRead START — ' + new Date().toLocaleTimeString());
     return fetch(url, { headers: { 'X-Master-Key': JB_KEY }, signal: ctrl.signal, cache: 'no-store' })
         .then(function(r) {
             clearTimeout(tid);
-            if (!r.ok) { console.error('[DB] jbRead HTTP error:', r.status); throw new Error(r.status); }
+            if (!r.ok) {
+                if (r.status === 401 || r.status === 403) {
+                    dbgErr('[Auth] JSONBin returned ' + r.status + ' — check X-Master-Key. Key starts with: ' + (JB_KEY ? JB_KEY.slice(0,8) + '...' : 'MISSING'));
+                } else {
+                    dbgErr('[Fetch] HTTP ' + r.status + ' from JSONBin');
+                }
+                throw new Error(r.status);
+            }
             return r.json();
         })
         .then(function(j) {
@@ -4582,7 +4592,17 @@ function DebugOverlay() {
     var [open, setOpen]   = React.useState(false);
     var [logs, setLogs]   = React.useState([]);
     var [taps, setTaps]   = React.useState(0);
+    var [highlight, setHighlight] = React.useState(false);
     var tapTimer = React.useRef(null);
+
+    // Toggle dbg-highlight class on all .tbl elements
+    React.useEffect(function() {
+        var tbls = document.querySelectorAll('.tbl');
+        tbls.forEach(function(el) {
+            if (highlight) el.classList.add('dbg-highlight');
+            else el.classList.remove('dbg-highlight');
+        });
+    }, [highlight]);
 
     React.useEffect(function() {
         // Register as a listener so new log lines re-render the overlay
@@ -4657,21 +4677,25 @@ function DebugOverlay() {
                         return React.createElement('div', {key:i, style:{color:color, marginBottom:2, wordBreak:'break-all'}}, line);
                     })
             ),
-            React.createElement('div', {style:{display:'flex',gap:8}},
+            React.createElement('div', {style:{display:'flex',gap:8,flexWrap:'wrap'}},
                 React.createElement('button', {
                     onClick: function(){
                         dbgLog('Manual fetch triggered from debug overlay');
                         if(window._glForceRefresh) window._glForceRefresh();
                     },
-                    style:{flex:1,background:'#78C043',border:'none',color:'#fff',borderRadius:8,padding:'10px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Poppins'}
-                }, '↺ Force Fetch Now'),
+                    style:{flex:1,background:'#78C043',border:'none',color:'#fff',borderRadius:8,padding:'10px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Poppins',minWidth:120}
+                }, '↺ Force Fetch'),
+                React.createElement('button', {
+                    onClick: function(){ setHighlight(function(h){ return !h; }); },
+                    style:{flex:1,background: highlight ? '#f59e0b' : '#1d4ed8',border:'none',color:'#fff',borderRadius:8,padding:'10px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Poppins',minWidth:120}
+                }, highlight ? '🔴 Hide Highlight' : '🔴 Highlight Tables'),
                 React.createElement('button', {
                     onClick: function(){
-                        if(window.confirm('⚠️ NUCLEAR SYNC\n\nThis will erase all local data, kill service workers, and force-reload the app from scratch.\n\nProceed?')) {
+                        if(window.confirm('⚠️ NUCLEAR SYNC\n\nThis will erase all local data, kill service workers, and reload.\n\nProceed?')) {
                             if(window._nuclearSync) window._nuclearSync();
                         }
                     },
-                    style:{flex:1,background:'#ef4444',border:'none',color:'#fff',borderRadius:8,padding:'10px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Poppins'}
+                    style:{flex:'0 0 100%',background:'#ef4444',border:'none',color:'#fff',borderRadius:8,padding:'10px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Poppins'}
                 }, '☢ Nuclear Sync')
             )
         )
@@ -4717,7 +4741,14 @@ window._nuclearSync = nuclearSync;
 
 function App() {
     var _a, _b;
-    const [activeLab, setActiveLab] = useState(null); // always start at landing page
+    const [activeLab, setActiveLab] = useState(function() {
+        // Restore last lab on reload — no password re-entry for existing sessions
+        try {
+            var lastId = localStorage.getItem('gl_last_lab');
+            if (lastId) { var labs = loadLabs(); return labs.find(function(l){ return l.id === lastId; }) || null; }
+        } catch(e) {}
+        return null;
+    });
     const [data, setData] = useState({ greenhouses:[], tables:[], plants:[], experiments:[], users:[], structs:[], stock:[], orders:[], schedules:[], messages:[], measures:[], notes:[], locked:true });
     const [user, setUser] = useState(null);
     const [tab, setTab] = useState('layout');
@@ -4919,17 +4950,21 @@ useEffect(() => {
                         window._glRemoteTblCount = (remote.tables||[]).length;
 
                         // NEVER apply remote data if writes are queued — ghost deletion prevention
-                        var hasPendingWrites = _syncQueue.length > 0 || writeTimerRef.current !== null;
-                        dbgLog('[State] mobile=' + IS_MOBILE + ' msSinceWrite=' + msSinceWrite + ' hasPending=' + hasPendingWrites + ' serverNewer=' + serverIsNewer + ' remoteTbls=' + (remote.tables||[]).length);
+                        // On mobile: only block if actual network writes are queued
+                        // On desktop: also block if write debounce timer is running
+                        var hasNetworkWrites = _syncQueue.length > 0;
+                        var hasPendingWrites = IS_MOBILE ? hasNetworkWrites : (hasNetworkWrites || writeTimerRef.current !== null);
+                        dbgLog('[State] mobile=' + IS_MOBILE + ' msSince=' + msSinceWrite + ' netQ=' + _syncQueue.length + ' timer=' + !!writeTimerRef.current + ' newer=' + serverIsNewer + ' tbls=' + (remote.tables||[]).length);
 
-                        // Mobile: server-authoritative — apply immediately unless writes pending
-                        // Desktop: apply if no recent local write OR server is explicitly newer
+                        // Mobile: always apply server data unless actively uploading
+                        // Desktop: apply if no recent local write OR server is newer
                         var shouldApply = !forceWriteRef.current && !hasPendingWrites &&
                                           (IS_MOBILE || msSinceWrite > 5000 || serverIsNewer);
 
                         if (shouldApply) {
                             dbgLog('[State] APPLYING — ' + (IS_MOBILE ? 'MOBILE(server-auth)' : 'DESKTOP(LWW)') + ' tables:' + (remote.tables||[]).length + ' notes:' + (remote.notes||[]).length);
                             remoteUpdateRef.current = true;
+                            setSyncCount(function(n){ return n + 1; }); // triggers ghr remount
                             // Always update cache with fresh server data
                             if (activeLab) {
                                 idbSave(activeLab.id, remote).catch(function(){});
@@ -5018,11 +5053,11 @@ useEffect(() => {
 
         function startPoll() {
             if (pollId) clearInterval(pollId);
-            var interval = (Date.now() - lastInteraction > 300000) ? 60000 : 30000;
+            var interval = IS_MOBILE ? 15000 : ((Date.now() - lastInteraction > 300000) ? 60000 : 30000);
             pollId = setInterval(function() {
                 if (document.visibilityState === 'hidden') return; // skip while backgrounded
                 // Re-evaluate interval each tick
-                var nextInterval = (Date.now() - lastInteraction > 300000) ? 60000 : 30000;
+                var nextInterval = IS_MOBILE ? 15000 : ((Date.now() - lastInteraction > 300000) ? 60000 : 30000);
                 if (nextInterval !== interval) { startPoll(); return; } // restart with new interval
                 fetchLabData();
             }, interval);
@@ -5107,6 +5142,7 @@ useEffect(() => {
     const writeTimerRef     = useRef(null);
     const lastLocalWriteRef = useRef(0);
     const fetchNowRef       = useRef(null); // set by the data-loading useEffect
+    const [syncCount, setSyncCount] = useState(0); // increments on each server data apply → forces ghr remount
 
     // Expose live table counts for debug overlay
     useEffect(function() {
@@ -5197,6 +5233,7 @@ useEffect(() => {
     }, [user]);
     /* Called when user selects a lab from LabSelectScreen */
     const selectLab = useCallback(lab => {
+        try { localStorage.setItem('gl_last_lab', lab.id); } catch(e) {}
         setActiveLab(lab);
         setData({ greenhouses:[], tables:[], plants:[], experiments:[],
                   users:[], structs:[], stock:[], genotypes:[], locked:true });
@@ -5411,6 +5448,18 @@ useEffect(() => {
         setTimeout(fitRoom, 60); }, [ghId]);
     useEffect(() => { if (tab === 'layout' && aGh)
         setTimeout(fitRoom, 40); }, [tab]);
+    // Re-fit when table count changes (e.g. after server sync adds a table)
+    const prevTblCountRef = useRef(0);
+    useEffect(() => {
+        var cur = aTbls.length;
+        if (cur !== prevTblCountRef.current && tab === 'layout' && aGh) {
+            dbgLog('[Render] aTbls count changed: ' + prevTblCountRef.current + ' → ' + cur + ' — calling fitRoom');
+            prevTblCountRef.current = cur;
+            setTimeout(fitRoom, 80);
+        } else {
+            prevTblCountRef.current = cur;
+        }
+    }, [aTbls.length, tab, aGh]);
     const updGh = (k, v) => setData(d => (Object.assign(Object.assign({}, d), { greenhouses: d.greenhouses.map(g => g.id === ghId ? Object.assign(Object.assign({}, g), { [k]: isNaN(+v) ? v : +v }) : g) })));
     const createGH = () => { if (!ghFm.name.trim())
         return; const g = { id: uid(), name: ghFm.name.trim(), width: +ghFm.width || 400, length: +ghFm.length || 300, notes: '', last_sprayed_at: null, spray_material: '', spray_category: '', spray_notes: '', created_by: (user === null || user === void 0 ? void 0 : user.id) || 'u', created_at: now() }; setData(d => (Object.assign(Object.assign({}, d), { greenhouses: [...d.greenhouses, g] }))); setGhId(g.id); setShowAGH(false); setGhFm({ name: '', width: 600, length: 400 }); notify(`"${g.name}" created`); logActivity(`Created greenhouse: ${g.name}`); };
@@ -5863,7 +5912,7 @@ useEffect(() => {
                             React.createElement("div", { className: "sb-user-role" }, user.position || user.role))),
                     React.createElement("button", {
                         title: "Return to lab selection",
-                        onClick: () => { setActiveLab(null); setUser(null); },
+                        onClick: () => { setActiveLab(null); setUser(null); try { localStorage.removeItem('gl_last_lab'); localStorage.removeItem('gl_last_user'); } catch(e){} },
                         style: {
                             width:'100%', marginTop:8, padding:'8px 12px',
                             background:'none', border:'1.5px solid #E5E7EB',
@@ -6088,7 +6137,7 @@ useEffect(() => {
                             setPopup(null);
                         } } },
                         aGh ? React.createElement("div", { ref: wrRef, className: "cvw" },
-                            React.createElement("div", { className: "ghr", style: { width: aGh.width * WS, height: aGh.length * WS }, onClick: e => { if (e.target === e.currentTarget) {
+                            React.createElement("div", { key: 'ghr-' + syncCount, className: "ghr", style: { width: aGh.width * WS, height: aGh.length * WS }, onClick: e => { if (e.target === e.currentTarget) {
                                     setSelTbl(null);
                                     setPopup(null);
                                 } } },
