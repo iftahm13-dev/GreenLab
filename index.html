@@ -463,16 +463,18 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 ═══════════════════════════════════ */
 .sync-chip{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:var(--r);font-size:10px;font-weight:600;cursor:default;transition:all .3s;flex-shrink:0;border:1.5px solid transparent}
 .sync-chip.saving{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.sync-chip.pending{background:#eff6ff;border-color:#93c5fd;color:#1d4ed8}
 .sync-chip.saved{background:#edf7e3;border-color:#c3e6a8;color:#2d6a1f}
 .sync-chip.error{background:#fef2f2;border-color:#fca5a5;color:#991b1b;cursor:pointer}
 .sync-chip.nosync{background:var(--cr2);border-color:var(--bo);color:var(--i4)}
 .sync-chip.synced{background:var(--ll);border-color:var(--ld);color:#166534}
-.sync-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.sync-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;transition:background .3s}
 .sync-dot.saving{background:#f59e0b;animation:pulse-dot 1s ease-in-out infinite}
+.sync-dot.pending{background:#3b82f6;animation:pulse-dot .8s ease-in-out infinite}
 .sync-dot.saved,.sync-dot.synced{background:#78C043}
 .sync-dot.error{background:#ef4444;animation:pulse-dot .6s ease-in-out infinite}
 .sync-dot.nosync{background:var(--i5)}
-@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
 
 /* ═══════════════════════════════════
    FIREBASE PANEL
@@ -1109,6 +1111,107 @@ function jbCreate(data) {
     }).then(function(r) { if (!r.ok) return r.text().then(function(t){throw new Error(r.status+':'+t);}); return r.json(); });
 }
 
+// ── IndexedDB persistence layer ──────────────────────────────────────────
+// Falls back gracefully if IDB is unavailable (private browsing on some iOS)
+var _idb = null;
+function idbOpen() {
+    if (_idb) return Promise.resolve(_idb);
+    return new Promise(function(resolve, reject) {
+        if (typeof indexedDB === 'undefined') { resolve(null); return; }
+        var req = indexedDB.open('greenlab_v1', 1);
+        req.onupgradeneeded = function(e) {
+            var db = e.target.result;
+            if (!db.objectStoreNames.contains('kv'))  db.createObjectStore('kv');
+            if (!db.objectStoreNames.contains('queue')) db.createObjectStore('queue', { autoIncrement: true });
+        };
+        req.onsuccess  = function(e) { _idb = e.target.result; resolve(_idb); };
+        req.onerror    = function()  { resolve(null); }; // fail silently
+    });
+}
+function idbPut(store, key, value) {
+    return idbOpen().then(function(db) {
+        if (!db) return;
+        return new Promise(function(res) {
+            var tx = db.transaction(store, 'readwrite');
+            tx.objectStore(store).put(value, key);
+            tx.oncomplete = res; tx.onerror = res;
+        });
+    });
+}
+function idbGet(store, key) {
+    return idbOpen().then(function(db) {
+        if (!db) return null;
+        return new Promise(function(res) {
+            var tx = db.transaction(store, 'readonly');
+            var req = tx.objectStore(store).get(key);
+            req.onsuccess = function() { res(req.result || null); };
+            req.onerror   = function() { res(null); };
+        });
+    });
+}
+function idbSave(labId, data) {
+    var key = 'lab_' + labId;
+    return idbPut('kv', key, { data: data, ts: Date.now() });
+}
+function idbLoad(labId) {
+    return idbGet('kv', 'lab_' + labId).then(function(rec) { return rec ? rec.data : null; });
+}
+// Write-queue: each entry is { labId, data, ts, attempts }
+var _syncQueue = [];
+var _syncRunning = false;
+function enqueueSave(labId, data, onOK, onFail) {
+    // Replace any existing pending entry for this lab (latest wins)
+    _syncQueue = _syncQueue.filter(function(e){ return e.labId !== labId; });
+    _syncQueue.push({ labId: labId, data: data, onOK: onOK, onFail: onFail, attempts: 0, ts: Date.now() });
+    // Persist queue entry to IDB so it survives reload
+    idbPut('queue', 'pending_' + labId, { data: data, ts: Date.now() });
+    drainQueue();
+}
+var _drainTimer = null;
+function drainQueue() {
+    if (_syncRunning || _syncQueue.length === 0) return;
+    _syncRunning = true;
+    var entry = _syncQueue.shift();
+    var BACKOFF = [0, 3000, 8000, 20000, 60000];
+    var delay   = BACKOFF[Math.min(entry.attempts, BACKOFF.length - 1)];
+    function attempt() {
+        jbWrite(entry.data)
+            .then(function() {
+                // Success — clear pending IDB entry
+                idbPut('queue', 'pending_' + entry.labId, null);
+                _syncRunning = false;
+                if (entry.onOK) entry.onOK('remote');
+                drainQueue();
+            })
+            .catch(function(err) {
+                entry.attempts++;
+                console.warn('[Sync] write failed (attempt ' + entry.attempts + '):', err.message);
+                if (entry.attempts >= 5) {
+                    _syncRunning = false;
+                    if (entry.onFail) entry.onFail(err);
+                    drainQueue();
+                    return;
+                }
+                var wait = BACKOFF[Math.min(entry.attempts, BACKOFF.length - 1)];
+                // Put back at front of queue
+                _syncQueue.unshift(entry);
+                _syncRunning = false;
+                _drainTimer = setTimeout(drainQueue, wait);
+            });
+    }
+    if (delay > 0) {
+        setTimeout(attempt, delay);
+    } else {
+        attempt();
+    }
+}
+// On startup: reload any pending queue entry from IDB and retry
+idbOpen().then(function(db) {
+    if (!db) return;
+    // We don't re-queue on startup automatically — the app will rewrite on next data change
+    // This is intentional: we don't want to overwrite with stale data
+});
+
 // Keep these as stubs so existing calls don't break — they now go through jbRead/jbWrite
 var SB_URL = null; var SB_KEY = null;
 function sbFetch(){return Promise.reject(new Error('unused'));}
@@ -1742,34 +1845,45 @@ function loadImages(d) {
     } catch(e) { return d; }
 }
 function saveData(d, labId, onOK, onFail) {
-    // OFFLINE-FIRST: persist locally before any network call
-    saveImages(d);
+    // Step 1: stamp with LWW timestamp
+    var stamped = Object.assign({}, d, { _lww_ts: Date.now() });
+
+    // Step 2: persist to IndexedDB immediately (survives localStorage quota)
+    saveImages(stamped);
+    if (labId) {
+        idbSave(labId, stamped).catch(function(){});
+        try { saveLabData(labId, stamped); } catch(e2){}
+    } else {
+        try { localStorage.setItem('gl_v19', JSON.stringify(stamped)); } catch(e2){}
+    }
+    // Save note PDFs separately (large blobs)
     try {
         var notePdfs = {};
         (d.notes||[]).forEach(function(note){ if(note.pdf) notePdfs['np_'+note.id] = note.pdf; });
         if(Object.keys(notePdfs).length) localStorage.setItem('gl_note_pdfs', JSON.stringify(notePdfs));
     } catch(ep){}
-    if (labId) { try { saveLabData(labId, d); } catch(e2){} }
-    else       { try { localStorage.setItem('gl_v19', JSON.stringify(d)); } catch(e2){} }
+
     if (!labId) { if (onOK) onOK('local'); return Promise.resolve('local'); }
 
-    var writeData = Object.assign({}, d, {
-        plants: d.plants ? d.plants.map(function(p){var p2=Object.assign({},p);delete p2.image;return p2;}) : d.plants,
-        stock:  d.stock  ? d.stock.map( function(s){var s2=Object.assign({},s);delete s2.image;return s2;}) : d.stock,
+    // Step 3: strip binary blobs before network write
+    var writeData = Object.assign({}, stamped, {
+        plants: d.plants ? d.plants.map(function(p){var p2=Object.assign({},p);delete p2.image;delete p2.genotype_description;return p2;}) : d.plants,
+        stock:  d.stock  ? d.stock.map(function(s){var s2=Object.assign({},s);delete s2.image;return s2;}) : d.stock,
         orders: d.orders ? d.orders.map(function(o){var o2=Object.assign({},o);delete o2.item_image;delete o2.quotation_file;return o2;}) : d.orders,
-        notes:  d.notes  ? d.notes.map( function(note){var n2=Object.assign({},note);delete n2.pdf;return n2;}) : d.notes
+        notes:  d.notes  ? d.notes.map(function(note){var n2=Object.assign({},note);delete n2.pdf;return n2;}) : d.notes
     });
-    if (writeData.users) { writeData.users = writeData.users.map(function(u){ return u; }); }
     var sizeKB = Math.round(JSON.stringify(writeData).length / 1024);
 
     if (JB_BIN_ID && JB_BIN_ID.indexOf('PASTE') === -1) {
-        return jbWrite(writeData).then(function() {
+        // Step 4: enqueue to retry-aware background sync queue
+        enqueueSave(labId, writeData, function() {
             console.log('[DB] Saved to JSONBin (' + sizeKB + 'KB)');
             if (onOK) onOK('remote');
-        }).catch(function(e) {
+        }, function(e) {
             console.error('[DB] JSONBin write failed (all retries exhausted):', e.message);
             if (onFail) onFail(e);
         });
+        return Promise.resolve('queued');
     } else {
         if (onOK) onOK('local');
         return Promise.resolve('local');
@@ -3966,11 +4080,12 @@ function SyncStatusChip({ status, lastSaved, lastBy, onClick, uploadProgress }) 
         }
         return function(){ if (warnRef.current) clearTimeout(warnRef.current); };
     }, [status]);
-    var effectiveStatus = (overdue && status !== 'synced') ? 'error' : status;
+    var effectiveStatus = (overdue && status !== 'synced' && status !== 'pending') ? 'error' : status;
     var label = uploadProgress != null && status === 'saving' ? ('Uploading ' + uploadProgress + '%')
         : status === 'saving'  ? 'Saving…'
+        : status === 'pending' ? 'Sending…'
         : status === 'saved'   ? 'Saved locally'
-        : status === 'synced'  ? 'Synced'
+        : status === 'synced'  ? '✓ Synced'
         : status === 'error'   ? 'Sync failed — tap to retry'
         : overdue              ? 'Unsynced > 30s — tap to retry'
         : 'Not saved';
@@ -4263,6 +4378,19 @@ function App() {
     /* Firestore real-time listener — loop-proof with remoteUpdateRef */
 useEffect(() => {
         if (!activeLab) return;
+        // Pre-load from IDB for instant UI (before network)
+        if (activeLab && !dataLoadedRef.current) {
+            idbLoad(activeLab.id).then(function(cached) {
+                if (!cached || dataLoadedRef.current) return; // network already responded
+                if (cached.greenhouses && cached.greenhouses.length > 0) {
+                    remoteUpdateRef.current = true;
+                    setData(loadImages(cached));
+                    setGhId(function(cur){ return cur || cached.greenhouses[0].id; });
+                    setSyncStatus('saved');
+                }
+            }).catch(function(){});
+        }
+
         function fetchLabData() {
             if (!JB_KEY || JB_KEY.indexOf('PASTE') !== -1) {
                 // No key at all — use localStorage only
@@ -4314,8 +4442,10 @@ useEffect(() => {
                         setData(seeded);
                         if (seeded.greenhouses.length > 0) setGhId(seeded.greenhouses[0].id);
                     } else {
+                        var remoteLww = remote._lww_ts || 0;
                         var msSinceWrite = Date.now() - lastLocalWriteRef.current;
-                        if (!forceWriteRef.current && msSinceWrite > 5000) {
+                        // LWW: if our local write is more recent than the server record, skip remote
+                        if (!forceWriteRef.current && msSinceWrite > 5000 && remoteLww >= lastLocalWriteRef.current) {
                             remoteUpdateRef.current = true;
                             dataLoadedRef.current = true;
                             setData(loadImages(remote));
@@ -4380,16 +4510,20 @@ useEffect(() => {
         remoteUpdateRef.current = false;
         forceWriteRef.current = false;
         lastLocalWriteRef.current = Date.now();
-        setSyncStatus('saving');
+        setSyncStatus('pending');
         if (writeTimerRef.current) clearTimeout(writeTimerRef.current);
         var sd = data, sl = activeLab, su = user;
         writeTimerRef.current = setTimeout(function() {
             writeTimerRef.current = null;
             saveData(sd, sl ? sl.id : null,
-                function() { setSyncStatus('synced'); setLastSaved(new Date()); if (su) setLastBy(su.name); },
+                function(mode) {
+                    setSyncStatus(mode === 'remote' ? 'synced' : 'saved');
+                    setLastSaved(new Date());
+                    if (su) setLastBy(su.name);
+                },
                 function() { setSyncStatus('error'); }
             );
-        }, 2500);
+        }, 2000);
     }, [data]);
     const notify = useCallback(m => { setNotif(m); setTimeout(() => setNotif(null), 2500); }, []);
     const logActivity = useCallback((what) => {
