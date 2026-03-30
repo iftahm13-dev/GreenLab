@@ -246,6 +246,10 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .tbl:hover{border-color:#c3e6a8;box-shadow:0 4px 16px rgba(120,192,67,.1)}
 .tbl.sel{border-color:#78C043;box-shadow:0 0 0 3px rgba(120,192,67,.25),var(--sh-card);background:#edf7e3}
 .tbl.tedit{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+.tbl.sync-failed{border-color:#ef4444!important;box-shadow:0 0 0 3px rgba(239,68,68,.15),var(--sh)!important;background:#fff5f5!important}
+.tbl.sync-failed .thd{background:#fef2f2!important;border-bottom-color:#fca5a5!important}
+.tbl-sync-banner{position:absolute;bottom:100%;left:0;right:0;background:#ef4444;color:#fff;font-size:9px;font-weight:700;padding:3px 8px;border-radius:6px 6px 0 0;text-align:center;cursor:pointer;white-space:nowrap;z-index:10}
+.tbl-sync-banner:hover{background:#dc2626}
 .tbl.dragging{box-shadow:var(--sh2);opacity:.93;z-index:200;cursor:grabbing!important}
 .tbl.locked .thd{cursor:default}
 .thd{flex-shrink:0;background:#f9fafb;border-bottom:1px solid #e5e7eb;padding:6px 10px;display:flex;align-items:center;justify-content:space-between;cursor:grab;user-select:none;border-radius:12px 12px 0 0}
@@ -1202,6 +1206,8 @@ function drainQueue() {
                     // Exhausted — persist to IDB for next session and report error
                     console.error('[Sync] Giving up after ' + entry.attempts + ' attempts. Entry preserved in IDB for next launch.');
                     idbPut('queue', 'pending_' + entry.labId, { data: entry.data, ts: entry.ts, attempts: entry.attempts });
+                    // Signal App to mark affected objects as _syncFailed
+                    if (typeof window._onSyncFailed === 'function') window._onSyncFailed(entry.labId);
                     _syncRunning = false;
                     if (entry.onFail) entry.onFail(err);
                     drainQueue();
@@ -1293,7 +1299,7 @@ catch (_a) { } return { greenhouses: [], tables: [], plants: [], experiments: []
 function saveLabData(labId, d) { try {
     // Strip large images to prevent localStorage quota overflow
     var slim = Object.assign({}, d, {
-        plants: d.plants ? d.plants.map(function(p){var p2=Object.assign({},p);delete p2.image;delete p2.genotype_description;return p2;}) : d.plants,
+        plants: d.plants ? d.plants.map(function(p){var p2=Object.assign({},p);delete p2.image;delete p2.genotype_description;delete p2._localOnly;delete p2._syncFailed;return p2;}) : d.plants,
         stock:  d.stock  ? d.stock.map( function(s){
             var s2=Object.assign({},s);
             // Include image in JSONBin if small enough (compressed images are ~3-8KB)
@@ -1662,7 +1668,7 @@ function ExpOverlay({ tables, plants, exps, users }) {
     return null; // Experiment shown via initials badge on each pot + hover tooltip
 }
 /* Table block */
-function TableBlock({ table, plants, locked, isSel, activePotId, selMode, selPots, editTblId, onSel, onDrag, onPotClick, onPotSel, onDel, onToggleEdit, exps, users, onExpTip, colorByExp }) {
+function TableBlock({ table, plants, locked, isSel, activePotId, selMode, selPots, editTblId, onSel, onDrag, onPotClick, onPotSel, onDel, onToggleEdit, exps, users, onExpTip, colorByExp, syncFailed, onSyncRetry }) {
     const ref = useRef(), dr = useRef(null);
     const wx = table.x_position * WS, wy = table.y_position * WS, ww = table.width * WS, wh = table.length * WS;
     const GAP = 5, avW = ww - 10, avH = wh - HDR - 10;
@@ -1711,7 +1717,9 @@ function TableBlock({ table, plants, locked, isSel, activePotId, selMode, selPot
         window.addEventListener('touchmove', mv, { passive: false });
         window.addEventListener('touchend', up);
     }, [locked, startDrag, moveDrag, endDrag]);
-    return (React.createElement("div", { ref: ref, className: `tbl${isSel ? ' sel' : ''}${locked ? ' locked' : ''}${te ? ' tedit' : ''}`, style: { position: 'absolute', left: wx, top: wy, width: ww, height: wh }, onMouseDown: hmd, onTouchStart: htd },
+    return (React.createElement("div", { ref: ref, className: `tbl${isSel ? ' sel' : ''}${locked ? ' locked' : ''}${te ? ' tedit' : ''}${syncFailed ? ' sync-failed' : ''}`, style: { position: 'absolute', left: wx, top: wy, width: ww, height: wh }, onMouseDown: hmd, onTouchStart: htd },
+        syncFailed && React.createElement('div', { className: 'tbl-sync-banner', onClick: function(e){ e.stopPropagation(); if(onSyncRetry) onSyncRetry(); } }, '⚠ Sync Failed — Click to Retry'),
+        syncFailed && React.createElement('div', { className: 'tbl-sync-banner', onClick: function(e){ e.stopPropagation(); if(onSyncRetry) onSyncRetry(); } }, '⚠ Sync Failed — Click to Retry'),
         React.createElement("div", { className: "thd" },
             React.createElement("span", { className: "thnm" }, table.name),
             React.createElement("span", { className: "thinfo" },
@@ -1897,7 +1905,8 @@ function saveData(d, labId, onOK, onFail) {
 
     // Step 3: strip binary blobs before network write
     var writeData = Object.assign({}, stamped, {
-        plants: d.plants ? d.plants.map(function(p){var p2=Object.assign({},p);delete p2.image;delete p2.genotype_description;return p2;}) : d.plants,
+        tables: d.tables ? d.tables.map(function(t){var t2=Object.assign({},t);delete t2._localOnly;delete t2._syncFailed;return t2;}) : d.tables,
+        plants: d.plants ? d.plants.map(function(p){var p2=Object.assign({},p);delete p2.image;delete p2.genotype_description;delete p2._localOnly;delete p2._syncFailed;return p2;}) : d.plants,
         stock:  d.stock  ? d.stock.map(function(s){var s2=Object.assign({},s);delete s2.image;return s2;}) : d.stock,
         orders: d.orders ? d.orders.map(function(o){var o2=Object.assign({},o);delete o2.item_image;delete o2.quotation_file;return o2;}) : d.orders,
         notes:  d.notes  ? d.notes.map(function(note){var n2=Object.assign({},note);delete n2.pdf;return n2;}) : d.notes
@@ -4399,6 +4408,38 @@ function lookupGenotypeDesc(data, name) {
     var rec = (data.genotypes || []).find(function(g){ return g.name === name; });
     return rec ? (rec.description || '') : '';
 }
+// ── Local-First Merge ─────────────────────────────────────────────────────
+// Merges server state with local state, preserving local-only objects
+// (those not yet confirmed by the server) so polls never ghost-delete them.
+var MERGE_ARRAYS = ['tables','plants','notes','orders','messages','schedules','structs','genotypes','measures'];
+
+function mergeRemoteData(remote, localData) {
+    if (!localData) return remote;
+    var merged = Object.assign({}, remote);
+    MERGE_ARRAYS.forEach(function(key) {
+        var remoteArr = remote[key] || [];
+        var localArr  = localData[key] || [];
+        // Build a set of IDs the server knows about
+        var remoteIds = {};
+        remoteArr.forEach(function(item){ if(item && item.id) remoteIds[item.id] = true; });
+        // Keep local items that the server doesn't know about yet (_localOnly or just absent from server)
+        var localOnlyItems = localArr.filter(function(item) {
+            if (!item || !item.id) return false;
+            return !remoteIds[item.id]; // server doesn't have this ID → local-only, preserve it
+        });
+        if (localOnlyItems.length > 0) {
+            console.log('[Merge] Preserving ' + localOnlyItems.length + ' local-only ' + key + ': ' + localOnlyItems.map(function(x){return x.id;}).join(', '));
+        }
+        // Merged = all server items + local items the server doesn't know about
+        merged[key] = remoteArr.concat(localOnlyItems);
+    });
+    // Preserve local scalar fields that server may not have
+    if (localData._lww_ts && (!remote._lww_ts || localData._lww_ts > remote._lww_ts)) {
+        merged._lww_ts = localData._lww_ts;
+    }
+    return merged;
+}
+
 function App() {
     var _a, _b;
     const [activeLab, setActiveLab] = useState(null); // always start at landing page
@@ -4580,9 +4621,15 @@ useEffect(() => {
                                 console.log('[Sync] Diff OK — server and local counts match.');
                             }
                         })();
-                        if (!forceWriteRef.current && msSinceWrite > 5000) {
+                        // NEVER apply remote data if writes are queued — ghost deletion prevention
+                        var hasPendingWrites = _syncQueue.length > 0 || writeTimerRef.current !== null;
+                        if (!forceWriteRef.current && msSinceWrite > 5000 && !hasPendingWrites) {
                             remoteUpdateRef.current = true;
-                            setData(loadImages(remote));
+                            // LOCAL-FIRST MERGE: preserve local-only objects not yet on server
+                            setData(function(localData) {
+                                var merged = mergeRemoteData(remote, localData);
+                                return loadImages(merged);
+                            });
                             if (remote.greenhouses && remote.greenhouses.length > 0) {
                                 setGhId(function(cur) { return cur || remote.greenhouses[0].id; });
                             }
@@ -4647,6 +4694,28 @@ useEffect(() => {
     }, [activeLab ? activeLab.id : null]);
     const writeTimerRef     = useRef(null);
     const lastLocalWriteRef = useRef(0);
+
+    // Register global sync-failure callback so drainQueue can reach App state
+    useEffect(function() {
+        window._onSyncFailed = function(failedLabId) {
+            if (!activeLab || activeLab.id !== failedLabId) return;
+            // Mark all _localOnly objects as _syncFailed so UI can show the error
+            setData(function(d) {
+                var marked = Object.assign({}, d);
+                MERGE_ARRAYS.forEach(function(key) {
+                    if (!d[key]) return;
+                    var hadLocalOnly = d[key].some(function(item){ return item && item._localOnly; });
+                    if (!hadLocalOnly) return;
+                    marked[key] = d[key].map(function(item) {
+                        if (!item || !item._localOnly) return item;
+                        return Object.assign({}, item, { _localOnly: false, _syncFailed: true });
+                    });
+                });
+                return marked;
+            });
+        };
+        return function() { window._onSyncFailed = null; };
+    }, [activeLab]);
     useEffect(() => {
         if (!activeLab) return;
         if (!dataLoadedRef.current) return;
@@ -4664,6 +4733,24 @@ useEffect(() => {
                     setSyncStatus(mode === 'remote' ? 'synced' : 'saved');
                     setLastSaved(new Date());
                     if (su) setLastBy(su.name);
+                    // Server ACK: clear _localOnly and _syncFailed flags — data is now confirmed
+                    if (mode === 'remote') {
+                        setData(function(d) {
+                            var cleared = Object.assign({}, d);
+                            MERGE_ARRAYS.forEach(function(key) {
+                                if (!d[key]) return;
+                                cleared[key] = d[key].map(function(item) {
+                                    if (!item) return item;
+                                    if (!item._localOnly && !item._syncFailed) return item;
+                                    var c = Object.assign({}, item);
+                                    delete c._localOnly;
+                                    delete c._syncFailed;
+                                    return c;
+                                });
+                            });
+                            return cleared;
+                        });
+                    }
                 },
                 function() { setSyncStatus('error'); }
             );
@@ -4954,7 +5041,7 @@ useEffect(() => {
     const createTbl = () => { if (!tFm.name.trim() || !ghId)
         return; const rows = clamp(+tFm.rows || 3, 1, 20), cols = clamp(+tFm.cols || 6, 1, 20); const t = { id: uid(), greenhouse_id: ghId, name: tFm.name.trim(), width: +tFm.width || 230, length: +tFm.length || 125, x_position: 20, y_position: 20, rows, cols }; const ps = []; for (let r = 0; r < rows; r++)
         for (let c = 0; c < cols; c++)
-            ps.push({ id: uid(), table_id: t.id, greenhouse_id: ghId, row: r, col: c, genotype: '', treatment: '', planting_date: '', notes: '', status: 'empty', crop: 'Tomato', pot_style: 'conic', image: null, experiment_id: null, timeline: [], created_by: (user === null || user === void 0 ? void 0 : user.id) || 'u', updated_by: (user === null || user === void 0 ? void 0 : user.id) || 'u', updated_at: now() }); setData(d => (Object.assign(Object.assign({}, d), { tables: [...d.tables, t], plants: [...d.plants, ...ps] }))); setSelTbl(t.id); lastTblRef.current = { width: +tFm.width || 230, length: +tFm.length || 125, rows: rows, cols: cols }; setShowATbl(false); setTFm({ name: '', width: 230, length: 125, rows: 3, cols: 6 }); notify(`"${t.name}" - ${rows}x${cols} pots`); logActivity(`Added table: ${t.name} (${rows}x${cols})`); };
+            ps.push({ id: uid(), table_id: t.id, greenhouse_id: ghId, row: r, col: c, genotype: '', treatment: '', planting_date: '', notes: '', status: 'empty', crop: 'Tomato', pot_style: 'conic', image: null, experiment_id: null, timeline: [], created_by: (user === null || user === void 0 ? void 0 : user.id) || 'u', updated_by: (user === null || user === void 0 ? void 0 : user.id) || 'u', updated_at: now() }); var tWithWal = Object.assign({}, t, { _localOnly: true }); setData(d => (Object.assign(Object.assign({}, d), { tables: [...d.tables, tWithWal], plants: [...d.plants, ...ps] }))); setSelTbl(t.id); lastTblRef.current = { width: +tFm.width || 230, length: +tFm.length || 125, rows: rows, cols: cols }; setShowATbl(false); setTFm({ name: '', width: 230, length: 125, rows: 3, cols: 6 }); notify(`"${t.name}" - ${rows}x${cols} pots`); logActivity(`Added table: ${t.name} (${rows}x${cols})`); };
     const hDrag = (id, x, y, del = false) => {
         if (del) {
             const t = data.tables.find(x => x.id === id);
@@ -5584,7 +5671,7 @@ useEffect(() => {
                                 React.createElement("div", { className: "rlabel" }, aGh.name),
                                 aStructs.map(s => React.createElement(StructObj, { key: s.id, obj: s, locked: locked, onDrag: hStrDrag, onDel: delStruct, onSwitch: hStrSwitch })),
                                 React.createElement(ExpOverlay, { tables: aTbls, plants: aPlants, exps: data.experiments, users: data.users }),
-                                aTbls.map(t => React.createElement(TableBlock, { key: t.id, table: t, plants: aPlants.filter(p => p.table_id === t.id), locked: locked, isSel: selTbl === t.id || selTbls.has(t.id), activePotId: actPot, selMode: selMode, selPots: selPots, editTblId: editTbl, tblSelMode: tblSelMode, onSel: (id, multi) => { if (multi || tblSelMode) { setSelTbls(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; }); setSelTbl(id); } else { setSelTbl(id); setSelTbls(new Set([id])); setPopup(null); } }, onDrag: hDrag, onPotClick: hPotClick, onPotSel: togSel, exps: data.experiments, users: data.users, onExpTip: setExpTip, colorByExp: colorByExp, onDel: delPot, onToggleEdit: id => setEditTbl(editTbl === id ? null : id) })))) : React.createElement("div", { className: "empty-st", style: { position: 'absolute', inset: 0, display: 'flex' } },
+                                aTbls.map(t => React.createElement(TableBlock, { key: t.id, table: t, plants: aPlants.filter(p => p.table_id === t.id), locked: locked, isSel: selTbl === t.id || selTbls.has(t.id), activePotId: actPot, selMode: selMode, selPots: selPots, editTblId: editTbl, tblSelMode: tblSelMode, syncFailed: !!t._syncFailed, onSyncRetry: function() { forceWriteRef.current = true; setData(function(d){ return Object.assign({}, d); }); }, onSel: (id, multi) => { if (multi || tblSelMode) { setSelTbls(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; }); setSelTbl(id); } else { setSelTbl(id); setSelTbls(new Set([id])); setPopup(null); } }, onDrag: hDrag, onPotClick: hPotClick, onPotSel: togSel, exps: data.experiments, users: data.users, onExpTip: setExpTip, colorByExp: colorByExp, onDel: delPot, onToggleEdit: id => setEditTbl(editTbl === id ? null : id) })))) : React.createElement("div", { className: "empty-st", style: { position: 'absolute', inset: 0, display: 'flex' } },
                             React.createElement("div", { style: { fontSize: 48, opacity: .3 } }, "\uD83C\uDF45"),
                             React.createElement("div", { style: { fontFamily: 'Inter', fontSize: 17, color: 'var(--i2)' } }, "No greenhouse selected"),
                             React.createElement("button", { className: "btn btnp", onClick: () => { setData(d => (Object.assign(Object.assign({}, d), { locked: false }))); setGhFm({ name: '', width: 600, length: 400 }); setShowAGH(true); } }, "Create greenhouse")),
