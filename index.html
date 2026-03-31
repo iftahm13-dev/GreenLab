@@ -1119,6 +1119,8 @@ function jbWrite(data) {
     var url = 'https://api.jsonbin.io/v3/b/' + JB_BIN_ID;
     var DELAYS = [5000, 15000, 60000];
     function attempt(triesLeft, delayIdx) {
+        var sizeKbAttempt = Math.round(JSON.stringify(data).length / 1024);
+        dbgLog('[Write] PUT attempt ' + (4-triesLeft) + '/3 — ' + sizeKbAttempt + 'KB, key:' + (JB_KEY ? JB_KEY.slice(0,8) : 'MISSING') + '...');
         var wc = new AbortController();
         var wt = setTimeout(function(){ wc.abort(); }, 45000);
         return fetch(url, {
@@ -1127,13 +1129,22 @@ function jbWrite(data) {
             body: JSON.stringify(data),
             signal: wc.signal
         }).then(function(r) { clearTimeout(wt);
-            if (!r.ok) return r.text().then(function(t){ throw new Error(r.status+':'+t); });
+            if (!r.ok) {
+                return r.text().then(function(t){
+                    var msg = r.status + ':' + t.slice(0,120);
+                    if (r.status === 429) { dbgErr('[Write] RATE LIMITED (429) — too many requests. Slow down poll.'); }
+                    else if (r.status === 401 || r.status === 403) { dbgErr('[Write] AUTH FAILED (' + r.status + ') — X-Master-Key rejected'); }
+                    else { dbgErr('[Write] HTTP ' + msg); }
+                    throw new Error(msg);
+                });
+            }
+            dbgLog('[Write] ✓ 200 OK — server confirmed write');
             return r.json();
         }).catch(function(err) {
             clearTimeout(wt);
             if (triesLeft <= 1) throw err;
             var delay = DELAYS[delayIdx] || 60000;
-            console.warn('[DB] jbWrite failed (' + err.message + '), retrying in ' + Math.round(delay/1000) + 's');
+            dbgWarn('[Write] Failed (' + err.message.slice(0,60) + ') — retry in ' + Math.round(delay/1000) + 's');
             return new Promise(function(res){ setTimeout(res, delay); })
                 .then(function(){ return attempt(triesLeft - 1, delayIdx + 1); });
         });
@@ -1223,10 +1234,10 @@ function drainQueue() {
             })
             .catch(function(err) {
                 entry.attempts++;
-                console.warn('[Sync] write failed (attempt ' + entry.attempts + '):', err.message);
+                dbgWarn('[Sync] Attempt ' + entry.attempts + ' failed: ' + err.message.slice(0,60));
                 if (entry.attempts >= 8) {
                     // Exhausted — persist to IDB for next session and report error
-                    console.error('[Sync] Giving up after ' + entry.attempts + ' attempts. Entry preserved in IDB for next launch.');
+                    dbgErr('[Sync] Gave up after ' + entry.attempts + ' attempts. Preserved in IDB.');
                     idbPut('queue', 'pending_' + entry.labId, { data: entry.data, ts: entry.ts, attempts: entry.attempts });
                     // Signal App to mark affected objects as _syncFailed
                     if (typeof window._onSyncFailed === 'function') window._onSyncFailed(entry.labId);
@@ -1973,11 +1984,12 @@ function saveData(d, labId, onOK, onFail) {
     if (JB_BIN_ID && JB_BIN_ID.indexOf('PASTE') === -1) {
         // Step 4: enqueue to retry-aware background sync queue
         enqueueSave(labId, writeData, function() {
+            dbgLog('[Sync] ✅ SUCCESS — ' + sizeKB + 'KB written to server');
             console.log('[DB] Saved to JSONBin (' + sizeKB + 'KB) — server 200 OK ✓');
-            // Notify other tabs (same device) to fetch latest
             if (window._glBroadcast) window._glBroadcast({ type: 'wrote', ts: Date.now(), labId: labId });
             if (onOK) onOK('remote');
         }, function(e) {
+            dbgErr('[Sync] ❌ FAILED after all retries: ' + e.message.slice(0,80));
             console.error('[DB] JSONBin write failed (all retries exhausted):', e.message);
             if (onFail) onFail(e);
         });
@@ -4683,12 +4695,20 @@ function DebugOverlay() {
             ),
             React.createElement('div', {style:{display:'flex',gap:8,flexWrap:'wrap'}},
                 React.createElement('button', {
-                    onClick: function(){
-                        dbgLog('Manual fetch triggered from debug overlay');
-                        if(window._glForceRefresh) window._glForceRefresh();
-                    },
+                    onClick: function(){ dbgLog('Manual fetch triggered from debug overlay'); if(window._glForceRefresh) window._glForceRefresh(); },
                     style:{flex:1,background:'#78C043',border:'none',color:'#fff',borderRadius:8,padding:'10px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Poppins',minWidth:120}
                 }, '↺ Force Fetch'),
+                React.createElement('button', {
+                    onClick: function(){
+                        if (_syncQueue.length > 0) {
+                            dbgWarn('[ForcePush] Queue has ' + _syncQueue.length + ' item(s) already — draining...');
+                            drainQueue();
+                        } else {
+                            if(window._glForcePush) window._glForcePush();
+                        }
+                    },
+                    style:{flex:1,background:'#7c3aed',border:'none',color:'#fff',borderRadius:8,padding:'10px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Poppins',minWidth:120}
+                }, '⬆ Force Push'),
                 React.createElement('button', {
                     onClick: function(){ setHighlight(function(h){ return !h; }); },
                     style:{flex:1,background: highlight ? '#f59e0b' : '#1d4ed8',border:'none',color:'#fff',borderRadius:8,padding:'10px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Poppins',minWidth:120}
@@ -5037,6 +5057,19 @@ useEffect(() => {
             console.log('[Sync] Manual pull-to-refresh triggered');
             fetchLabData();
         };
+        // Force-push: immediately saves current data state to server, bypassing debounce
+        window._glForcePush = function() {
+            dbgLog('[ForcePush] Manual push triggered — flushing to JSONBin...');
+            if (writeTimerRef.current) { clearTimeout(writeTimerRef.current); writeTimerRef.current = null; }
+            forceWriteRef.current = true;
+            // Capture current closure values
+            var sd2 = data, sl2 = activeLab, su2 = user;
+            if (!sl2) { dbgErr('[ForcePush] No active lab — cannot push'); return; }
+            saveData(sd2, sl2.id,
+                function(mode) { dbgLog('[ForcePush] ✅ Done — mode:' + mode); setSyncStatus(mode === 'remote' ? 'synced' : 'saved'); },
+                function(e)    { dbgErr('[ForcePush] ❌ Failed: ' + e.message); setSyncStatus('error'); }
+            );
+        };
         fetchLabData();
         // If previous session had unsynced data, mark forceWrite so the next data-effect write fires
         if (_pendingOnLaunch) {
@@ -5053,7 +5086,10 @@ useEffect(() => {
         // shouldApply() inside fetchLabData still guards state updates —
         // dirty-state blocking happens there, not here. This way the poll
         // always fires even if the user is actively typing.
-        var POLL_INTERVAL = IS_MOBILE ? 10000 : 30000;
+        // JSONBin free tier: ~150 requests/day ÷ 86400s = 1 req/576s safe rate.
+        // We use 20s poll as a compromise — acceptable lag with reasonable request count.
+        // If 429 errors appear in debug overlay, increase this value.
+        var POLL_INTERVAL = IS_MOBILE ? 20000 : 30000;
         var pollId = setInterval(function() {
             if (document.visibilityState === 'hidden') return;
             dbgLog('[Poll] Heartbeat tick — ' + new Date().toLocaleTimeString());
@@ -5131,6 +5167,7 @@ useEffect(() => {
             if (bc) { try { bc.close(); } catch(e){} }
             window._glBroadcast = null;
             window._glForceRefresh = null;
+            window._glForcePush = null;
         };
     }, [activeLab ? activeLab.id : null]);
     const writeTimerRef     = useRef(null);
