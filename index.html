@@ -10,6 +10,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* ── Reset & base ── */
@@ -1070,21 +1071,94 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 <div id="root"></div>
 <script>
 /* ═══════════════════════════════════════════════
-   JSONBIN.IO BACKEND — pure fetch, no SDK
-   One bin per lab. Free tier, not Google.
-   API: https://api.jsonbin.io/v3/b/<BIN_ID>
-   Header: X-Master-Key: <YOUR_KEY>
+   SUPABASE BACKEND — real-time, no polling needed
+   Project: https://oifuoyyisezudweeqwcr.supabase.co
+   Table: lab_data  { lab_id text PK, data jsonb, updated_at timestamptz }
+
+   Run this SQL once in Supabase SQL editor:
+   ─────────────────────────────────────────────
+   create table if not exists lab_data (
+     lab_id text primary key,
+     data jsonb not null default '{}',
+     updated_at timestamptz default now()
+   );
+   alter table lab_data enable row level security;
+   create policy "anon all" on lab_data for all using (true) with check (true);
+   alter publication supabase_realtime add table lab_data;
+   ─────────────────────────────────────────────
 ════════════════════════════════════════════════ */
-var JB_KEY    = '$2a$10$VdByQrrh52qhtymuGH3N9uggACh.2hEbbh78qw0tH3.0pbn3QN71O';  // your JSONBin Master Key
-var JB_BIN_ID = '69c3ce37c3097a1dd55b1533';       // created automatically on first run
-var APP_VERSION = 'gl-2026-03-30-v1'; // bump this string when deploying a new build
+var SB_PROJECT = 'https://oifuoyyisezudweeqwcr.supabase.co';
+var SB_ANON    = 'sb_publishable_cR-6hxB8aws_Z65Sct0rIA_arsD_aBA';
+var APP_VERSION = 'gl-2026-03-31-v2'; // bump when deploying a new build
 // True on any touch-primary device (iPhone, iPad, Android)
 var IS_MOBILE = (function() {
     try {
         return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
-               (navigator.maxTouchPoints > 1 && /Mac/i.test(navigator.userAgent)); // iPad with desktop UA
+               (navigator.maxTouchPoints > 1 && /Mac/i.test(navigator.userAgent));
     } catch(e) { return false; }
 })();
+
+// Supabase client — created once, shared everywhere
+var _sbClient = null;
+function getSB() {
+    if (_sbClient) return _sbClient;
+    try {
+        _sbClient = window.supabase.createClient(SB_PROJECT, SB_ANON, {
+            realtime: { params: { eventsPerSecond: 10 } }
+        });
+        dbgLog('[SB] Client created — project: ' + SB_PROJECT.slice(8, 38));
+    } catch(e) { dbgErr('[SB] Client init failed: ' + e.message); }
+    return _sbClient;
+}
+
+// sbRead: fetch full lab record from Supabase
+function sbRead(labId) {
+    dbgLog('[Fetch] sbRead START — ' + new Date().toLocaleTimeString());
+    var sb = getSB();
+    if (!sb) return Promise.reject(new Error('Supabase client not ready'));
+    return sb.from('lab_data').select('data').eq('lab_id', labId).single()
+        .then(function(res) {
+            if (res.error) {
+                if (res.error.code === 'PGRST116') return null; // row not found — first run
+                dbgErr('[Fetch] sbRead error: ' + res.error.message);
+                throw new Error(res.error.message);
+            }
+            var rec = res.data ? res.data.data : null;
+            if (rec) {
+                dbgLog('[Fetch] RECEIVED — tables:' + (rec.tables||[]).length + ' notes:' + (rec.notes||[]).length + ' plants:' + (rec.plants||[]).length + ' ts:' + (rec._lww_ts ? new Date(rec._lww_ts).toLocaleTimeString() : 'none'));
+            }
+            return rec;
+        });
+}
+
+// sbWrite: upsert full lab record to Supabase
+function sbWrite(labId, data) {
+    var sizeKB = Math.round(JSON.stringify(data).length / 1024);
+    dbgLog('[Write] sbWrite — ' + sizeKB + 'KB for lab ' + labId);
+    var sb = getSB();
+    if (!sb) return Promise.reject(new Error('Supabase client not ready'));
+    return sb.from('lab_data')
+        .upsert({ lab_id: labId, data: data, updated_at: new Date().toISOString() }, { onConflict: 'lab_id' })
+        .then(function(res) {
+            if (res.error) {
+                var msg = res.error.message;
+                if (res.error.code === '42501' || msg.indexOf('policy') !== -1) {
+                    dbgErr('[Write] RLS POLICY blocked write — run SQL policies in Supabase dashboard');
+                } else {
+                    dbgErr('[Write] Supabase write error: ' + msg);
+                }
+                throw new Error(msg);
+            }
+            dbgLog('[Write] Supabase 200 OK — ' + sizeKB + 'KB confirmed');
+            return res;
+        });
+}
+
+// Backward-compat stubs — nothing calls these now
+var JB_KEY = null; var JB_BIN_ID = null;
+function jbRead(){ return sbRead('_legacy'); }
+function jbWrite(){ return Promise.resolve(); }
+function jbCreate(){ return Promise.resolve({ metadata: { id: 'supabase' } }); }
 
 function jbRead() {
     if (!JB_KEY || JB_KEY.indexOf('PASTE') !== -1) return Promise.reject(new Error('JSONBin not configured'));
@@ -1208,57 +1282,44 @@ function idbLoad(labId) {
 // Write-queue: each entry is { labId, data, ts, attempts }
 var _syncQueue = [];
 var _syncRunning = false;
+var _drainTimer = null;
 function enqueueSave(labId, data, onOK, onFail) {
-    // Replace any existing pending entry for this lab (latest wins)
+    // Supabase handles reconnection — no complex retry queue needed
     _syncQueue = _syncQueue.filter(function(e){ return e.labId !== labId; });
-    _syncQueue.push({ labId: labId, data: data, onOK: onOK, onFail: onFail, attempts: 0, ts: Date.now() });
-    // Persist queue entry to IDB so it survives reload
+    var entry = { labId: labId, data: data, onOK: onOK, onFail: onFail, attempts: 0, ts: Date.now() };
+    _syncQueue.push(entry);
+    idbSave(labId, data).catch(function(){});
     idbPut('queue', 'pending_' + labId, { data: data, ts: Date.now() });
     drainQueue();
 }
-var _drainTimer = null;
 function drainQueue() {
     if (_syncRunning || _syncQueue.length === 0) return;
     _syncRunning = true;
     var entry = _syncQueue.shift();
-    var BACKOFF = [0, 3000, 8000, 20000, 60000, 120000, 300000, 600000];
-    var delay   = BACKOFF[Math.min(entry.attempts, BACKOFF.length - 1)];
-    function attempt() {
-        try { jbWrite(entry.data)
-            .then(function() {
-                // Success — clear pending IDB entry
-                idbPut('queue', 'pending_' + entry.labId, null);
+    sbWrite(entry.labId, entry.data)
+        .then(function() {
+            idbPut('queue', 'pending_' + entry.labId, null);
+            _syncRunning = false;
+            if (entry.onOK) entry.onOK('remote');
+            drainQueue();
+        })
+        .catch(function(err) {
+            entry.attempts++;
+            dbgWarn('[Sync] Attempt ' + entry.attempts + ' failed: ' + err.message.slice(0, 60));
+            if (entry.attempts >= 5) {
+                dbgErr('[Sync] FAILED after ' + entry.attempts + ' attempts: ' + err.message.slice(0, 80));
+                idbPut('queue', 'pending_' + entry.labId, { data: entry.data, ts: entry.ts });
+                if (typeof window._onSyncFailed === 'function') window._onSyncFailed(entry.labId);
                 _syncRunning = false;
-                if (entry.onOK) entry.onOK('remote');
-                drainQueue();
-            })
-            .catch(function(err) {
-                entry.attempts++;
-                dbgWarn('[Sync] Attempt ' + entry.attempts + ' failed: ' + err.message.slice(0,60));
-                if (entry.attempts >= 8) {
-                    // Exhausted — persist to IDB for next session and report error
-                    dbgErr('[Sync] Gave up after ' + entry.attempts + ' attempts. Preserved in IDB.');
-                    idbPut('queue', 'pending_' + entry.labId, { data: entry.data, ts: entry.ts, attempts: entry.attempts });
-                    // Signal App to mark affected objects as _syncFailed
-                    if (typeof window._onSyncFailed === 'function') window._onSyncFailed(entry.labId);
-                    _syncRunning = false;
-                    if (entry.onFail) entry.onFail(err);
-                    drainQueue();
-                    return;
-                }
-                var wait = BACKOFF[Math.min(entry.attempts, BACKOFF.length - 1)];
-                // Put back at front of queue
-                _syncQueue.unshift(entry);
-                _syncRunning = false;
-                _drainTimer = setTimeout(drainQueue, wait);
-            });
-        } catch(syncErr) { _syncRunning = false; if (entry.onFail) entry.onFail(syncErr); drainQueue(); }
-    }
-    if (delay > 0) {
-        setTimeout(attempt, delay);
-    } else {
-        attempt();
-    }
+                if (entry.onFail) entry.onFail(err);
+                return;
+            }
+            var wait = [2000, 5000, 15000, 45000][Math.min(entry.attempts - 1, 3)];
+            dbgWarn('[Sync] Retry in ' + wait / 1000 + 's...');
+            _syncQueue.unshift(entry);
+            _syncRunning = false;
+            _drainTimer = setTimeout(drainQueue, wait);
+        });
 }
 // On startup: reload any pending queue entry from IDB and retry
 // On startup: if a pending write survived a crash/close, log it so App can see it
@@ -1297,8 +1358,8 @@ if ('serviceWorker' in navigator) {
         }
     }).catch(function(){});
 }
-console.log('[GreenLab] JSONBin mode. Bin ID:', JB_BIN_ID);
-console.log('[GreenLab] Real-time: polling every 30s (active) / 60s (idle). WebSockets/SSE require a different backend (e.g. Supabase Realtime, Firebase). Immediate fetch on foreground/focus/bfcache/broadcast.');
+console.log('[GreenLab] Supabase mode — project: oifuoyyisezudweeqwcr');
+console.log('[GreenLab] Real-time: Supabase Postgres changes subscription (instant sync, no polling).');
 
 const { useState, useEffect, useRef, useCallback, useMemo, useLayoutEffect } = React;
 const WS = 3, HDR = 26, MINP = 44, LBH = 16, MINZ = .15, MAXZ = 4;
@@ -1981,16 +2042,13 @@ function saveData(d, labId, onOK, onFail) {
     }
     console.log('[DB] Final payload: ' + sizeKB + 'KB');
 
-    if (JB_BIN_ID && JB_BIN_ID.indexOf('PASTE') === -1) {
-        // Step 4: enqueue to retry-aware background sync queue
+    if (labId) {
         enqueueSave(labId, writeData, function() {
-            dbgLog('[Sync] ✅ SUCCESS — ' + sizeKB + 'KB written to server');
-            console.log('[DB] Saved to JSONBin (' + sizeKB + 'KB) — server 200 OK ✓');
+            dbgLog('[Sync] SUCCESS — ' + sizeKB + 'KB written to Supabase');
             if (window._glBroadcast) window._glBroadcast({ type: 'wrote', ts: Date.now(), labId: labId });
             if (onOK) onOK('remote');
         }, function(e) {
-            dbgErr('[Sync] ❌ FAILED after all retries: ' + e.message.slice(0,80));
-            console.error('[DB] JSONBin write failed (all retries exhausted):', e.message);
+            dbgErr('[Sync] FAILED: ' + e.message.slice(0, 80));
             if (onFail) onFail(e);
         });
         return Promise.resolve('queued');
@@ -4883,46 +4941,7 @@ useEffect(() => {
         }
 
         function fetchLabData() {
-            if (!JB_KEY || JB_KEY.indexOf('PASTE') !== -1) {
-                // No key at all — use localStorage only
-                var local = loadLabData(activeLab.id);
-                dataLoadedRef.current = true; // mark loaded even if empty
-                if (local && local.greenhouses && local.greenhouses.length > 0) {
-                    remoteUpdateRef.current = true;
-                    setData(loadImages(local));
-                    setGhId(local.greenhouses[0].id);
-                }
-                setSyncStatus('saved');
-                return;
-            }
-            // If BIN_ID is placeholder, skip read and go straight to create
-            if (JB_BIN_ID && JB_BIN_ID.indexOf('PASTE') !== -1) {
-                var seeded = seedIfEmpty({ greenhouses:[], tables:[], plants:[],
-                    experiments:[], users:[], structs:[], stock:[], orders:[], genotypes:[], locked:true });
-                jbCreate(seeded).then(function(res) {
-                    if (res && res.metadata && res.metadata.id) {
-                        JB_BIN_ID = res.metadata.id;
-                        console.log('[DB] Created JSONBin. ID:', JB_BIN_ID, '— SAVE THIS in your index.html as JB_BIN_ID');
-                        alert('Bin created! ID: ' + JB_BIN_ID + '\n\nSend this to your developer to save permanently.');
-                    }
-                    remoteUpdateRef.current = true;
-                    dataLoadedRef.current = true;
-                    setData(seeded);
-                    if (seeded.greenhouses.length > 0) setGhId(seeded.greenhouses[0].id);
-                }).catch(function(e2) {
-                    console.error('[DB] jbCreate failed:', e2.message);
-                    // Fall back to localStorage
-                    var local = loadLabData(activeLab.id);
-                    if (local && local.greenhouses && local.greenhouses.length > 0) {
-                        remoteUpdateRef.current = true;
-                        dataLoadedRef.current = true;
-                        setData(loadImages(local));
-                        setGhId(local.greenhouses[0].id);
-                    }
-                });
-                return;
-            }
-            jbRead()
+            sbRead(activeLab.id)
                 .then(function(remote) {
                     // ── Version check: if server carries a newer build, force reload ────
                     // This kills stale PWA/bfcache. Server version only matters if it's
@@ -4934,9 +4953,9 @@ useEffect(() => {
                         return; // don't apply stale state
                     }
                     if (!remote || !remote.greenhouses || !remote.users || remote.users.length === 0) {
-                        // Bin is empty or has no users — seed it
+                        dbgLog('[Fetch] No data found — seeding new lab in Supabase...');
                         var seeded = seedIfEmpty({ greenhouses:[], tables:[], plants:[],
-                            experiments:[], users:[], structs:[], stock:[], orders:[], locked:true });
+                            experiments:[], users:[], structs:[], stock:[], orders:[], genotypes:[], locked:true });
                         saveData(seeded, activeLab.id);
                         remoteUpdateRef.current = true;
                         setData(seeded);
@@ -5022,33 +5041,13 @@ useEffect(() => {
                     }
                 })
                 .catch(function(err) {
-                    // Bin doesn't exist yet — create it with seeded data
-                    if (err.message && (err.message.indexOf('404') !== -1 || err.message.indexOf('Bin not found') !== -1 || err.message.indexOf('PASTE') !== -1)) {
-                        var seeded = seedIfEmpty({ greenhouses:[], tables:[], plants:[],
-                            experiments:[], users:[], structs:[], stock:[], orders:[], locked:true });
-                        jbCreate(seeded).then(function(res) {
-                            if (res && res.metadata && res.metadata.id) {
-                                JB_BIN_ID = res.metadata.id;
-                                console.log('[DB] Created JSONBin. ID:', JB_BIN_ID, '— SAVE THIS in your index.html as JB_BIN_ID');
-                                setNotif('Bin created! ID: ' + JB_BIN_ID + ' — see console');
-                            }
-                            remoteUpdateRef.current = true;
-                            dataLoadedRef.current = true;
-                            setData(seeded);
-                            if (seeded.greenhouses.length > 0) setGhId(seeded.greenhouses[0].id);
-                        }).catch(function(e2) {
-                            console.error('[DB] jbCreate failed:', e2.message);
-                            setSyncStatus('error');
-                        });
-                    } else {
-                        console.warn('[DB] fetchLabData failed:', err.message, '— localStorage fallback');
-                        setSyncStatus('error');
-                        var local = loadLabData(activeLab.id);
-                        if (local && local.greenhouses && local.greenhouses.length > 0) {
-                            remoteUpdateRef.current = true;
-                            setData(loadImages(local));
-                            setGhId(local.greenhouses[0].id);
-                        }
+                    dbgErr('[Fetch] fetchLabData failed: ' + err.message);
+                    setSyncStatus('error');
+                    var local = loadLabData(activeLab.id);
+                    if (local && local.greenhouses && local.greenhouses.length > 0) {
+                        remoteUpdateRef.current = true;
+                        setData(loadImages(local));
+                        setGhId(local.greenhouses[0].id);
                     }
                 });
         }
@@ -5059,7 +5058,7 @@ useEffect(() => {
         };
         // Force-push: immediately saves current data state to server, bypassing debounce
         window._glForcePush = function() {
-            dbgLog('[ForcePush] Manual push triggered — flushing to JSONBin...');
+            dbgLog('[ForcePush] Manual push triggered — flushing to Supabase...');
             if (writeTimerRef.current) { clearTimeout(writeTimerRef.current); writeTimerRef.current = null; }
             forceWriteRef.current = true;
             // Capture current closure values
@@ -5078,23 +5077,57 @@ useEffect(() => {
             console.log('[Sync] Replaying pending write from previous session...');
         }
 
-        // ── Adaptive polling ─────────────────────────────────────────
-        // Visible & active: every 30s. Idle (>5min no touch): 60s.
-        // Tab hidden: polling suspended. Immediately resumes on foreground.
-        // ── Heartbeat poll ────────────────────────────────────────────────
-        // Mobile: 10s. Desktop: 30s. Unconditional except tab hidden.
-        // shouldApply() inside fetchLabData still guards state updates —
-        // dirty-state blocking happens there, not here. This way the poll
-        // always fires even if the user is actively typing.
-        // JSONBin free tier: ~150 requests/day ÷ 86400s = 1 req/576s safe rate.
-        // We use 20s poll as a compromise — acceptable lag with reasonable request count.
-        // If 429 errors appear in debug overlay, increase this value.
-        var POLL_INTERVAL = IS_MOBILE ? 20000 : 30000;
-        var pollId = setInterval(function() {
-            if (document.visibilityState === 'hidden') return;
-            dbgLog('[Poll] Heartbeat tick — ' + new Date().toLocaleTimeString());
-            fetchLabData();
-        }, POLL_INTERVAL);
+        // ── Supabase Realtime subscription — no polling needed ─────────────
+        // Changes from any device arrive here within ~100ms via WebSocket.
+        var realtimeChannel = null;
+        var pollId = null; // fallback poll handle
+
+        function startRealtimeSub() {
+            var sb = getSB();
+            if (!sb) { startFallbackPoll(); return; }
+            try {
+                realtimeChannel = sb.channel('lab_' + activeLab.id)
+                    .on('postgres_changes', {
+                        event: '*',
+                        schema: 'public',
+                        table: 'lab_data',
+                        filter: 'lab_id=eq.' + activeLab.id
+                    }, function(payload) {
+                        dbgLog('[Realtime] Change received — event:' + payload.eventType + ' at ' + new Date().toLocaleTimeString());
+                        var hasPendingWrites = _syncQueue.length > 0 || writeTimerRef.current !== null;
+                        if (!hasPendingWrites && !forceWriteRef.current) {
+                            fetchLabData();
+                        } else {
+                            dbgLog('[Realtime] Skipped — dirty state (Q=' + _syncQueue.length + ')');
+                        }
+                    })
+                    .subscribe(function(status) {
+                        dbgLog('[Realtime] Status: ' + status);
+                        if (status === 'SUBSCRIBED') {
+                            dbgLog('[Realtime] Live — instant sync active');
+                            if (pollId) { clearInterval(pollId); pollId = null; }
+                        }
+                        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                            dbgWarn('[Realtime] Connection issue — starting 30s fallback poll');
+                            startFallbackPoll();
+                        }
+                    });
+            } catch(e) {
+                dbgErr('[Realtime] Setup failed: ' + e.message + ' — starting fallback poll');
+                startFallbackPoll();
+            }
+        }
+
+        function startFallbackPoll() {
+            if (pollId) return;
+            pollId = setInterval(function() {
+                if (document.visibilityState === 'hidden') return;
+                dbgLog('[Poll] Fallback tick — ' + new Date().toLocaleTimeString());
+                fetchLabData();
+            }, 30000);
+        }
+
+        startRealtimeSub();
 
         // ── Visibility change: force-fetch on foreground resume ──────
         // This is the primary fix for iPhone: when user switches back to the app
@@ -5160,10 +5193,10 @@ useEffect(() => {
 
         return function() {
             if (pollId) clearInterval(pollId);
+            if (realtimeChannel) { try { getSB().removeChannel(realtimeChannel); } catch(e){} }
             document.removeEventListener('visibilitychange', onVisibilityChange);
             window.removeEventListener('focus', onWindowFocus);
             window.removeEventListener('pageshow', onPageShow);
-
             if (bc) { try { bc.close(); } catch(e){} }
             window._glBroadcast = null;
             window._glForceRefresh = null;
