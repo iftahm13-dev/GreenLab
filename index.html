@@ -1244,6 +1244,16 @@ function idbGet(store, key) {
         });
     });
 }
+function idbDelete(store, key) {
+    return idbOpen().then(function(db) {
+        if (!db) return;
+        return new Promise(function(res) {
+            var tx = db.transaction(store, 'readwrite');
+            tx.objectStore(store).delete(key);
+            tx.oncomplete = res; tx.onerror = res;
+        });
+    });
+}
 function idbSave(labId, data) {
     var key = 'lab_' + labId;
     return idbPut('kv', key, { data: data, ts: Date.now() });
@@ -1256,12 +1266,16 @@ var _syncQueue = [];
 var _syncRunning = false;
 var _drainTimer = null;
 function enqueueSave(labId, data, onOK, onFail) {
-    // Supabase handles reconnection — no complex retry queue needed
+    // Stamp each entry with a unique serial so stale onOK callbacks are ignored
+    var serial = Date.now() + Math.random();
     _syncQueue = _syncQueue.filter(function(e){ return e.labId !== labId; });
-    var entry = { labId: labId, data: data, onOK: onOK, onFail: onFail, attempts: 0, ts: Date.now() };
+    var entry = { labId: labId, data: data, onOK: onOK, onFail: onFail, attempts: 0, ts: Date.now(), serial: serial };
     _syncQueue.push(entry);
     idbSave(labId, data).catch(function(){});
-    idbPut('queue', 'pending_' + labId, { data: data, ts: Date.now() });
+    idbPut('queue', 'pending_' + labId, { data: data, ts: Date.now(), serial: serial });
+    // Track the latest serial per lab so we can ignore stale callbacks
+    if (!enqueueSave._latest) enqueueSave._latest = {};
+    enqueueSave._latest[labId] = serial;
     drainQueue();
 }
 function drainQueue() {
@@ -1270,9 +1284,11 @@ function drainQueue() {
     var entry = _syncQueue.shift();
     sbWrite(entry.labId, entry.data)
         .then(function() {
-            idbPut('queue', 'pending_' + entry.labId, null);
+            idbDelete('queue', 'pending_' + entry.labId);
             _syncRunning = false;
-            if (entry.onOK) entry.onOK('remote');
+            // Only fire onOK if this write is still the latest for this lab
+            var isLatest = !enqueueSave._latest || enqueueSave._latest[entry.labId] === entry.serial;
+            if (entry.onOK && isLatest) entry.onOK('remote');
             drainQueue();
         })
         .catch(function(err) {
@@ -1293,22 +1309,35 @@ function drainQueue() {
             _drainTimer = setTimeout(drainQueue, wait);
         });
 }
-// On startup: reload any pending queue entry from IDB and retry
-// On startup: if a pending write survived a crash/close, log it so App can see it
+// On startup: check IDB queue for unsaved data from a previous crashed session
+// If found and newer than server, push it immediately without waiting for React
 var _pendingOnLaunch = false;
+var _pendingLabId    = null;
 idbOpen().then(function(db) {
     if (!db) return;
     return new Promise(function(res) {
         var tx = db.transaction('queue', 'readonly');
         var req = tx.objectStore('queue').getAllKeys();
         req.onsuccess = function() {
-            var keys = req.result || [];
-            var hasPending = keys.some(function(k){ return String(k).indexOf('pending_') === 0; });
-            if (hasPending) {
+            var keys = (req.result || []).filter(function(k){ return String(k).indexOf('pending_') === 0; });
+            if (keys.length === 0) { res(); return; }
+            // Read the first pending entry
+            var pendingKey = keys[0];
+            var labId = String(pendingKey).replace('pending_', '');
+            var req2 = db.transaction('queue','readonly').objectStore('queue').get(pendingKey);
+            req2.onsuccess = function() {
+                var entry = req2.result;
+                if (!entry || !entry.data) {
+                    // Null/empty entry — delete it (legacy bug)
+                    idbDelete('queue', pendingKey);
+                    res(); return;
+                }
                 _pendingOnLaunch = true;
-                console.warn('[Sync] Unsynced data detected from previous session — will retry on next write.');
-            }
-            res();
+                _pendingLabId = labId;
+                console.warn('[Sync] Unsaved data from previous session detected (lab:'+labId+' ts:'+new Date(entry.ts).toISOString()+') — will recover after server fetch.');
+                res();
+            };
+            req2.onerror = res;
         };
         req.onerror = res;
     });
@@ -4422,55 +4451,66 @@ function DashView({ greenhouses, tables, structs, plants, experiments }) {
    2. Replace loadData() with onSnapshot listener
    3. The syncStatus state machine below stays the same
 ════════════════════════════════════════════════ */
-function SyncStatusChip({ status, lastSaved, lastBy, onClick, uploadProgress, queueLen, rtLive }) {
-    var warnRef = React.useRef(null);
-    var [overdue, setOverdue] = React.useState(false);
-    React.useEffect(function() {
-        if (status === 'synced' || status === 'saved') {
-            setOverdue(false);
-            if (warnRef.current) { clearTimeout(warnRef.current); warnRef.current = null; }
-            return;
-        }
-        if (!warnRef.current) {
-            warnRef.current = setTimeout(function(){ setOverdue(true); }, 30000);
-        }
-        return function(){ if (warnRef.current) clearTimeout(warnRef.current); };
-    }, [status]);
-    var effectiveStatus = (overdue && status !== 'synced' && status !== 'pending' && status !== 'loading') ? 'error' : status;
-    var label = uploadProgress != null && status === 'saving' ? ('Uploading ' + uploadProgress + '%')
-        : status === 'saving'   ? 'Saving…'
-        : status === 'pending'  ? 'Sending to server…'
-        : status === 'loading'  ? 'Loading…'
-        : status === 'saved'    ? 'Saved locally (not synced)'
-        : status === 'synced'   ? '✓ Synced (Live)'
-        : status === 'poll'    ? '⚠ Synced (polling)'
-        : status === 'error'    ? 'Sync failed — tap to retry'
-        : overdue               ? 'Unsynced > 30s — tap to retry'
-        : 'Not saved';
-    var timeStr = lastSaved ? ago(lastSaved.toISOString()) : null;
-    var byStr   = lastBy ? ' by ' + lastBy : '';
-    var title   = timeStr ? ('Last saved ' + timeStr + byStr) : label;
-    return React.createElement('div', { className: 'sync-chip ' + effectiveStatus, title: title, onClick: onClick,
-        style: { cursor: onClick ? 'pointer' : 'default' } },
-        React.createElement('div', { className: 'sync-dot ' + effectiveStatus }),
-        uploadProgress != null && status === 'saving'
-            ? React.createElement('div', { style:{display:'flex',alignItems:'center',gap:5} },
-                React.createElement('span', null, label),
-                React.createElement('div', { style:{width:50,height:4,background:'#ddd',borderRadius:2,overflow:'hidden'} },
-                    React.createElement('div', { style:{width:uploadProgress+'%',height:'100%',background:'#1d4ed8',borderRadius:2,transition:'width .3s'} })
-                )
-              )
-            : React.createElement('span', null, label),
+function SyncStatusChip({ status, lastSaved, lastBy, onClick, uploadProgress, queueLen, rtLive, lastServerSync, onForceSave }) {
+    var [tick, setTick] = React.useState(0);
+    // Re-render every 10s so "X ago" stays fresh
+    React.useEffect(function(){
+        var t = setInterval(function(){ setTick(function(n){return n+1;}); }, 10000);
+        return function(){ clearInterval(t); };
+    }, []);
+
+    var dotColor = status === 'synced' ? '#22c55e'
+        : status === 'pending' || status === 'saving' ? '#3b82f6'
+        : status === 'error' ? '#ef4444'
+        : status === 'loading' ? '#94a3b8'
+        : '#f59e0b';
+
+    var statusText = status === 'pending' || status === 'saving' ? 'Saving…'
+        : status === 'loading' ? 'Loading…'
+        : status === 'error' ? '✕ Save failed'
+        : status === 'synced' ? '✓ Saved'
+        : status === 'poll' ? '⟳ Saved (offline ws)'
+        : '⚠ Saving…';
+
+    var serverTime = lastServerSync
+        ? lastServerSync.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'})
+        : null;
+
+    var wsIcon = rtLive ? '🟢' : '🟠';
+    var wsTitle = rtLive ? 'WebSocket live' : 'WebSocket offline — using poll';
+
+    return React.createElement('div', {
+        style:{ display:'flex', alignItems:'center', gap:5, padding:'3px 8px',
+                background: status === 'error' ? '#fef2f2' : status === 'synced' ? '#f0fdf4' : '#f8fafc',
+                border: '1px solid ' + (status === 'error' ? '#fca5a5' : status === 'synced' ? '#bbf7d0' : '#e2e8f0'),
+                borderRadius:8, fontSize:10, fontFamily:'Inter,sans-serif', flexShrink:0, userSelect:'none' }
+    },
+        // Status dot + text
+        React.createElement('div', { style:{width:7,height:7,borderRadius:'50%',background:dotColor,flexShrink:0,
+            boxShadow: (status==='pending'||status==='saving') ? '0 0 0 3px rgba(59,130,246,.2)' : 'none'} }),
+        React.createElement('span', { style:{fontWeight:600, color: status==='error'?'#dc2626':status==='synced'?'#15803d':'#475569'} }, statusText),
+
+        // Server confirmation time — the thing the user needs to trust
+        serverTime
+            ? React.createElement('span', { style:{color:'#475569', borderLeft:'1px solid #e2e8f0', paddingLeft:5, marginLeft:2} },
+                'Server: ', React.createElement('span', { style:{fontWeight:700, color:'#0f172a'} }, serverTime))
+            : React.createElement('span', { style:{color:'#94a3b8', borderLeft:'1px solid #e2e8f0', paddingLeft:5, marginLeft:2} }, 'not yet confirmed'),
+
+        // Queue badge
         queueLen > 0 && React.createElement('span', {
-            style:{ background:'#ef4444', color:'#fff', borderRadius:10, fontSize:8, fontWeight:700, padding:'1px 5px', marginLeft:2, letterSpacing:'.02em' }
-        }, queueLen + ' queued'),
-        React.createElement('span', {
-            title: rtLive ? 'Supabase WebSocket: LIVE' : 'Supabase WebSocket: offline (polling)',
-            style:{ width:5, height:5, borderRadius:'50%', flexShrink:0, marginLeft:1,
-                    background: rtLive ? '#22c55e' : '#f97316',
-                    boxShadow: rtLive ? '0 0 0 2px rgba(34,197,94,.25)' : '0 0 0 2px rgba(249,115,22,.25)' }
-        }),
-        timeStr && status !== 'saving' && React.createElement('span', { style:{opacity:.65} }, '· ', timeStr)
+            style:{ background:'#ef4444', color:'#fff', borderRadius:10, fontSize:8, fontWeight:700, padding:'1px 5px' }
+        }, queueLen + ' pending'),
+
+        // WS indicator
+        React.createElement('span', { title: wsTitle, style:{fontSize:8, marginLeft:1} }, wsIcon),
+
+        // Force-save button — always visible so user can trigger manually
+        React.createElement('button', {
+            onClick: function(e){ e.stopPropagation(); if(onForceSave) onForceSave(); },
+            title: 'Force save to server now',
+            style:{ background: '#1d4ed8', color:'#fff', border:'none', borderRadius:5,
+                    fontSize:9, fontWeight:700, padding:'2px 7px', cursor:'pointer', marginLeft:3, flexShrink:0 }
+        }, '⬆ Save now')
     );
 }
 const FB_CODE_SNIPPET = '// saveData(d): await db.collection("labs").doc("main").set(d,{merge:true})\n// loadData: db.collection("labs").doc("main").onSnapshot(snap=>{if(snap.exists)setData(snap.data());})';
@@ -5432,6 +5472,7 @@ function App() {
     const [syncStatus, setSyncStatus] = useState('saved'); // 'saving'|'saved'|'synced'|'error'|'poll'
     const [rtLive, setRtLive] = useState(false); // true = Supabase WS is SUBSCRIBED
     const [lastSaved, setLastSaved] = useState(null);
+    const [lastServerSync, setLastServerSync] = useState(null); // only set when Supabase 200 OK received
     const [lastBy, setLastBy] = useState('');
     const [activityLog, setActivityLog] = useState([]);
     const [showFbPanel, setShowFbPanel] = useState(false);
@@ -5538,10 +5579,15 @@ useEffect(() => {
                     // This kills stale PWA/bfcache. Server version only matters if it's
                     // a DIFFERENT string (could be older or newer build on server).
                     if (remote && remote._appVersion && remote._appVersion !== APP_VERSION) {
-                        console.warn('[Version] App mismatch: local=' + APP_VERSION + ' server=' + remote._appVersion + ' — reloading to get fresh code...');
-                        // Small delay so the log is visible in DevTools before reload
-                        setTimeout(function() { window.location.reload(true); }, 800);
-                        return; // don't apply stale state
+                        console.warn('[Version] App mismatch: local=' + APP_VERSION + ' server=' + remote._appVersion + ' — saving local work then reloading...');
+                        // Save local state to IDB before reload so pending writes survive
+                        var localSnapshot = loadLabData(activeLab.id);
+                        if (localSnapshot) {
+                            idbSave(activeLab.id, localSnapshot).catch(function(){});
+                            idbPut('queue', 'pending_' + activeLab.id, { data: localSnapshot, ts: Date.now() });
+                        }
+                        setTimeout(function() { window.location.reload(true); }, 1200);
+                        return;
                     }
                     if (!remote || !remote.greenhouses || !remote.users || remote.users.length === 0) {
                         dbgLog('[Fetch] No data found — seeding new lab in Supabase...');
@@ -5652,20 +5698,48 @@ useEffect(() => {
             dbgLog('[ForcePush] Manual push triggered — flushing to Supabase...');
             if (writeTimerRef.current) { clearTimeout(writeTimerRef.current); writeTimerRef.current = null; }
             forceWriteRef.current = true;
-            // Capture current closure values
-            var sd2 = data, sl2 = activeLab, su2 = user;
+            var sd2 = dataRef.current, sl2 = activeLab, su2 = user; // always use latest data
             if (!sl2) { dbgErr('[ForcePush] No active lab — cannot push'); return; }
             saveData(sd2, sl2.id,
-                function(mode) { dbgLog('[ForcePush] ✅ Done — mode:' + mode); setSyncStatus(mode === 'remote' ? 'synced' : 'saved'); },
+                function(mode) { dbgLog('[ForcePush] ✅ Done — mode:' + mode); setSyncStatus(mode === 'remote' ? 'synced' : 'saved'); if(mode==='remote'){setLastServerSync(new Date());} },
                 function(e)    { dbgErr('[ForcePush] ❌ Failed: ' + e.message); setSyncStatus('error'); }
             );
         };
         fetchLabData();
-        // If previous session had unsynced data, mark forceWrite so the next data-effect write fires
-        if (_pendingOnLaunch) {
+        // Recover any unsaved data from a previous crashed/closed session
+        if (_pendingOnLaunch && _pendingLabId === activeLab.id) {
             _pendingOnLaunch = false;
-            forceWriteRef.current = true;
-            console.log('[Sync] Replaying pending write from previous session...');
+            var recoveryLabId = _pendingLabId;
+            console.warn('[Sync] Starting recovery for lab:', recoveryLabId);
+            // Wait for fetchLabData to finish (give it 4s), then compare timestamps
+            setTimeout(function() {
+                idbGet('queue', 'pending_' + recoveryLabId).then(function(entry) {
+                    if (!entry || !entry.data) {
+                        console.log('[Sync] Recovery: no pending data found');
+                        return;
+                    }
+                    var pendingTs = entry.ts || 0;
+                    var serverTs  = (window._glLastRemote && window._glLastRemote._lww_ts) || 0;
+                    console.warn('[Sync] Recovery compare — pending:' + new Date(pendingTs).toISOString() + ' server:' + new Date(serverTs).toISOString());
+                    if (pendingTs > serverTs) {
+                        // Pending data is NEWER than what the server has — push it now
+                        console.warn('[Sync] RECOVERING — pending data is newer, pushing to Supabase...');
+                        dbgWarn('[Recovery] Pushing unsaved session data to server...');
+                        enqueueSave(recoveryLabId, entry.data,
+                            function() {
+                                console.warn('[Sync] Recovery SUCCESS — lost data restored to server!');
+                                dbgLog('[Recovery] ✅ Previous session data restored successfully');
+                                // Reload so UI reflects the recovered data
+                                setTimeout(function(){ window.location.reload(); }, 500);
+                            },
+                            function(e) { console.error('[Sync] Recovery FAILED:', e.message); }
+                        );
+                    } else {
+                        console.log('[Sync] Recovery: server is up to date, clearing stale queue entry');
+                        idbDelete('queue', 'pending_' + recoveryLabId);
+                    }
+                });
+            }, 4000);
         }
 
         // ── Supabase Realtime subscription — no polling needed ─────────────
@@ -5685,8 +5759,13 @@ useEffect(() => {
                 return;
             }
             if (remote._appVersion && remote._appVersion !== APP_VERSION) {
-                dbgWarn('[Realtime] Version mismatch — reloading...');
-                setTimeout(function(){ window.location.reload(true); }, 500);
+                dbgWarn('[Realtime] Version mismatch — saving local work then reloading...');
+                var snap = loadLabData(activeLab.id);
+                if (snap) {
+                    idbSave(activeLab.id, snap).catch(function(){});
+                    idbPut('queue', 'pending_' + activeLab.id, { data: snap, ts: Date.now() });
+                }
+                setTimeout(function(){ window.location.reload(true); }, 1200);
                 return;
             }
             dbgLog('[Realtime] Applying — tables:' + (remote.tables||[]).length + ' notes:' + (remote.notes||[]).length + ' plants:' + (remote.plants||[]).length);
@@ -5875,6 +5954,7 @@ useEffect(() => {
         };
     }, [activeLab ? activeLab.id : null]);
     const writeTimerRef     = useRef(null);
+    const dataRef           = useRef(data); // always points to latest data state
     const lastLocalWriteRef = useRef(0);
     const fetchNowRef       = useRef(null); // set by the data-loading useEffect
     const [lastFetchTime, setLastFetchTime] = useState(null); // updated after every successful jbRead
@@ -5907,6 +5987,9 @@ useEffect(() => {
         };
         return function() { window._onSyncFailed = null; };
     }, [activeLab]);
+    // Keep dataRef current so the timer always writes latest data
+    useEffect(() => { dataRef.current = data; }, [data]);
+
     useEffect(() => {
         if (!activeLab) return;
         if (!dataLoadedRef.current) return;
@@ -5916,13 +5999,15 @@ useEffect(() => {
         lastLocalWriteRef.current = Date.now();
         setSyncStatus('pending');
         if (writeTimerRef.current) clearTimeout(writeTimerRef.current);
-        var sd = data, sl = activeLab, su = user;
+        var sl = activeLab, su = user; // capture lab+user; data read from ref in timer
         writeTimerRef.current = setTimeout(function() {
             writeTimerRef.current = null;
+            var sd = dataRef.current; // always latest data, not stale closure
             saveData(sd, sl ? sl.id : null,
                 function(mode) {
                     setSyncStatus(mode === 'remote' ? 'synced' : 'saved');
                     setLastSaved(new Date());
+                    if (mode === 'remote') { setLastServerSync(new Date()); }
                     if (su) setLastBy(su.name);
                     // Server ACK: clear _localOnly and _syncFailed flags — data is now confirmed
                     if (mode === 'remote') {
@@ -5945,21 +6030,31 @@ useEffect(() => {
                 },
                 function() { setSyncStatus('error'); }
             );
-        }, 2000);
+        }, 800);
     }, [data]);
 
-    // Warn user before closing tab if a write is still in-flight
+    // On tab close: flush any pending debounced write immediately
     useEffect(() => {
         var handler = function(e) {
-            if (syncStatus === 'pending' || syncStatus === 'saving' || _syncQueue.length > 0) {
+            // If timer is running, fire the write NOW before the page unloads
+            if (writeTimerRef.current) {
+                clearTimeout(writeTimerRef.current);
+                writeTimerRef.current = null;
+                // Synchronous IDB save as best-effort (async write may not complete)
+                var snap = Object.assign({}, data, { _lww_ts: Date.now(), _appVersion: APP_VERSION });
+                try { saveLabData(activeLab && activeLab.id, snap); } catch(e2){}
+                idbSave(activeLab && activeLab.id, snap).catch(function(){});
+                idbPut('queue', 'pending_' + (activeLab && activeLab.id), { data: snap, ts: Date.now() });
+            }
+            if (syncStatus === 'pending' || _syncQueue.length > 0) {
                 e.preventDefault();
-                e.returnValue = 'Changes are still syncing to the server. If you close now, data may be lost.';
+                e.returnValue = 'Changes are still syncing. If you close now, they will retry on next open.';
                 return e.returnValue;
             }
         };
         window.addEventListener('beforeunload', handler);
         return function() { window.removeEventListener('beforeunload', handler); };
-    }, [syncStatus]);
+    }, [syncStatus, data, activeLab]);
 
     const notify = useCallback(m => { setNotif(m); setTimeout(() => setNotif(null), 2500); }, []);
     const logActivity = useCallback((what) => {
@@ -6391,7 +6486,7 @@ useEffect(() => {
         setPopup(null); setActPot(null); notify('Saved'); logActivity('Updated pot: ' + (w.genotype || 'empty'));
     };
     /* delete pot = clear data, keep slot */
-    const delPot = id => { setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => p.id !== id ? p : Object.assign(Object.assign({}, p), { genotype: '', treatment: '', planting_date: '', notes: '', status: 'empty', image: null, experiment_id: null })) }))); notify('Pot cleared'); };
+    const delPot = id => { setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => p.id !== id ? p : Object.assign(Object.assign({}, p), { genotype: '', treatment: '', planting_date: '', notes: '', status: 'empty', image: null, experiment_id: null, updated_at: now() })) }))); notify('Pot cleared'); };
     /* selection */
     const togSel = id => setSelPots(ps => ps.includes(id) ? ps.filter(x => x !== id) : [...ps, id]);
     const assExp = () => {
@@ -6795,7 +6890,7 @@ useEffect(() => {
                             },
                             style:{background:'none',border:'1.5px solid #E5E7EB',borderRadius:20,padding:'4px 10px',fontSize:11,fontWeight:600,color:'var(--i2)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}
                         }, '👤 ', user.name.split(' ')[0]),
-                        React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, queueLen: _syncQueue.length, rtLive: rtLive, onClick: syncStatus==='error' ? ()=>{saveData(data,activeLab?.id);setSyncStatus('saved');} : ()=>setShowFbPanel(true) }),
+                        React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, queueLen: _syncQueue.length, rtLive: rtLive, lastServerSync: lastServerSync, onForceSave: function(){ if(window._glForcePush) window._glForcePush(); } }),
                         React.createElement("button", {
                             title: "Force refresh (hold 2s for Nuclear Sync)",
                             onClick: function() { if (fetchNowRef.current) { setSyncStatus('loading'); fetchNowRef.current(); } },
@@ -6885,7 +6980,7 @@ useEffect(() => {
                         React.createElement("span", { className: "hbadge" },
                             totPlants,
                             " plants"),
-                        React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, queueLen: _syncQueue.length, rtLive: rtLive, onClick: syncStatus === 'error' ? () => { saveData(data, activeLab === null || activeLab === void 0 ? void 0 : activeLab.id); setSyncStatus('saved'); } : () => setShowFbPanel(true) }),
+                        React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, queueLen: _syncQueue.length, rtLive: rtLive, lastServerSync: lastServerSync, onForceSave: function(){ if(window._glForcePush) window._glForcePush(); } }),
                         React.createElement("button", { className: `lkbtn${!locked ? ' edit' : ''}`, onClick: togLock }, locked ? 'Locked' : 'Edit mode'))),
                 alerts.length > 0 && React.createElement("div", { className: "alerts-bar" },
                     alerts.map(function(a, i) {
