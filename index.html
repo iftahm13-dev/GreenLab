@@ -1078,22 +1078,22 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .note-icon-btn:hover{opacity:1;background:rgba(0,0,0,.06)}
 .note-icon-btn.del:hover{background:#fef2f2;opacity:1}
 /* ── Weather Widget ── */
-.weather-widget{background:#fff;border:1px solid var(--bo);border-radius:14px;padding:14px 16px;margin-top:2px}
-.weather-now{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.weather-icon{font-size:32px;line-height:1;flex-shrink:0}
-.weather-temps{flex:1;min-width:0}
-.weather-temp{font-size:24px;font-weight:700;color:var(--i1);line-height:1}
+.weather-widget{background:#fff;border:1px solid var(--bo);border-radius:10px;padding:8px 12px;margin-top:2px}
+.weather-now{display:flex;align-items:center;gap:8px;margin-bottom:0}
+.weather-icon{font-size:22px;line-height:1;flex-shrink:0}
+.weather-temps{flex:1;min-width:0;display:flex;align-items:baseline;gap:6px}
+.weather-temp{font-size:17px;font-weight:700;color:var(--i1);line-height:1}
 .weather-loc{font-size:10px;color:var(--i4);margin-top:1px;font-family:'Inter',sans-serif}
-.weather-detail{display:flex;gap:10px;font-size:10px;color:var(--i3);font-family:'Inter',sans-serif;margin-top:2px}
-.weather-detail span{display:flex;align-items:center;gap:3px}
-.weather-forecast{display:flex;gap:6px}
-.weather-day{flex:1;background:#F9FAFB;border:1px solid var(--bo);border-radius:10px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:3px}
-.weather-day-name{font-size:9px;font-weight:600;color:var(--i3);text-transform:uppercase;letter-spacing:.04em}
-.weather-day-icon{font-size:18px;line-height:1}
-.weather-day-hi{font-size:11px;font-weight:700;color:var(--i1)}
-.weather-day-lo{font-size:10px;color:var(--i4)}
-.weather-err{font-size:10px;color:var(--i5);text-align:center;padding:8px 0;font-family:'Inter',sans-serif}
-.weather-loading{font-size:10px;color:var(--i5);padding:6px 0;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:5px}
+.weather-detail{display:flex;gap:8px;font-size:9px;color:var(--i3);font-family:'Inter',sans-serif}
+.weather-detail span{display:flex;align-items:center;gap:2px}
+.weather-forecast{display:flex;gap:4px;margin-top:7px}
+.weather-day{flex:1;background:#F9FAFB;border:1px solid var(--bo);border-radius:7px;padding:4px 3px;display:flex;flex-direction:column;align-items:center;gap:1px}
+.weather-day-name{font-size:8px;font-weight:600;color:var(--i3);text-transform:uppercase;letter-spacing:.04em}
+.weather-day-icon{font-size:13px;line-height:1}
+.weather-day-hi{font-size:10px;font-weight:700;color:var(--i1)}
+.weather-day-lo{font-size:9px;color:var(--i4)}
+.weather-err{font-size:10px;color:var(--i5);text-align:center;padding:6px 0;font-family:'Inter',sans-serif}
+.weather-loading{font-size:10px;color:var(--i5);padding:4px 0;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:5px}
 .note-pdf-link{display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:4px 10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:20px;font-size:11px;color:#1d4ed8;text-decoration:none}
 .note-actions{display:flex;gap:6px;margin-top:10px;border-top:1px solid var(--bo);padding-top:8px;flex-wrap:wrap;align-items:center}
 .note-hl-dot{width:16px;height:16px;border-radius:50%;cursor:pointer;flex-shrink:0;border:2px solid rgba(0,0,0,.12);transition:transform .12s}
@@ -1743,7 +1743,7 @@ function ExpOverlay({ tables, plants, exps, users }) {
     return null; // Experiment shown via initials badge on each pot + hover tooltip
 }
 /* Table block */
-function TableBlock({ table, plants, locked, isSel, activePotId, selMode, selPots, editTblId, onSel, onDrag, onPotClick, onPotSel, onDel, onToggleEdit, exps, users, onExpTip, colorByExp, syncFailed, onSyncRetry }) {
+function TableBlock({ table, plants, locked, isSel, activePotId, selMode, selPots, editTblId, onSel, onDrag, onPotClick, onPotSel, onDel, onToggleEdit, exps, users, onExpTip, colorByExp, syncFailed, onSyncRetry, onCopy }) {
     const ref = useRef(), dr = useRef(null);
     const wx = table.x_position * WS, wy = table.y_position * WS, ww = table.width * WS, wh = table.length * WS;
     const GAP = 5, avW = ww - 10, avH = wh - HDR - 10;
@@ -1794,14 +1794,15 @@ function TableBlock({ table, plants, locked, isSel, activePotId, selMode, selPot
     }, [locked, startDrag, moveDrag, endDrag]);
     return (React.createElement("div", { ref: ref, className: `tbl${isSel ? ' sel' : ''}${locked ? ' locked' : ''}${te ? ' tedit' : ''}${syncFailed ? ' sync-failed' : ''}`, style: { position: 'absolute', left: wx, top: wy, width: ww, height: wh }, onMouseDown: hmd, onTouchStart: htd },
         syncFailed && React.createElement('div', { className: 'tbl-sync-banner', onClick: function(e){ e.stopPropagation(); if(onSyncRetry) onSyncRetry(); } }, '⚠ Sync Failed — Click to Retry'),
-        syncFailed && React.createElement('div', { className: 'tbl-sync-banner', onClick: function(e){ e.stopPropagation(); if(onSyncRetry) onSyncRetry(); } }, '⚠ Sync Failed — Click to Retry'),
         React.createElement("div", { className: "thd" },
             React.createElement("span", { className: "thnm" }, table.name),
             React.createElement("span", { className: "thinfo" },
                 table.rows,
                 "x",
                 table.cols),
-            React.createElement("button", { className: "thedit", onClick: e => { e.stopPropagation(); onToggleEdit(table.id); }, style: { background: te ? '#2563eb' : '#78C043' } }, te ? 'Done' : 'Edit')),
+            React.createElement("button", { className: "thedit", onClick: e => { e.stopPropagation(); onToggleEdit(table.id); }, style: { background: te ? '#2563eb' : '#78C043' } }, te ? 'Done' : 'Edit'),
+            !locked && onCopy && React.createElement("button", { title:'Copy this table', onClick: e => { e.stopPropagation(); onCopy(table.id); },
+                style:{background:'none',border:'none',cursor:'pointer',fontSize:13,color:'var(--i4)',padding:'0 2px',lineHeight:1,marginLeft:2} }, '⧉')),
         React.createElement("div", { className: "pgrid", style: { gridTemplateColumns: `repeat(${table.cols},${ppx}px)`, gridTemplateRows: `repeat(${table.rows},${ppx + LBH}px)`, gap: GAP + 'px', justifyContent: 'center', alignContent: 'center' } }, Array.from({ length: table.rows }, (_, row) => Array.from({ length: table.cols }, (_, col) => {
             const p = plants.find(x => x.row === row && x.col === col);
             return (React.createElement(PotCell, { key: `${row}-${col}`, plant: p, ppx: ppx, isActive: p && p.id === activePotId, isSel: p && selPots.includes(p.id), selMode: selMode, teMode: te,
@@ -4569,13 +4570,14 @@ function WeatherWidget() {
     }
 
     return React.createElement('div', { className: 'weather-widget' },
-        // Header row with city selector toggle
-        React.createElement('div', { style:{display:'flex',alignItems:'center',marginBottom:8} },
-            React.createElement('div', { style:{fontSize:10,fontWeight:700,color:'var(--i3)',letterSpacing:'.06em',textTransform:'uppercase',flex:1,fontFamily:'Inter,sans-serif'} }, '🌤 Weather'),
+        // Compact header row: city toggle left, label right
+        React.createElement('div', { style:{display:'flex',alignItems:'center',marginBottom:6,gap:6} },
+            React.createElement('span', { style:{fontSize:9,fontWeight:700,color:'var(--i4)',textTransform:'uppercase',letterSpacing:'.06em',fontFamily:'Inter,sans-serif'} }, '🌤'),
             React.createElement('button', {
                 onClick: function(){ setShowPicker(function(x){return !x;}); },
-                style:{fontSize:10,fontWeight:600,color:'var(--lf)',background:'var(--ll)',border:'1px solid var(--ld)',borderRadius:6,padding:'2px 8px',cursor:'pointer',fontFamily:'Inter,sans-serif',flexShrink:0}
-            }, city.name + ' ▾')
+                style:{fontSize:10,fontWeight:600,color:'var(--lf)',background:'var(--ll)',border:'1px solid var(--ld)',borderRadius:5,padding:'1px 6px',cursor:'pointer',fontFamily:'Inter,sans-serif',flexShrink:0}
+            }, city.name + ' ▾'),
+            weather && React.createElement('span', { style:{fontSize:9,color:'var(--i4)',marginLeft:'auto',fontFamily:'Inter,sans-serif'} }, '💧 '+weather.humidity+'%')
         ),
         // City picker dropdown
         showPicker && React.createElement('div', {
@@ -4600,8 +4602,7 @@ function WeatherWidget() {
                 React.createElement('div', {className:'weather-temps'},
                     React.createElement('div', {className:'weather-temp'}, weather.temp+'°C'),
                     React.createElement('div', {className:'weather-detail'},
-                        React.createElement('span', null, '💧 '+weather.humidity+'%'),
-                        React.createElement('span', null, 'Humidity')
+                        weather.forecast[0] && React.createElement('span', null, '↑'+weather.forecast[0].hi+'° ↓'+weather.forecast[0].lo+'°')
                     )
                 )
             ),
@@ -4676,21 +4677,38 @@ function mergeRemoteData(remote, localData) {
     MERGE_ARRAYS.forEach(function(key) {
         var remoteArr = remote[key] || [];
         var localArr  = localData[key] || [];
-        // Build a set of IDs the server knows about
-        var remoteIds = {};
-        remoteArr.forEach(function(item){ if(item && item.id) remoteIds[item.id] = true; });
-        // Keep local items that the server doesn't know about yet (_localOnly or just absent from server)
-        var localOnlyItems = localArr.filter(function(item) {
-            if (!item || !item.id) return false;
-            return !remoteIds[item.id]; // server doesn't have this ID → local-only, preserve it
+        // Index both sides by id
+        var remoteById = {};
+        remoteArr.forEach(function(item){ if(item && item.id) remoteById[item.id] = item; });
+        var localById = {};
+        localArr.forEach(function(item){ if(item && item.id) localById[item.id] = item; });
+        // Collect all IDs from both sides
+        var allIds = {};
+        remoteArr.forEach(function(item){ if(item && item.id) allIds[item.id] = true; });
+        localArr.forEach(function(item){ if(item && item.id) allIds[item.id] = true; });
+        var result = [];
+        Object.keys(allIds).forEach(function(id) {
+            var r = remoteById[id];
+            var l = localById[id];
+            if (r && l) {
+                // Both sides have it — LWW per-object using updated_at
+                var rt = r.updated_at || r._lww_ts || 0;
+                var lt = l.updated_at || l._lww_ts || 0;
+                // Keep local if dirty (_localOnly) or newer
+                if (l._localOnly || lt > rt) {
+                    result.push(l);
+                } else {
+                    result.push(r);
+                }
+            } else if (r) {
+                result.push(r); // only on server
+            } else if (l) {
+                // Only local — keep if _localOnly or server simply doesn't have it yet
+                result.push(l);
+            }
         });
-        if (localOnlyItems.length > 0) {
-            console.log('[Merge] Preserving ' + localOnlyItems.length + ' local-only ' + key + ': ' + localOnlyItems.map(function(x){return x.id;}).join(', '));
-        }
-        // Merged = all server items + local items the server doesn't know about
-        merged[key] = remoteArr.concat(localOnlyItems);
+        merged[key] = result;
     });
-    // Preserve local scalar fields that server may not have
     if (localData._lww_ts && (!remote._lww_ts || localData._lww_ts > remote._lww_ts)) {
         merged._lww_ts = localData._lww_ts;
     }
@@ -5860,6 +5878,7 @@ useEffect(() => {
     const lastLocalWriteRef = useRef(0);
     const fetchNowRef       = useRef(null); // set by the data-loading useEffect
     const [lastFetchTime, setLastFetchTime] = useState(null); // updated after every successful jbRead
+    const [tblClipboard, setTblClipboard] = useState(null); // { table, plants } — for copy/paste
     const [syncCount, setSyncCount] = useState(0); // increments on each server data apply → forces ghr remount
 
     // Expose live table counts for debug overlay
@@ -6178,6 +6197,53 @@ useEffect(() => {
             prevTblCountRef.current = cur;
         }
     }, [aTbls.length, tab, aGh]);
+    const copyTable = function(tblId) {
+        var tbl = data.tables.find(function(t){ return t.id === tblId; });
+        if (!tbl) return;
+        var plants = data.plants.filter(function(p){ return p.table_id === tblId; });
+        setTblClipboard({ table: tbl, plants: plants });
+        notify('Table "' + tbl.name + '" copied — paste with the ⊕ button');
+    };
+    const pasteTable = function(targetGhId) {
+        if (!tblClipboard) return;
+        var src = tblClipboard;
+        var newTblId = uid();
+        var aGhTables = data.tables.filter(function(t){ return t.greenhouse_id === targetGhId; });
+        // Place to the right of existing tables
+        var maxX = aGhTables.reduce(function(m, t){ return Math.max(m, (t.x_position||0) + (t.width||230)); }, 20);
+        var newTable = Object.assign({}, src.table, { id: newTblId, greenhouse_id: targetGhId, name: src.table.name + ' (Copy)', x_position: maxX + 10, y_position: src.table.y_position || 20, _localOnly: true });
+        var newPlants = src.plants.map(function(p){
+            return Object.assign({}, p, { id: uid(), table_id: newTblId, greenhouse_id: targetGhId, _localOnly: true, updated_at: now() });
+        });
+        forceWriteRef.current = true;
+        setData(function(d){ return Object.assign({}, d, {
+            tables: [...d.tables, newTable],
+            plants: [...d.plants, ...newPlants]
+        }); });
+        notify('Table "' + newTable.name + '" pasted');
+    };
+    const dupGH = function(srcId) {
+        var src = data.greenhouses.find(function(g){ return g.id === srcId; });
+        if (!src) return;
+        var newGhId = uid();
+        var idMap = {}; // old table id → new table id
+        var newTables = data.tables.filter(function(t){ return t.greenhouse_id === srcId; }).map(function(t){
+            var newId = uid(); idMap[t.id] = newId;
+            return Object.assign({}, t, { id: newId, greenhouse_id: newGhId, _localOnly: true });
+        });
+        var newPlants = data.plants.filter(function(p){ return idMap[p.table_id]; }).map(function(p){
+            return Object.assign({}, p, { id: uid(), table_id: idMap[p.table_id], greenhouse_id: newGhId, _localOnly: true, updated_at: now() });
+        });
+        var newGh = Object.assign({}, src, { id: newGhId, name: src.name + ' (Copy)', created_at: now(), _localOnly: true });
+        forceWriteRef.current = true;
+        setData(function(d){ return Object.assign({}, d, {
+            greenhouses: [...d.greenhouses, newGh],
+            tables: [...d.tables, ...newTables],
+            plants: [...d.plants, ...newPlants]
+        }); });
+        setGhId(newGhId);
+        notify('"' + newGh.name + '" created');
+    };
     const updGh = (k, v) => setData(d => (Object.assign(Object.assign({}, d), { greenhouses: d.greenhouses.map(g => g.id === ghId ? Object.assign(Object.assign({}, g), { [k]: isNaN(+v) ? v : +v }) : g) })));
     const createGH = () => { if (!ghFm.name.trim())
         return; const g = { id: uid(), name: ghFm.name.trim(), width: +ghFm.width || 400, length: +ghFm.length || 300, notes: '', last_sprayed_at: null, spray_material: '', spray_category: '', spray_notes: '', created_by: (user === null || user === void 0 ? void 0 : user.id) || 'u', created_at: now() }; setData(d => (Object.assign(Object.assign({}, d), { greenhouses: [...d.greenhouses, g] }))); setGhId(g.id); setShowAGH(false); setGhFm({ name: '', width: 600, length: 400 }); notify(`"${g.name}" created`); logActivity(`Created greenhouse: ${g.name}`); };
@@ -6841,6 +6907,11 @@ useEffect(() => {
                             onClick: e => { e.stopPropagation(); const n = window.prompt('Rename greenhouse:', g.name); if (n && n.trim() && n.trim() !== g.name) { setData(d => ({...d, greenhouses: d.greenhouses.map(gh => gh.id === g.id ? {...gh, name: n.trim()} : gh)})); notify('Greenhouse renamed'); } }
                         }, '✎'),
                         ghId === g.id && React.createElement("button", {
+                            title: "Duplicate greenhouse (copy all tables + pots)",
+                            style: { background:'none', border:'1px solid var(--ld)', cursor:'pointer', fontSize:11, color:'var(--fo3)', padding:'3px 6px', lineHeight:1, borderRadius:6, flexShrink:0 },
+                            onClick: e => { e.stopPropagation(); if (window.confirm('Duplicate "' + g.name + '"? All tables and pots will be copied with new IDs.')) dupGH(g.id); }
+                        }, '⧉'),
+                        ghId === g.id && React.createElement("button", {
                             title: "Delete greenhouse",
                             style: { background:'none', border:'1px solid #fca5a5', cursor:'pointer', fontSize:11, color:'#dc2626', padding:'3px 6px', lineHeight:1, borderRadius:6, flexShrink:0 },
                             onClick: e => { e.stopPropagation(); delGH(g.id); }
@@ -6854,6 +6925,7 @@ useEffect(() => {
                 ),
                 React.createElement("div", { className: "toolbar" },
                     !locked && aGh && tab === 'layout' && React.createElement("button", { className: "btn btnp bsm", onClick: () => { setTFm({ name: `B${aTbls.length + 1}`, width: lastTblRef.current.width, length: lastTblRef.current.length, rows: lastTblRef.current.rows, cols: lastTblRef.current.cols }); if(aGh) setGhId(aGh.id); setShowATbl(true); } }, "+ Table"),
+                    !locked && aGh && tblClipboard && tab === 'layout' && React.createElement("button", { className: "btn btns bsm", title: 'Paste "' + tblClipboard.table.name + '" into this greenhouse', onClick: () => pasteTable(ghId) }, '⊕ Paste Table'),
                     !locked && React.createElement("div", { className: "enote" }, "Edit mode"),
                     editTbl && React.createElement("div", { className: "tenote" }, "Table edit \u2014 click x to remove pots"),
                     tab === 'layout' && selTbls.size > 1 && tblSelMode && React.createElement(React.Fragment, null,
@@ -6955,7 +7027,7 @@ useEffect(() => {
                                 React.createElement("div", { className: "rlabel" }, aGh.name),
                                 aStructs.map(s => React.createElement(StructObj, { key: s.id, obj: s, locked: locked, onDrag: hStrDrag, onDel: delStruct, onSwitch: hStrSwitch })),
                                 React.createElement(ExpOverlay, { tables: aTbls, plants: aPlants, exps: data.experiments, users: data.users }),
-                                aTbls.map(t => React.createElement(TableBlock, { key: t.id, table: t, plants: aPlants.filter(p => p.table_id === t.id), locked: locked, isSel: selTbl === t.id || selTbls.has(t.id), activePotId: actPot, selMode: selMode, selPots: selPots, editTblId: editTbl, tblSelMode: tblSelMode, syncFailed: !!t._syncFailed, onSyncRetry: function() { forceWriteRef.current = true; setData(function(d){ return Object.assign({}, d); }); }, onSel: (id, multi) => { if (multi || tblSelMode) { setSelTbls(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; }); setSelTbl(id); } else { setSelTbl(id); setSelTbls(new Set([id])); setPopup(null); } }, onDrag: hDrag, onPotClick: hPotClick, onPotSel: togSel, exps: data.experiments, users: data.users, onExpTip: setExpTip, colorByExp: colorByExp, onDel: delPot, onToggleEdit: id => setEditTbl(editTbl === id ? null : id) })))) : React.createElement("div", { className: "empty-st", style: { position: 'absolute', inset: 0, display: 'flex' } },
+                                aTbls.map(t => React.createElement(TableBlock, { key: t.id, table: t, plants: aPlants.filter(p => p.table_id === t.id), locked: locked, isSel: selTbl === t.id || selTbls.has(t.id), activePotId: actPot, selMode: selMode, selPots: selPots, editTblId: editTbl, tblSelMode: tblSelMode, syncFailed: !!t._syncFailed, onCopy: function(id){ copyTable(id); }, onSyncRetry: function() { forceWriteRef.current = true; setData(function(d){ return Object.assign({}, d); }); }, onSel: (id, multi) => { if (multi || tblSelMode) { setSelTbls(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; }); setSelTbl(id); } else { setSelTbl(id); setSelTbls(new Set([id])); setPopup(null); } }, onDrag: hDrag, onPotClick: hPotClick, onPotSel: togSel, exps: data.experiments, users: data.users, onExpTip: setExpTip, colorByExp: colorByExp, onDel: delPot, onToggleEdit: id => setEditTbl(editTbl === id ? null : id) })))) : React.createElement("div", { className: "empty-st", style: { position: 'absolute', inset: 0, display: 'flex' } },
                             React.createElement("div", { style: { fontSize: 48, opacity: .3 } }, "\uD83C\uDF45"),
                             React.createElement("div", { style: { fontFamily: 'Inter', fontSize: 17, color: 'var(--i2)' } }, "No greenhouse selected"),
                             React.createElement("button", { className: "btn btnp", onClick: () => { setData(d => (Object.assign(Object.assign({}, d), { locked: false }))); setGhFm({ name: '', width: 600, length: 400 }); setShowAGH(true); } }, "Create greenhouse")),
@@ -7013,6 +7085,10 @@ useEffect(() => {
                 React.createElement("button", { className: `mbn-btn${tab==='orders'?' on':''}`, onClick: ()=>{ setTab('orders'); } },
                     React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"9\" cy=\"21\" r=\"1\"/><circle cx=\"20\" cy=\"21\" r=\"1\"/><path d=\"M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6\"/></svg>'} })),
                     "Orders"
+                ),
+                React.createElement("button", { className: `mbn-btn${tab==='registry'?' on':''}`, onClick: ()=>setTab('registry') },
+                    React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><ellipse cx=\"12\" cy=\"5\" rx=\"9\" ry=\"3\"/><path d=\"M21 12c0 1.66-4 3-9 3s-9-1.34-9-3\"/><path d=\"M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5\"/></svg>'} })),
+                    "Registry"
                 ),
                 React.createElement("button", { className: `mbn-btn${tab==='notes'?' on':''}`, onClick: ()=>setTab('notes') },
                     React.createElement("div", { className:"mbn-ic" }, React.createElement("span", { dangerouslySetInnerHTML:{__html:'<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/></svg>'} })),
