@@ -5599,82 +5599,80 @@ useEffect(() => {
                         if (seeded.greenhouses.length > 0) setGhId(seeded.greenhouses[0].id);
                     } else {
                         var msSinceWrite = Date.now() - lastLocalWriteRef.current;
-                        // Versioning: compare server _lww_ts against local cache
                         var remoteLwwTs = remote._lww_ts || 0;
-                        var localCache = loadLabData(activeLab.id);
-                        var localLwwTs = localCache ? (localCache._lww_ts || 0) : 0;
-                        var serverIsNewer = remoteLwwTs > localLwwTs;
-                        if (serverIsNewer) {
-                            console.log('[Sync] Server is newer (' + new Date(remoteLwwTs).toISOString() + ') vs local (' + new Date(localLwwTs).toISOString() + ') — applying server data');
-                        }
-
-                        // Only apply remote data if we haven't written locally in the last 5s
-                        dataLoadedRef.current = true; // always mark loaded, even if we skip the remote data
-                        // Startup diff: compare server vs local counts
-                        (function() {
-                            var local = loadLabData(activeLab.id);
-                            if (!local) return;
-                            var diffs = [];
-                            ['notes','orders','plants','messages'].forEach(function(k) {
-                                var rc = (remote[k]||[]).length, lc = (local[k]||[]).length;
-                                if (rc !== lc) diffs.push(k + ': server=' + rc + ' local=' + lc);
-                            });
-                            if (diffs.length) {
-                                console.warn('[Sync] Diff mismatch on load:', diffs.join(' | '));
-                            } else {
-                                console.log('[Sync] Diff OK — server and local counts match.');
-                            }
-                        })();
-                        // Track counts for debug overlay
+                        dataLoadedRef.current = true;
                         window._glLastRemote = remote;
                         window._glRemoteTblCount = (remote.tables||[]).length;
 
-                        // Dirty-state protection — same rule on all platforms:
-                        // Block if: queue has entries OR debounce timer running OR wrote < 10s ago
-                        var hasPendingWrites = _syncQueue.length > 0 || writeTimerRef.current !== null;
-                        var isDirty = hasPendingWrites || msSinceWrite < 3000;
-                        dbgLog('[State] Q=' + _syncQueue.length + ' timer=' + !!writeTimerRef.current + ' msSince=' + msSinceWrite + ' dirty=' + isDirty + ' newer=' + serverIsNewer + ' remoteTbls=' + (remote.tables||[]).length);
+                        // Read IDB first (survives iOS localStorage purge), fall back to localStorage
+                        idbLoad(activeLab.id).then(function(idbCache) {
+                            var lsCache   = loadLabData(activeLab.id);
+                            // Pick whichever local cache is newer
+                            var idbTs = idbCache ? (idbCache._lww_ts || 0) : 0;
+                            var lsTs  = lsCache  ? (lsCache._lww_ts  || 0) : 0;
+                            var localCache = (idbTs >= lsTs) ? idbCache : lsCache;
+                            var localLwwTs = localCache ? (localCache._lww_ts || 0) : 0;
+                            var serverIsNewer = remoteLwwTs > localLwwTs;
 
-                        // Apply server data only when local state is clean
-                        var shouldApply = !forceWriteRef.current && !isDirty;
+                            dbgLog('[State] IDB_ts=' + idbTs + ' LS_ts=' + lsTs + ' server_ts=' + remoteLwwTs + ' serverNewer=' + serverIsNewer);
 
-                        if (shouldApply) {
-                            dbgLog('[State] APPLYING — ' + (IS_MOBILE ? 'MOBILE(server-auth)' : 'DESKTOP(LWW)') + ' tables:' + (remote.tables||[]).length + ' notes:' + (remote.notes||[]).length);
-                            remoteUpdateRef.current = true;
-                            setSyncCount(function(n){ return n + 1; }); // triggers ghr remount
-                            // Always update cache with fresh server data
-                            if (activeLab) {
-                                idbSave(activeLab.id, remote).catch(function(){});
-                                try { saveLabData(activeLab.id, remote); } catch(e){}
+                            // Log any count mismatches for debugging
+                            if (localCache) {
+                                var diffs = [];
+                                ['notes','orders','plants','messages'].forEach(function(k) {
+                                    var rc = (remote[k]||[]).length, lc = (localCache[k]||[]).length;
+                                    if (rc !== lc) diffs.push(k+': server='+rc+' local='+lc);
+                                });
+                                if (diffs.length) console.warn('[Sync] Count diff:', diffs.join(' | '));
+                                else console.log('[Sync] Count OK');
                             }
-                            // Merge: server is authoritative, but preserve _localOnly items not yet confirmed
-                            setData(function(localData) {
-                                var merged = mergeRemoteData(remote, localData);
-                                return loadImages(merged);
-                            });
-                            if (remote.greenhouses && remote.greenhouses.length > 0) {
-                                setGhId(function(cur) { return cur || remote.greenhouses[0].id; });
+
+                            // Dirty guard
+                            var hasPendingWrites = _syncQueue.length > 0 || writeTimerRef.current !== null;
+                            var isDirty = hasPendingWrites || msSinceWrite < 3000;
+                            var shouldApply = !forceWriteRef.current && !isDirty;
+
+                            dbgLog('[State] Q=' + _syncQueue.length + ' timer=' + !!writeTimerRef.current + ' msSince=' + msSinceWrite + ' dirty=' + isDirty + ' newer=' + serverIsNewer + ' shouldApply=' + shouldApply);
+
+                            if (shouldApply) {
+                                // Use best local cache for merge (IDB preferred over localStorage)
+                                var mergeBase = localCache || {};
+                                dbgLog('[State] APPLYING — merging server+' + (idbTs>=lsTs?'IDB':'LS') + ' tables:' + (remote.tables||[]).length);
+                                remoteUpdateRef.current = true;
+                                setSyncCount(function(n){ return n + 1; });
+                                // Update both caches with merged result
+                                if (activeLab) {
+                                    idbSave(activeLab.id, remote).catch(function(){});
+                                    try { saveLabData(activeLab.id, remote); } catch(e){}
+                                }
+                                setData(function(localData) {
+                                    // Use IDB/LS cache as the local side, not just React state
+                                    // (React state may be empty on fresh load)
+                                    var bestLocal = (mergeBase && mergeBase.plants && mergeBase.plants.length > 0) ? mergeBase : localData;
+                                    return loadImages(mergeRemoteData(remote, bestLocal));
+                                });
+                                if (remote.greenhouses && remote.greenhouses.length > 0) {
+                                    setGhId(function(cur) { return cur || remote.greenhouses[0].id; });
+                                }
+                                setUser(function(cur) {
+                                    if (cur) return cur;
+                                    try {
+                                        var lastUid = localStorage.getItem('gl_last_user');
+                                        if (lastUid && remote.users) return remote.users.find(function(u){return u.id===lastUid;})||null;
+                                    } catch(e) {}
+                                    return null;
+                                });
+                            } else {
+                                dbgWarn('[State] SKIPPED — forceWrite=' + forceWriteRef.current + ' pendingWrites=' + hasPendingWrites + ' msSinceWrite=' + msSinceWrite);
                             }
-                            // Restore last user on refresh
-                            setUser(function(cur) {
-                                if (cur) return cur;
-                                try {
-                                    var lastUid = localStorage.getItem('gl_last_user');
-                                    if (lastUid && remote.users) return remote.users.find(function(u){return u.id===lastUid;})||null;
-                                } catch(e) {}
-                                return null;
+                            setLastFetchTime(new Date());
+                            setSyncStatus(function(cur) {
+                                if (cur === 'pending' || cur === 'saving') return cur;
+                                if (_syncQueue.length > 0 || writeTimerRef.current !== null) return 'pending';
+                                return 'synced';
                             });
-                        } else {
-                            dbgWarn('[State] SKIPPED — forceWrite=' + forceWriteRef.current + ' pendingWrites=' + hasPendingWrites + ' mobile=' + IS_MOBILE + ' msSinceWrite=' + msSinceWrite);
-                        }
-                        setLastFetchTime(new Date()); // visible clock ticks here on every successful fetch
-                        // Synced = queue empty + server responded. Never overwrite pending/saving.
-                        setSyncStatus(function(cur) {
-                            if (cur === 'pending' || cur === 'saving') return cur;
-                            if (_syncQueue.length > 0 || writeTimerRef.current !== null) return 'pending';
-                            return 'synced';
-                        });
-                        setLastSaved(new Date());
+                            setLastSaved(new Date());
+                        }); // end idbLoad.then
                     }
                 })
                 .catch(function(err) {
