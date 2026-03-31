@@ -1088,7 +1088,7 @@ var IS_MOBILE = (function() {
 
 function jbRead() {
     if (!JB_KEY || JB_KEY.indexOf('PASTE') !== -1) return Promise.reject(new Error('JSONBin not configured'));
-    var url = 'https://api.jsonbin.io/v3/b/' + JB_BIN_ID + '/latest?t=' + Date.now();
+    var url = 'https://api.jsonbin.io/v3/b/' + JB_BIN_ID + '/latest?t=' + Date.now() + '&r=' + Math.random().toString(36).slice(2);
     var ctrl = new AbortController();
     var tid = setTimeout(function(){ ctrl.abort(); }, 30000);
     if (!jbRead._logged) { jbRead._logged = true; dbgLog('[Auth] X-Master-Key set, starts: ' + (JB_KEY ? JB_KEY.slice(0,8) + '...' : 'MISSING')); }
@@ -4956,7 +4956,7 @@ useEffect(() => {
                         // Dirty-state protection — same rule on all platforms:
                         // Block if: queue has entries OR debounce timer running OR wrote < 10s ago
                         var hasPendingWrites = _syncQueue.length > 0 || writeTimerRef.current !== null;
-                        var isDirty = hasPendingWrites || msSinceWrite < 10000;
+                        var isDirty = hasPendingWrites || msSinceWrite < 3000;
                         dbgLog('[State] Q=' + _syncQueue.length + ' timer=' + !!writeTimerRef.current + ' msSince=' + msSinceWrite + ' dirty=' + isDirty + ' newer=' + serverIsNewer + ' remoteTbls=' + (remote.tables||[]).length);
 
                         // Apply server data only when local state is clean
@@ -4991,6 +4991,7 @@ useEffect(() => {
                         } else {
                             dbgWarn('[State] SKIPPED — forceWrite=' + forceWriteRef.current + ' pendingWrites=' + hasPendingWrites + ' mobile=' + IS_MOBILE + ' msSinceWrite=' + msSinceWrite);
                         }
+                        setLastFetchTime(new Date()); // visible clock ticks here on every successful fetch
                         // Synced = queue empty + server responded. Never overwrite pending/saving.
                         setSyncStatus(function(cur) {
                             if (cur === 'pending' || cur === 'saving') return cur;
@@ -5047,28 +5048,17 @@ useEffect(() => {
         // ── Adaptive polling ─────────────────────────────────────────
         // Visible & active: every 30s. Idle (>5min no touch): 60s.
         // Tab hidden: polling suspended. Immediately resumes on foreground.
-        var pollId = null;
-        var lastInteraction = Date.now();
-        var onInteraction = function() { lastInteraction = Date.now(); };
-        window.addEventListener('pointerdown', onInteraction, { passive: true });
-        window.addEventListener('keydown',     onInteraction, { passive: true });
-
-        function startPoll() {
-            if (pollId) clearInterval(pollId);
-            var interval = IS_MOBILE ? 15000 : ((Date.now() - lastInteraction > 300000) ? 60000 : 30000);
-            pollId = setInterval(function() {
-                if (document.visibilityState === 'hidden') return; // skip while backgrounded
-                if (_syncQueue.length > 0 || writeTimerRef.current !== null) {
-                    dbgLog('[Poll] Skipped — dirty state (Q=' + _syncQueue.length + ' timer=' + !!writeTimerRef.current + ')');
-                    return; // pause poll while writes are pending
-                }
-                // Re-evaluate interval each tick
-                var nextInterval = IS_MOBILE ? 15000 : ((Date.now() - lastInteraction > 300000) ? 60000 : 30000);
-                if (nextInterval !== interval) { startPoll(); return; } // restart with new interval
-                fetchLabData();
-            }, interval);
-        }
-        startPoll();
+        // ── Heartbeat poll ────────────────────────────────────────────────
+        // Mobile: 10s. Desktop: 30s. Unconditional except tab hidden.
+        // shouldApply() inside fetchLabData still guards state updates —
+        // dirty-state blocking happens there, not here. This way the poll
+        // always fires even if the user is actively typing.
+        var POLL_INTERVAL = IS_MOBILE ? 10000 : 30000;
+        var pollId = setInterval(function() {
+            if (document.visibilityState === 'hidden') return;
+            dbgLog('[Poll] Heartbeat tick — ' + new Date().toLocaleTimeString());
+            fetchLabData();
+        }, POLL_INTERVAL);
 
         // ── Visibility change: force-fetch on foreground resume ──────
         // This is the primary fix for iPhone: when user switches back to the app
@@ -5087,8 +5077,7 @@ useEffect(() => {
                     console.log('[Sync] Force-fetching after resume...');
                     fetchLabData();
                 }
-                // Restart poll at appropriate interval
-                startPoll();
+                // Poll continues on its own interval
             }
         }
         document.addEventListener('visibilitychange', onVisibilityChange);
@@ -5138,8 +5127,7 @@ useEffect(() => {
             document.removeEventListener('visibilitychange', onVisibilityChange);
             window.removeEventListener('focus', onWindowFocus);
             window.removeEventListener('pageshow', onPageShow);
-            window.removeEventListener('pointerdown', onInteraction);
-            window.removeEventListener('keydown', onInteraction);
+
             if (bc) { try { bc.close(); } catch(e){} }
             window._glBroadcast = null;
             window._glForceRefresh = null;
@@ -5148,6 +5136,7 @@ useEffect(() => {
     const writeTimerRef     = useRef(null);
     const lastLocalWriteRef = useRef(0);
     const fetchNowRef       = useRef(null); // set by the data-loading useEffect
+    const [lastFetchTime, setLastFetchTime] = useState(null); // updated after every successful jbRead
     const [syncCount, setSyncCount] = useState(0); // increments on each server data apply → forces ghr remount
 
     // Expose live table counts for debug overlay
@@ -5938,7 +5927,14 @@ useEffect(() => {
                 React.createElement("div", { className: "mob-top-bar" },
                     React.createElement("div", { className: "mob-top-logo" },
                         React.createElement("div", { className: "mob-top-logo-dot" }, "🌿"),
-                        React.createElement("span", { className: "mob-top-labname" }, activeLab.name)
+                        React.createElement("div", { style:{display:'flex',flexDirection:'column',gap:0} },
+                            React.createElement("span", { className: "mob-top-labname" }, activeLab.name),
+                            React.createElement("span", { style:{fontSize:9,color:'var(--i4)',fontFamily:'Inter,monospace',lineHeight:1.2} },
+                                lastFetchTime
+                                    ? '↓ ' + lastFetchTime.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'})
+                                    : '↓ —'
+                            )
+                        )
                     ),
                     React.createElement("div", { className: "mob-top-r" },
                         onlineUsers.length > 0 && React.createElement("div", { className: "online-bar", title: onlineUsers.map(u=>u.name).join(', ') + ' online', style:{marginRight:4} },
