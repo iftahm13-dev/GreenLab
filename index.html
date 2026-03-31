@@ -1437,6 +1437,9 @@ const POT_COLORS = [
     { id: 'green',  lbl: 'Green',      body:'#4a7c4e', rim:'#3a6040', rimI:'#2d5032', ridge:'#375c3c', base:'#375c3c' },
     { id: 'grey',   lbl: 'Grey',       body:'#7a7a7a', rim:'#636363', rimI:'#525252', ridge:'#5e5e5e', base:'#5e5e5e' },
     { id: 'brown',  lbl: 'Dark brown', body:'#5c3317', rim:'#4a2810', rimI:'#3a1e0a', ridge:'#472e12', base:'#472e12' },
+    { id: 'purple', lbl: 'Purple',      body:'#7c3aed', rim:'#6d28d9', rimI:'#5b21b6', ridge:'#6527c4', base:'#6527c4' },
+    { id: 'orange', lbl: 'Orange',      body:'#ea580c', rim:'#c2410c', rimI:'#9a3412', ridge:'#b23a0a', base:'#b23a0a' },
+    { id: 'skyblue',lbl: 'Sky blue',    body:'#0ea5e9', rim:'#0284c7', rimI:'#0369a1', ridge:'#027ab8', base:'#027ab8' },
 ];
 
 // Build palette from a color preset id (default terracotta)
@@ -2890,7 +2893,22 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
         var rec = (genotypes||[]).find(function(g){ return g.name === f.genotype; });
         setGenoDesc(rec ? (rec.description||'') : '');
     }, [f.genotype]);
-    const allGenos = useMemo(() => [...new Set((allPlants || []).map(p => p.genotype).filter(Boolean))], [allPlants]);
+    // Suggestions: registry full names first, then any pot genotypes not in registry
+    const allGenos = useMemo(function() {
+        var regNames = (genotypes || []).map(function(g){ return g.name; });
+        var potNames = (allPlants || []).map(function(p){ return p.genotype; }).filter(Boolean);
+        return [...new Set(regNames.concat(potNames))];
+    }, [allPlants, genotypes]);
+    // For autocomplete: also match shortcuts → show full name
+    const genoSuggestions = useMemo(function() {
+        // Build list: each entry is the full name; shortcut listed for matching
+        return (genotypes || []).map(function(g){
+            return { label: g.name, shortcut: g.shortcut || '', desc: g.description || '' };
+        }).concat(
+            allGenos.filter(function(n){ return !(genotypes||[]).find(function(g){ return g.name===n; }); })
+                    .map(function(n){ return { label:n, shortcut:'', desc:'' }; })
+        );
+    }, [genotypes, allGenos]);
     const allTrts = useMemo(() => [...new Set((allPlants || []).map(p => p.treatment).filter(Boolean))], [allPlants]);
     const userNames = useMemo(() => (users || []).map(u => u.name), [users]);
     const DISEASES = ['Powdery mildew', 'Botrytis', 'Alternaria', 'TMV', 'Fusarium wilt', 'Pythium', 'Downy mildew', 'Root rot', 'Bacterial wilt', 'Mosaic virus'];
@@ -2959,28 +2977,17 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
             React.createElement("div", null,
                 React.createElement("label", { className: "fl", style:{display:'flex',alignItems:'center',justifyContent:'space-between'} },
                     React.createElement('span', null, 'Genotype'),
-                    f.genotype && React.createElement('span', {
-                        style:{fontSize:9,color:'var(--fo3)',fontWeight:600,letterSpacing:'.04em'}
-                    }, 'LOCKED — click ✕ to change')
+                    f.genotype && React.createElement('span', { style:{fontSize:9,color:'var(--fo3)',fontWeight:600} }, '✓ set')
                 ),
-                f.genotype
-                    ? React.createElement('div', { style:{display:'flex',alignItems:'center',gap:6} },
-                        React.createElement('div', {
-                            style:{flex:1,background:'var(--ll)',border:'2px solid var(--ld)',borderRadius:8,padding:'7px 10px',
-                                   fontSize:14,fontWeight:700,color:'var(--fo2)',fontFamily:'Inter,monospace',letterSpacing:'.02em'}
-                        }, f.genotype),
-                        React.createElement('button', {
-                            title:'Clear genotype and enter a new one',
-                            onClick:function(e){ e.stopPropagation(); set('genotype',''); },
-                            style:{background:'#fee2e2',border:'1.5px solid #fca5a5',borderRadius:6,
-                                   width:28,height:28,display:'flex',alignItems:'center',justifyContent:'center',
-                                   cursor:'pointer',color:'#b91c1c',fontSize:15,flexShrink:0,fontWeight:700}
-                        }, '✕')
-                      )
-                    : React.createElement(Autocomplete, { value: f.genotype, onChange: function(v){ set('genotype', v); }, onKeyDown: onKey,
-                          suggestions: allGenos, placeholder: 'e.g. Col-0, wrky33...', inputRef: gref, big: true,
-                          onDeleteSuggestion: function(geno){ if (window.confirm('Remove genotype "' + geno + '" from ALL pots? The pots will become empty (not deleted).')) { onSave(null, geno); } }
-                      })
+                React.createElement(GenotypeAutocomplete, {
+                    value: f.genotype,
+                    suggestions: genoSuggestions,
+                    genotypes: genotypes,
+                    inputRef: gref,
+                    onKeyDown: onKey,
+                    onChange: function(v){ set('genotype', v); },
+                    onDeleteSuggestion: function(geno){ if (window.confirm('Remove genotype "' + geno + '" from ALL pots?')) { onSave(null, geno); } }
+                })
             ),
             React.createElement("div", null,
                 React.createElement("label", { className: "fl" }, "Treatment"),
@@ -3831,7 +3838,8 @@ function TeamPage({ users, curUser, onUpdate, onDel, onAdd }) {
                     React.createElement("option", { value: "member" }, "Member"))),
             React.createElement("div", { className: "mof" },
                 React.createElement("label", { className: "mol" }, "Color"),
-                React.createElement("div", { style: { display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap' } }, ['#4e9e72', '#3b82f6', '#ec4899', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16'].map(c => React.createElement("div", { key: c, className: `csw${f.color === c ? ' on' : ''}`, style: { background: c }, onClick: () => set('color', c) })))))));
+                React.createElement("div", { style: { display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap' } }, ['#4e9e72','#3b82f6','#ec4899','#f59e0b','#8b5cf6','#ef4444','#06b6d4','#84cc16',
+      '#10b981','#f97316','#6366f1','#14b8a6','#d946ef','#0ea5e9','#dc2626','#78C043'].map(c => React.createElement("div", { key: c, className: `csw${f.color === c ? ' on' : ''}`, style: { background: c }, onClick: () => set('color', c) })))))));
 }
 /* Login */
 /* Lab selection — labs stored in Firestore so all devices share the same lab IDs */
@@ -4625,14 +4633,40 @@ function upsertGenotypeDesc(data, name, description) {
     if (idx >= 0) {
         updated = existing.map(function(g, i){ return i === idx ? Object.assign({}, g, { description: description, updated_at: new Date().toISOString() }) : g; });
     } else {
-        updated = existing.concat([{ name: name, description: description, updated_at: new Date().toISOString() }]);
+        updated = existing.concat([{ id: uid(), name: name, shortcut: '', description: description, updated_at: new Date().toISOString() }]);
     }
     return Object.assign({}, data, { genotypes: updated });
+}
+function upsertGenotypeRecord(data, rec) {
+    // rec = { id?, name, shortcut, description }
+    var existing = (data.genotypes || []);
+    var idx = rec.id ? existing.findIndex(function(g){ return g.id === rec.id; })
+                     : existing.findIndex(function(g){ return g.name === rec.name; });
+    var entry = Object.assign({ id: uid(), shortcut: '', description: '' }, rec, { updated_at: new Date().toISOString() });
+    var updated = idx >= 0
+        ? existing.map(function(g, i){ return i === idx ? entry : g; })
+        : existing.concat([entry]);
+    return Object.assign({}, data, { genotypes: updated });
+}
+function deleteGenotypeRecord(data, id) {
+    return Object.assign({}, data, { genotypes: (data.genotypes || []).filter(function(g){ return g.id !== id; }) });
 }
 function lookupGenotypeDesc(data, name) {
     if (!name) return '';
     var rec = (data.genotypes || []).find(function(g){ return g.name === name; });
     return rec ? (rec.description || '') : '';
+}
+// Resolve a typed value (shortcut OR partial name) → full name from registry
+function resolveGenotype(genotypes, typed) {
+    if (!typed) return typed;
+    var lc = typed.toLowerCase();
+    // Exact full name match
+    var exact = (genotypes || []).find(function(g){ return g.name === typed; });
+    if (exact) return exact.name;
+    // Exact shortcut match
+    var sc = (genotypes || []).find(function(g){ return g.shortcut && g.shortcut.toLowerCase() === lc; });
+    if (sc) return sc.name;
+    return typed; // keep as-is (free text)
 }
 // ── Local-First Merge ─────────────────────────────────────────────────────
 // Merges server state with local state, preserving local-only objects
@@ -5054,14 +5088,14 @@ function AddTreatmentInline({ userNames, onAdd }) {
         React.createElement('input', { className:'fi', placeholder:'Treatment name (e.g. +SA, Mock)', value:f.label,
             onChange:function(e){ patch('label', e.target.value); } }),
         React.createElement('div', { style:{display:'flex',gap:6} },
-            React.createElement('input', { className:'fi', placeholder:'Dosage (e.g. 1mM)', style:{flex:1}, value:f.dosage,
+            React.createElement('input', { className:'fi', placeholder:'Dosage e.g. 1mM', style:{flex:1}, value:f.dosage,
                 onChange:function(e){ patch('dosage', e.target.value); } }),
             React.createElement('input', { className:'fi', type:'datetime-local', style:{flex:1}, value:f.datetime,
                 onChange:function(e){ patch('datetime', e.target.value); } })
         ),
         React.createElement('select', { className:'fi', value:f.technician, style:{fontSize:11},
             onChange:function(e){ patch('technician', e.target.value); } },
-            React.createElement('option', { value:'' }, '— Technician —'),
+            React.createElement('option', { value:'' }, 'Name…'),
             (userNames||[]).map(function(u){ return React.createElement('option', {key:u, value:u}, u); })
         ),
         React.createElement('div', { style:{display:'flex',gap:6,justifyContent:'flex-end'} },
@@ -5082,6 +5116,280 @@ function NotesEditor({ value, onChange }) {
         placeholder: 'Observations…',
         style:{resize:'vertical',minHeight:70}
     });
+}
+
+// ── Genotype Registry ─────────────────────────────────────────────────────
+function GenotypeRegistry({ genotypes, plants, onSave, onDelete }) {
+    var [editId, setEditId]   = React.useState(null); // null = adding new
+    var [showForm, setShowForm] = React.useState(false);
+    var [fm, setFm] = React.useState({ name:'', shortcut:'', description:'' });
+    var [search, setSearch]   = React.useState('');
+    var [confirmDel, setConfirmDel] = React.useState(null);
+
+    function openAdd() { setFm({ name:'', shortcut:'', description:'' }); setEditId(null); setShowForm(true); }
+    function openEdit(g) { setFm({ name:g.name, shortcut:g.shortcut||'', description:g.description||'' }); setEditId(g.id); setShowForm(true); }
+    function cancel() { setShowForm(false); setEditId(null); }
+    function patch(k, v) { setFm(function(p){ return Object.assign({},p,{[k]:v}); }); }
+
+    function submit() {
+        if (!fm.name.trim()) return;
+        onSave({ id: editId || undefined, name: fm.name.trim(), shortcut: fm.shortcut.trim().toLowerCase(), description: fm.description.trim() });
+        setShowForm(false); setEditId(null);
+    }
+
+    var filtered = React.useMemo(function() {
+        var q = search.toLowerCase();
+        if (!q) return genotypes || [];
+        return (genotypes || []).filter(function(g) {
+            return g.name.toLowerCase().includes(q) ||
+                   (g.shortcut && g.shortcut.toLowerCase().includes(q)) ||
+                   (g.description && g.description.toLowerCase().includes(q));
+        });
+    }, [genotypes, search]);
+
+    // Count pots per genotype
+    var potCounts = React.useMemo(function() {
+        var m = {};
+        (plants || []).forEach(function(p){ if (p.genotype) m[p.genotype] = (m[p.genotype]||0)+1; });
+        return m;
+    }, [plants]);
+
+    return React.createElement('div', { style:{display:'flex',flexDirection:'column',flex:1,minHeight:0,overflow:'hidden'} },
+
+        // Header
+        React.createElement('div', { style:{display:'flex',alignItems:'center',gap:10,padding:'14px 20px',borderBottom:'1px solid var(--bo)',flexShrink:0} },
+            React.createElement('div', { style:{flex:1} },
+                React.createElement('div', { style:{fontWeight:700,fontSize:14,color:'var(--i1)'} }, '🧬 Genotype Registry'),
+                React.createElement('div', { style:{fontSize:11,color:'var(--i4)',marginTop:1} }, (genotypes||[]).length + ' genotypes · shortcuts resolve to full names in pot details')
+            ),
+            React.createElement('button', { className:'btn btnp bsm', onClick:openAdd }, '+ Add Genotype')
+        ),
+
+        // Search
+        React.createElement('div', { style:{padding:'10px 20px',borderBottom:'1px solid var(--bo)',flexShrink:0} },
+            React.createElement('input', { className:'fi', placeholder:'Search by name, shortcut or description…', value:search,
+                onChange:function(e){setSearch(e.target.value);},
+                style:{width:'100%',boxSizing:'border-box'} })
+        ),
+
+        // Add / Edit form
+        showForm && React.createElement('div', { style:{padding:'14px 20px',background:'var(--ll)',borderBottom:'2px solid var(--ld)',flexShrink:0} },
+            React.createElement('div', { style:{fontWeight:600,fontSize:12,color:'var(--fo2)',marginBottom:10} },
+                editId ? 'Edit Genotype' : 'Add New Genotype'),
+            React.createElement('div', { style:{display:'flex',gap:8,flexWrap:'wrap',marginBottom:8} },
+                React.createElement('div', { style:{flex:'2 1 180px'} },
+                    React.createElement('label', { className:'fl', style:{fontSize:10} }, 'Full Name'),
+                    React.createElement('input', { className:'fi', placeholder:'e.g. pFIL>>CKX3 or pAt2g14140::GFP-NahG',
+                        value:fm.name, onChange:function(e){patch('name',e.target.value);} })
+                ),
+                React.createElement('div', { style:{flex:'1 1 100px'} },
+                    React.createElement('label', { className:'fl', style:{fontSize:10} }, 'Shortcut / Alias'),
+                    React.createElement('input', { className:'fi', placeholder:'e.g. ckx',
+                        value:fm.shortcut, onChange:function(e){patch('shortcut',e.target.value.toLowerCase());} })
+                )
+            ),
+            React.createElement('div', { style:{marginBottom:10} },
+                React.createElement('label', { className:'fl', style:{fontSize:10} }, 'Description'),
+                React.createElement('textarea', { className:'fta', rows:2, placeholder:'Mutation, background, notes…',
+                    value:fm.description, onChange:function(e){patch('description',e.target.value);},
+                    style:{resize:'none'} })
+            ),
+            React.createElement('div', { style:{display:'flex',gap:8} },
+                React.createElement('button', { className:'btn btnp bsm', onClick:submit, disabled:!fm.name.trim() },
+                    editId ? 'Save Changes' : 'Add to Registry'),
+                React.createElement('button', { className:'btn btns bsm', onClick:cancel }, 'Cancel')
+            )
+        ),
+
+        // Table
+        React.createElement('div', { style:{flex:1,minHeight:0,overflowY:'auto',padding:'0 20px 20px',WebkitOverflowScrolling:'touch'} },
+            filtered.length === 0
+                ? React.createElement('div', { style:{padding:'40px 0',textAlign:'center',color:'var(--i4)'} },
+                    React.createElement('div', { style:{fontSize:32,opacity:.3,marginBottom:8} }, '🧬'),
+                    React.createElement('div', { style:{fontSize:13} }, search ? 'No matches' : 'Registry is empty — add genotypes above'),
+                    !search && React.createElement('div', { style:{fontSize:11,marginTop:4,color:'var(--i5)'} }, 'Shortcuts let you type "ckx" and get "pFIL>>CKX3" in pot details')
+                  )
+                : React.createElement('table', { style:{width:'100%',borderCollapse:'collapse',fontSize:12,marginTop:12} },
+                    React.createElement('thead', null,
+                        React.createElement('tr', null,
+                            ['Full Name','Shortcut','Description','Pots',''].map(function(h,i){
+                                return React.createElement('th', { key:i, style:{textAlign:'left',padding:'6px 10px',borderBottom:'2px solid var(--bo)',
+                                    fontSize:10,fontWeight:700,color:'var(--i4)',textTransform:'uppercase',letterSpacing:'.07em',
+                                    width:i===4?'72px':i===3?'44px':undefined} }, h);
+                            })
+                        )
+                    ),
+                    React.createElement('tbody', null,
+                        filtered.map(function(g) {
+                            var cnt = potCounts[g.name] || 0;
+                            var isEditing = editId === g.id && showForm;
+                            return React.createElement('tr', { key:g.id||g.name,
+                                style:{borderBottom:'1px solid var(--bo)',background:isEditing?'var(--ll)':'transparent'} },
+                                React.createElement('td', { style:{padding:'8px 10px',fontWeight:600,color:'var(--i1)',
+                                    fontFamily:'Inter,monospace',wordBreak:'break-all',maxWidth:200} }, g.name),
+                                React.createElement('td', { style:{padding:'8px 10px'} },
+                                    g.shortcut
+                                        ? React.createElement('span', { style:{background:'#e0f2fe',color:'#0369a1',borderRadius:5,
+                                            padding:'2px 7px',fontSize:10,fontWeight:700,fontFamily:'monospace'} }, g.shortcut)
+                                        : React.createElement('span', { style:{color:'var(--i5)',fontSize:10} }, '—')
+                                ),
+                                React.createElement('td', { style:{padding:'8px 10px',color:'var(--i3)',fontSize:11,
+                                    maxWidth:260,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'} },
+                                    g.description || React.createElement('span', { style:{color:'var(--i5)'} }, '—')),
+                                React.createElement('td', { style:{padding:'8px 10px',textAlign:'center'} },
+                                    cnt > 0
+                                        ? React.createElement('span', { style:{background:'var(--fo2)',color:'#fff',borderRadius:20,padding:'1px 7px',fontSize:10,fontWeight:700} }, cnt)
+                                        : React.createElement('span', { style:{color:'var(--i5)',fontSize:10} }, '0')
+                                ),
+                                React.createElement('td', { style:{padding:'8px 10px'} },
+                                    React.createElement('div', { style:{display:'flex',gap:4,justifyContent:'flex-end'} },
+                                        React.createElement('button', { className:'btn btns bxs', onClick:function(){openEdit(g);},
+                                            style:{fontSize:10,padding:'3px 8px'} }, 'Edit'),
+                                        confirmDel === (g.id||g.name)
+                                            ? React.createElement('button', { className:'btn btnd bxs',
+                                                onClick:function(){ onDelete(g.id||g.name); setConfirmDel(null); },
+                                                style:{fontSize:10,padding:'3px 8px'} }, 'Confirm?')
+                                            : React.createElement('button', { className:'btn btnd bxs',
+                                                onClick:function(){ setConfirmDel(g.id||g.name); },
+                                                style:{fontSize:10,padding:'3px 8px',opacity:.7} }, 'Delete')
+                                    )
+                                )
+                            );
+                        })
+                    )
+                )
+        ),
+
+        // Confirm delete modal
+        confirmDel && React.createElement('div', null)
+    );
+}
+
+// ── Genotype Autocomplete — supports shortcuts + long names ──────────────
+function GenotypeAutocomplete({ value, onChange, suggestions, genotypes, inputRef, onKeyDown, onDeleteSuggestion }) {
+    var [open, setOpen] = React.useState(false);
+    var [hi, setHi]     = React.useState(-1);
+    var wrap = React.useRef();
+    var [dropRect, setDropRect] = React.useState(null);
+
+    // Filter suggestions by typed value: match full name OR shortcut
+    var filtered = React.useMemo(function() {
+        var lv = (value || '').toLowerCase();
+        if (!lv) return suggestions.slice(0, 12);
+        return suggestions.filter(function(s) {
+            return s.label.toLowerCase().includes(lv) ||
+                   (s.shortcut && s.shortcut.toLowerCase().includes(lv));
+        }).slice(0, 12);
+    }, [value, suggestions]);
+
+    React.useEffect(function(){ setHi(-1); }, [filtered.length]);
+
+    React.useEffect(function() {
+        var fn = function(e) { if (wrap.current && !wrap.current.contains(e.target)) setOpen(false); };
+        document.addEventListener('mousedown', fn);
+        document.addEventListener('touchstart', fn, { passive: true });
+        return function() { document.removeEventListener('mousedown', fn); document.removeEventListener('touchstart', fn); };
+    }, []);
+
+    function updateRect() {
+        if (wrap.current) {
+            var r = wrap.current.getBoundingClientRect();
+            var vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            var vOffset = window.visualViewport ? window.visualViewport.offsetTop : 0;
+            var spaceBelow = vh - (r.bottom - vOffset);
+            var top = spaceBelow < 200 ? (r.top - vOffset - 200) : (r.bottom - vOffset + 2);
+            setDropRect({ top: top, left: r.left, width: Math.max(r.width, 280) });
+        }
+    }
+
+    function pick(item) {
+        // Resolve shortcut to full name
+        var resolved = item.label;
+        onChange(resolved);
+        setOpen(false); setHi(-1);
+    }
+
+    function hKey(e) {
+        if (!open || !filtered.length) { if (onKeyDown) onKeyDown(e); return; }
+        if (e.key === 'ArrowDown') { e.preventDefault(); setHi(function(h){ return Math.min(h+1, filtered.length-1); }); }
+        else if (e.key === 'ArrowUp')  { e.preventDefault(); setHi(function(h){ return Math.max(h-1, -1); }); }
+        else if (e.key === 'Enter' && hi >= 0) { e.preventDefault(); pick(filtered[hi]); }
+        else if (e.key === 'Escape') { setOpen(false); }
+        else if (e.key === 'Tab' && hi >= 0) { e.preventDefault(); pick(filtered[hi]); }
+        else if ((e.key === 'Enter' || e.key === 'Tab') && hi < 0) {
+            // No dropdown selection — try shortcut resolve
+            var lc = (value || '').toLowerCase();
+            var sc = (genotypes||[]).find(function(g){ return g.shortcut && g.shortcut.toLowerCase() === lc; });
+            if (sc && sc.name !== value) { e.preventDefault(); onChange(sc.name); setOpen(false); return; }
+            if (onKeyDown) onKeyDown(e);
+        }
+        else if (onKeyDown) { onKeyDown(e); }
+    }
+
+    var dropdown = open && filtered.length > 0 && dropRect
+        ? ReactDOM.createPortal(
+            React.createElement('div', { className: 'ac-drop',
+                style:{ position:'fixed', top:dropRect.top, left:dropRect.left, width:dropRect.width, zIndex:99999, maxHeight:220, overflowY:'auto' }
+            },
+            filtered.map(function(item, i) {
+                // Highlight matching shortcut
+                var shortcutMatch = item.shortcut && (value||'').toLowerCase() && item.shortcut.toLowerCase().includes((value||'').toLowerCase());
+                return React.createElement('div', { key:item.label,
+                    className: 'ac-item' + (hi===i?' hi':''),
+                    style:{ display:'flex', alignItems:'center', gap:8, padding:'6px 10px' }
+                },
+                    React.createElement('div', { style:{flex:1,minWidth:0} },
+                        React.createElement('div', { style:{fontWeight:600,fontSize:12,color:'var(--i1)',
+                            wordBreak:'break-all',fontFamily:'Inter,monospace'} }, item.label),
+                        (item.shortcut || item.desc) && React.createElement('div', { style:{fontSize:10,color:'var(--i4)',marginTop:1,display:'flex',gap:6} },
+                            item.shortcut && React.createElement('span', {
+                                style:{background: shortcutMatch?'#dbeafe':'#f1f5f9',color: shortcutMatch?'#1d4ed8':'var(--i4)',
+                                    borderRadius:3,padding:'0 4px',fontFamily:'monospace',fontWeight:700}
+                            }, item.shortcut),
+                            item.desc && React.createElement('span', { style:{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'} }, item.desc)
+                        )
+                    ),
+                    onDeleteSuggestion && React.createElement('span', {
+                        style:{ color:'#ef4444', fontSize:13, padding:'2px 4px', cursor:'pointer', flexShrink:0 },
+                        onMouseDown: function(e){ e.preventDefault(); e.stopPropagation(); onDeleteSuggestion(item.label); setOpen(false); },
+                        onTouchEnd: function(e){ e.preventDefault(); e.stopPropagation(); onDeleteSuggestion(item.label); setOpen(false); }
+                    }, '×')
+                );
+            })
+        ), document.body)
+        : null;
+
+    return React.createElement('div', { className:'ac-wrap', ref:wrap, style:{position:'relative'} },
+        React.createElement('input', {
+            ref: inputRef,
+            className: 'fi big',
+            value: value,
+            onChange: function(e){ onChange(e.target.value); setOpen(true); updateRect(); },
+            onFocus: function(){ updateRect(); setOpen(true); },
+            onBlur: function() {
+                // Resolve shortcut on blur — slight delay to allow dropdown click to fire first
+                setTimeout(function() {
+                    if (!value) return;
+                    var lc = value.toLowerCase();
+                    var sc = (genotypes||[]).find(function(g){ return g.shortcut && g.shortcut.toLowerCase() === lc; });
+                    if (sc && sc.name !== value) { onChange(sc.name); }
+                }, 180);
+            },
+            onKeyDown: hKey,
+            placeholder: 'Full name or shortcut (e.g. ckx → pFIL>>CKX3)',
+            autoComplete: 'off',
+            style:{
+                fontFamily:'Inter,monospace',
+                fontSize: value && value.length > 20 ? 11 : 13,
+                height: 'auto',
+                minHeight: 34,
+                whiteSpace: 'normal',
+                wordBreak: 'break-all',
+                overflowWrap: 'break-word'
+            }
+        }),
+        dropdown
+    );
 }
 
 function App() {
@@ -6052,6 +6360,16 @@ useEffect(() => {
             })});
         });
     };
+    const saveGenotype = function(rec) {
+        forceWriteRef.current = true;
+        setData(function(d){ return upsertGenotypeRecord(d, rec); });
+        notify('Genotype saved');
+    };
+    const deleteGenotype = function(id) {
+        forceWriteRef.current = true;
+        setData(function(d){ return deleteGenotypeRecord(d, id); });
+        notify('Genotype removed');
+    };
     const deleteMilestone = (expId, msId) => {
         forceWriteRef.current = true;
         setData(function(d) {
@@ -6198,6 +6516,12 @@ useEffect(() => {
                             React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>' } })
                         ),
                         "Timeline"
+                    ),
+                    React.createElement("button", { className: `nav-btn${tab === 'registry' ? ' on' : ''}`, onClick: () => { setTab('registry'); setMenuOpen(false); setTblSelMode(false); setSelTbls(new Set()); } },
+                        React.createElement("div", { className: "nav-icon", style: { background: tab === 'registry' ? 'rgba(255,255,255,.22)' : '#78C0431A', color: tab === 'registry' ? '#fff' : '#78C043' } },
+                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>' } })
+                        ),
+                        "Registry"
                     ),
                     React.createElement("button", { className: `nav-btn${tab === 'dash' ? ' on' : ''}`, onClick: () => { setTab('dash'); setMenuOpen(false); if ('dash' !== 'layout') { setTblSelMode(false); setSelTbls(new Set()); } } },
                         React.createElement("div", { className: "nav-icon", style: { background: tab === 'dash' ? 'rgba(255,255,255,.22)' : '#4DB6AC1A', color: tab === 'dash' ? '#fff' : '#4DB6AC' } },
@@ -6471,6 +6795,12 @@ useEffect(() => {
                         ),
                         "Dashboard"
                     ),
+                    React.createElement("button", { key: 'registry', className: `tab-btn${tab === 'registry' ? ' on' : ''}`, onClick: () => { setTab('registry'); setMenuOpen(false); setTblSelMode(false); setSelTbls(new Set()); } },
+                        React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='registry' ? 'rgba(255,255,255,.22)' : '#78C0431A', color: tab==='registry' ? '#fff' : '#78C043', marginRight:1 } },
+                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><ellipse cx=\"12\" cy=\"5\" rx=\"9\" ry=\"3\"/><path d=\"M21 12c0 1.66-4 3-9 3s-9-1.34-9-3\"/><path d=\"M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5\"/></svg>' } })
+                        ),
+                        "Registry"
+                    ),
                     React.createElement("button", { key: 'notes', className: `tab-btn${tab === 'notes' ? ' on' : ''}`, onClick: () => { setTab('notes'); setMenuOpen(false); } },
                         React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='notes' ? 'rgba(255,255,255,.22)' : '#F472B61A', color: tab==='notes' ? '#fff' : '#F472B6', marginRight:1 } },
                             React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/></svg>' } })
@@ -6659,6 +6989,7 @@ useEffect(() => {
                 tab === 'orders' && React.createElement(OrdersView, { orders: data.orders||[], users: data.users, curUser: user, exps: data.experiments||[], onAdd: addOrder, onUpd: updOrder, onDel: delOrder, syncStatus: syncStatus }),
                 tab === 'schedule' && React.createElement(ScheduleView, { tables: data.tables, users: data.users, schedules: data.schedules||[], onAdd: addSchedule, onDel: delSchedule, currentUser: user ? user.name : '' }),
                 tab === 'timeline' && React.createElement(ExperimentTimelineView, { experiments: data.experiments || [], onSaveMilestone: saveMilestone, onDeleteMilestone: deleteMilestone, currentUser: user }),
+                tab === 'registry' && React.createElement(GenotypeRegistry, { genotypes: data.genotypes || [], plants: data.plants || [], onSave: saveGenotype, onDelete: deleteGenotype }),
                 tab === 'dash' && React.createElement(DashView, { greenhouses: data.greenhouses, tables: data.tables, structs: data.structs || [], plants: data.plants || [], experiments: data.experiments || [] }))),
 
             React.createElement("div", { className: "mob-bottom-nav" },
