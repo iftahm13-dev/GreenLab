@@ -1084,6 +1084,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
    );
    alter table lab_data enable row level security;
    create policy "anon all" on lab_data for all using (true) with check (true);
+   alter table lab_data replica identity full;
    alter publication supabase_realtime add table lab_data;
    ─────────────────────────────────────────────
 ════════════════════════════════════════════════ */
@@ -1119,9 +1120,9 @@ function sbRead(labId) {
     return sb.from('lab_data').select('data').eq('lab_id', labId).single()
         .then(function(res) {
             if (res.error) {
-                if (res.error.code === 'PGRST116') return null; // row not found — first run
-                dbgErr('[Fetch] sbRead error: ' + res.error.message);
-                throw new Error(res.error.message);
+                if (res.error.code === 'PGRST116') { dbgLog('[Fetch] No row yet for lab — will seed'); return null; }
+                dbgErr('[Fetch] sbRead ERROR code:' + res.error.code + ' — ' + res.error.message);
+                throw new Error(res.error.code + ': ' + res.error.message);
             }
             var rec = res.data ? res.data.data : null;
             if (rec) {
@@ -1142,14 +1143,17 @@ function sbWrite(labId, data) {
         .then(function(res) {
             if (res.error) {
                 var msg = res.error.message;
-                if (res.error.code === '42501' || msg.indexOf('policy') !== -1) {
-                    dbgErr('[Write] RLS POLICY blocked write — run SQL policies in Supabase dashboard');
+                var code = res.error.code || 'no-code';
+                if (code === '42501' || msg.indexOf('policy') !== -1) {
+                    dbgErr('[Write] RLS BLOCKED (code:' + code + ') — run: create policy "anon all" on lab_data for all using (true) with check (true);');
+                } else if (code === '23505') {
+                    dbgErr('[Write] CONFLICT (code:23505) — upsert key conflict, check lab_id');
                 } else {
-                    dbgErr('[Write] Supabase write error: ' + msg);
+                    dbgErr('[Write] ERROR code:' + code + ' — ' + msg);
                 }
-                throw new Error(msg);
+                throw new Error(code + ': ' + msg);
             }
-            dbgLog('[Write] Supabase 200 OK — ' + sizeKB + 'KB confirmed');
+            dbgLog('[Write] Supabase OK — ' + sizeKB + 'KB written (lab:' + labId + ')');
             return res;
         });
 }
@@ -5084,36 +5088,84 @@ useEffect(() => {
 
         function startRealtimeSub() {
             var sb = getSB();
-            if (!sb) { startFallbackPoll(); return; }
+            if (!sb) { dbgWarn('[Realtime] No SB client — fallback poll'); startFallbackPoll(); return; }
             try {
-                realtimeChannel = sb.channel('lab_' + activeLab.id)
+                // NOTE: No row-level filter here — Supabase free tier requires
+                // REPLICA IDENTITY FULL for filtered subscriptions to work.
+                // We subscribe to ALL lab_data changes and filter client-side.
+                realtimeChannel = sb.channel('gl_lab_data_all')
                     .on('postgres_changes', {
                         event: '*',
                         schema: 'public',
-                        table: 'lab_data',
-                        filter: 'lab_id=eq.' + activeLab.id
+                        table: 'lab_data'
                     }, function(payload) {
-                        dbgLog('[Realtime] Change received — event:' + payload.eventType + ' at ' + new Date().toLocaleTimeString());
+                        // Client-side filter: only handle changes for our lab
+                        var incomingLabId = payload.new && payload.new.lab_id;
+                        dbgLog('[Supabase] Broadcast Received — event:' + payload.eventType + ' lab:' + incomingLabId + ' at ' + new Date().toLocaleTimeString());
+
+                        if (incomingLabId !== activeLab.id) {
+                            dbgLog('[Realtime] Ignored — different lab (' + incomingLabId + ' vs ' + activeLab.id + ')');
+                            return;
+                        }
+
                         var hasPendingWrites = _syncQueue.length > 0 || writeTimerRef.current !== null;
-                        if (!hasPendingWrites && !forceWriteRef.current) {
-                            fetchLabData();
+                        if (hasPendingWrites || forceWriteRef.current) {
+                            dbgLog('[Realtime] Skipped apply — dirty state (Q=' + _syncQueue.length + ' timer=' + !!writeTimerRef.current + ')');
+                            return;
+                        }
+
+                        // Use data from the payload directly — no extra round-trip needed
+                        var remote = payload.new && payload.new.data;
+                        if (remote) {
+                            dbgLog('[Realtime] Applying payload data — tables:' + (remote.tables||[]).length + ' notes:' + (remote.notes||[]).length);
+                            // Version check
+                            if (remote._appVersion && remote._appVersion !== APP_VERSION) {
+                                dbgWarn('[Realtime] Version mismatch — reloading...');
+                                setTimeout(function(){ window.location.reload(true); }, 500);
+                                return;
+                            }
+                            remoteUpdateRef.current = true;
+                            setSyncCount(function(n){ return n + 1; });
+                            idbSave(activeLab.id, remote).catch(function(){});
+                            try { saveLabData(activeLab.id, remote); } catch(e){}
+                            setLastFetchTime(new Date());
+                            setData(function(localData) {
+                                return loadImages(mergeRemoteData(remote, localData));
+                            });
+                            if (remote.greenhouses && remote.greenhouses.length > 0) {
+                                setGhId(function(cur){ return cur || remote.greenhouses[0].id; });
+                            }
+                            setUser(function(cur) {
+                                if (cur) return cur;
+                                try {
+                                    var lastUid = localStorage.getItem('gl_last_user');
+                                    if (lastUid && remote.users) return remote.users.find(function(u){ return u.id === lastUid; }) || null;
+                                } catch(e) {}
+                                return null;
+                            });
+                            setSyncStatus(function(cur) {
+                                return (cur === 'pending' || cur === 'saving') ? cur : 'synced';
+                            });
                         } else {
-                            dbgLog('[Realtime] Skipped — dirty state (Q=' + _syncQueue.length + ')');
+                            // No payload data (DELETE event or empty) — do a fresh fetch
+                            dbgLog('[Realtime] No payload data — fetching from DB...');
+                            fetchLabData();
                         }
                     })
                     .subscribe(function(status) {
-                        dbgLog('[Realtime] Status: ' + status);
+                        dbgLog('[Realtime] Channel status: ' + status);
                         if (status === 'SUBSCRIBED') {
-                            dbgLog('[Realtime] Live — instant sync active');
+                            dbgLog('[Realtime] Live — instant cross-device sync active');
                             if (pollId) { clearInterval(pollId); pollId = null; }
                         }
                         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-                            dbgWarn('[Realtime] Connection issue — starting 30s fallback poll');
+                            dbgWarn('[Realtime] WebSocket issue — starting 30s fallback poll');
                             startFallbackPoll();
                         }
                     });
+                dbgLog('[Realtime] Subscribing to lab_data table (all rows, client-side filtered)...');
             } catch(e) {
-                dbgErr('[Realtime] Setup failed: ' + e.message + ' — starting fallback poll');
+                dbgErr('[Realtime] Setup threw: ' + e.message + ' — starting fallback poll');
                 startFallbackPoll();
             }
         }
