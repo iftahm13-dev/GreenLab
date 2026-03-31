@@ -479,11 +479,13 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .sync-chip.error{background:#fef2f2;border-color:#fca5a5;color:#991b1b;cursor:pointer}
 .sync-chip.nosync{background:var(--cr2);border-color:var(--bo);color:var(--i4)}
 .sync-chip.synced{background:var(--ll);border-color:var(--ld);color:#166534}
+.sync-chip.poll{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
 .sync-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;transition:background .3s}
 .sync-dot.saving{background:#f59e0b;animation:pulse-dot 1s ease-in-out infinite}
 .sync-dot.pending{background:#3b82f6;animation:pulse-dot .8s ease-in-out infinite}
 .sync-dot.loading{background:#9ca3af;animation:pulse-dot 1.2s ease-in-out infinite}
 .sync-dot.saved,.sync-dot.synced{background:#78C043}
+.sync-dot.poll{background:#f97316;animation:pulse-dot 2s ease-in-out infinite}
 .sync-dot.error{background:#ef4444;animation:pulse-dot .6s ease-in-out infinite}
 .sync-dot.nosync{background:var(--i5)}
 @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
@@ -4308,7 +4310,7 @@ function DashView({ greenhouses, tables, structs, plants, experiments }) {
    2. Replace loadData() with onSnapshot listener
    3. The syncStatus state machine below stays the same
 ════════════════════════════════════════════════ */
-function SyncStatusChip({ status, lastSaved, lastBy, onClick, uploadProgress, queueLen }) {
+function SyncStatusChip({ status, lastSaved, lastBy, onClick, uploadProgress, queueLen, rtLive }) {
     var warnRef = React.useRef(null);
     var [overdue, setOverdue] = React.useState(false);
     React.useEffect(function() {
@@ -4328,7 +4330,8 @@ function SyncStatusChip({ status, lastSaved, lastBy, onClick, uploadProgress, qu
         : status === 'pending'  ? 'Sending to server…'
         : status === 'loading'  ? 'Loading…'
         : status === 'saved'    ? 'Saved locally (not synced)'
-        : status === 'synced'   ? '✓ Synced'
+        : status === 'synced'   ? '✓ Synced (Live)'
+        : status === 'poll'    ? '⚠ Synced (polling)'
         : status === 'error'    ? 'Sync failed — tap to retry'
         : overdue               ? 'Unsynced > 30s — tap to retry'
         : 'Not saved';
@@ -4349,6 +4352,12 @@ function SyncStatusChip({ status, lastSaved, lastBy, onClick, uploadProgress, qu
         queueLen > 0 && React.createElement('span', {
             style:{ background:'#ef4444', color:'#fff', borderRadius:10, fontSize:8, fontWeight:700, padding:'1px 5px', marginLeft:2, letterSpacing:'.02em' }
         }, queueLen + ' queued'),
+        React.createElement('span', {
+            title: rtLive ? 'Supabase WebSocket: LIVE' : 'Supabase WebSocket: offline (polling)',
+            style:{ width:5, height:5, borderRadius:'50%', flexShrink:0, marginLeft:1,
+                    background: rtLive ? '#22c55e' : '#f97316',
+                    boxShadow: rtLive ? '0 0 0 2px rgba(34,197,94,.25)' : '0 0 0 2px rgba(249,115,22,.25)' }
+        }),
         timeStr && status !== 'saving' && React.createElement('span', { style:{opacity:.65} }, '· ', timeStr)
     );
 }
@@ -4843,7 +4852,8 @@ function App() {
     const [actPot, setActPot] = useState(null);
     const [popup, setPopup] = useState(null);
     const [notif, setNotif] = useState(null);
-    const [syncStatus, setSyncStatus] = useState('saved'); // 'saving'|'saved'|'synced'|'error'
+    const [syncStatus, setSyncStatus] = useState('saved'); // 'saving'|'saved'|'synced'|'error'|'poll'
+    const [rtLive, setRtLive] = useState(false); // true = Supabase WS is SUBSCRIBED
     const [lastSaved, setLastSaved] = useState(null);
     const [lastBy, setLastBy] = useState('');
     const [activityLog, setActivityLog] = useState([]);
@@ -5086,68 +5096,84 @@ useEffect(() => {
         var realtimeChannel = null;
         var pollId = null; // fallback poll handle
 
+        // Tracks whether the WS is currently SUBSCRIBED — read in subscribe callback
+        var _rtSubscribed = false;
+
+        function applyRemotePayload(remote) {
+            // Task 1: tight dirty guard — only block if actively writing right now
+            var hasPendingWrites = _syncQueue.length > 0 || writeTimerRef.current !== null;
+            var msSinceWrite = Date.now() - lastLocalWriteRef.current;
+            if (hasPendingWrites || forceWriteRef.current || msSinceWrite < 2000) {
+                dbgLog('[Realtime] Skipped — dirty (Q=' + _syncQueue.length + ' timer=' + !!writeTimerRef.current + ' msSince=' + msSinceWrite + ')');
+                return;
+            }
+            if (remote._appVersion && remote._appVersion !== APP_VERSION) {
+                dbgWarn('[Realtime] Version mismatch — reloading...');
+                setTimeout(function(){ window.location.reload(true); }, 500);
+                return;
+            }
+            dbgLog('[Realtime] Applying — tables:' + (remote.tables||[]).length + ' notes:' + (remote.notes||[]).length + ' plants:' + (remote.plants||[]).length);
+            // Side-effects outside React first (sync, fast)
+            idbSave(activeLab.id, remote).catch(function(){});
+            try { saveLabData(activeLab.id, remote); } catch(e){}
+            // Task 4: flushSync forces React to render THIS TICK, not on next batch
+            try {
+                ReactDOM.flushSync(function() {
+                    remoteUpdateRef.current = true;
+                    setSyncCount(function(n){ return n + 1; });
+                    setLastFetchTime(new Date());
+                    setData(function(localData) {
+                        return loadImages(mergeRemoteData(remote, localData));
+                    });
+                    if (remote.greenhouses && remote.greenhouses.length > 0) {
+                        setGhId(function(cur){ return cur || remote.greenhouses[0].id; });
+                    }
+                    setUser(function(cur) {
+                        if (cur) return cur;
+                        try {
+                            var lastUid = localStorage.getItem('gl_last_user');
+                            if (lastUid && remote.users) return remote.users.find(function(u){ return u.id === lastUid; }) || null;
+                        } catch(e) {}
+                        return null;
+                    });
+                    setSyncStatus(function(cur) { return (cur === 'pending' || cur === 'saving') ? cur : 'synced'; });
+                });
+            } catch(fsErr) {
+                // flushSync can throw if called during render — fall back to normal batched update
+                dbgWarn('[Realtime] flushSync skipped: ' + fsErr.message);
+                remoteUpdateRef.current = true;
+                setSyncCount(function(n){ return n + 1; });
+                setLastFetchTime(new Date());
+                setData(function(localData) { return loadImages(mergeRemoteData(remote, localData)); });
+                setSyncStatus(function(cur) { return (cur === 'pending' || cur === 'saving') ? cur : 'synced'; });
+            }
+        }
+
         function startRealtimeSub() {
             var sb = getSB();
             if (!sb) { dbgWarn('[Realtime] No SB client — fallback poll'); startFallbackPoll(); return; }
+            // Tear down existing channel cleanly before re-subscribing
+            if (realtimeChannel) {
+                try { sb.removeChannel(realtimeChannel); } catch(e){}
+                realtimeChannel = null;
+                _rtSubscribed = false;
+            }
             try {
-                // NOTE: No row-level filter here — Supabase free tier requires
-                // REPLICA IDENTITY FULL for filtered subscriptions to work.
-                // We subscribe to ALL lab_data changes and filter client-side.
+                // No row-level filter — subscribe to ALL lab_data, filter client-side.
+                // (Row filters require REPLICA IDENTITY FULL which may not be set.)
                 realtimeChannel = sb.channel('gl_lab_data_all')
                     .on('postgres_changes', {
                         event: '*',
                         schema: 'public',
                         table: 'lab_data'
                     }, function(payload) {
-                        // Client-side filter: only handle changes for our lab
                         var incomingLabId = payload.new && payload.new.lab_id;
                         dbgLog('[Supabase] Broadcast Received — event:' + payload.eventType + ' lab:' + incomingLabId + ' at ' + new Date().toLocaleTimeString());
-
-                        if (incomingLabId !== activeLab.id) {
-                            dbgLog('[Realtime] Ignored — different lab (' + incomingLabId + ' vs ' + activeLab.id + ')');
-                            return;
-                        }
-
-                        var hasPendingWrites = _syncQueue.length > 0 || writeTimerRef.current !== null;
-                        if (hasPendingWrites || forceWriteRef.current) {
-                            dbgLog('[Realtime] Skipped apply — dirty state (Q=' + _syncQueue.length + ' timer=' + !!writeTimerRef.current + ')');
-                            return;
-                        }
-
-                        // Use data from the payload directly — no extra round-trip needed
+                        if (incomingLabId !== activeLab.id) return; // different lab, ignore
                         var remote = payload.new && payload.new.data;
                         if (remote) {
-                            dbgLog('[Realtime] Applying payload data — tables:' + (remote.tables||[]).length + ' notes:' + (remote.notes||[]).length);
-                            // Version check
-                            if (remote._appVersion && remote._appVersion !== APP_VERSION) {
-                                dbgWarn('[Realtime] Version mismatch — reloading...');
-                                setTimeout(function(){ window.location.reload(true); }, 500);
-                                return;
-                            }
-                            remoteUpdateRef.current = true;
-                            setSyncCount(function(n){ return n + 1; });
-                            idbSave(activeLab.id, remote).catch(function(){});
-                            try { saveLabData(activeLab.id, remote); } catch(e){}
-                            setLastFetchTime(new Date());
-                            setData(function(localData) {
-                                return loadImages(mergeRemoteData(remote, localData));
-                            });
-                            if (remote.greenhouses && remote.greenhouses.length > 0) {
-                                setGhId(function(cur){ return cur || remote.greenhouses[0].id; });
-                            }
-                            setUser(function(cur) {
-                                if (cur) return cur;
-                                try {
-                                    var lastUid = localStorage.getItem('gl_last_user');
-                                    if (lastUid && remote.users) return remote.users.find(function(u){ return u.id === lastUid; }) || null;
-                                } catch(e) {}
-                                return null;
-                            });
-                            setSyncStatus(function(cur) {
-                                return (cur === 'pending' || cur === 'saving') ? cur : 'synced';
-                            });
+                            applyRemotePayload(remote);
                         } else {
-                            // No payload data (DELETE event or empty) — do a fresh fetch
                             dbgLog('[Realtime] No payload data — fetching from DB...');
                             fetchLabData();
                         }
@@ -5155,17 +5181,31 @@ useEffect(() => {
                     .subscribe(function(status) {
                         dbgLog('[Realtime] Channel status: ' + status);
                         if (status === 'SUBSCRIBED') {
-                            dbgLog('[Realtime] Live — instant cross-device sync active');
+                            _rtSubscribed = true;
+                            setRtLive(true);
+                            dbgLog('[Realtime] ✅ Live — instant cross-device sync active');
                             if (pollId) { clearInterval(pollId); pollId = null; }
+                            // Task 3: green only when WS is live
+                            setSyncStatus(function(cur) {
+                                return (cur === 'poll') ? 'synced' : cur;
+                            });
                         }
                         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-                            dbgWarn('[Realtime] WebSocket issue — starting 30s fallback poll');
+                            _rtSubscribed = false;
+                            setRtLive(false);
+                            dbgWarn('[Realtime] ⚠ WebSocket issue (' + status + ') — orange chip + 30s fallback poll');
+                            // Task 3: orange chip when falling back to poll
+                            setSyncStatus(function(cur) {
+                                return (cur !== 'pending' && cur !== 'saving' && cur !== 'error') ? 'poll' : cur;
+                            });
                             startFallbackPoll();
                         }
                     });
-                dbgLog('[Realtime] Subscribing to lab_data table (all rows, client-side filtered)...');
+                dbgLog('[Realtime] Subscribing to lab_data (all rows, client-side filter)...');
             } catch(e) {
-                dbgErr('[Realtime] Setup threw: ' + e.message + ' — starting fallback poll');
+                dbgErr('[Realtime] Setup threw: ' + e.message);
+                _rtSubscribed = false;
+                setRtLive(false);
                 startFallbackPoll();
             }
         }
@@ -5188,17 +5228,16 @@ useEffect(() => {
         function onVisibilityChange() {
             if (document.visibilityState === 'hidden') {
                 lastHiddenAt = Date.now();
-                console.log('[Sync] App backgrounded');
+                dbgLog('[Sync] App backgrounded');
             } else {
-                // Foreground — immediate fetch if we were hidden for >5s
                 var hiddenMs = Date.now() - lastHiddenAt;
-                console.log('[Sync] App foregrounded after ' + Math.round(hiddenMs/1000) + 's');
-                // Fetch on ANY foreground resume — no minimum hidden time required
-                if (hiddenMs >= 0) {
-                    console.log('[Sync] Force-fetching after resume...');
-                    fetchLabData();
+                dbgLog('[Sync] Foregrounded after ' + Math.round(hiddenMs/1000) + 's — rtLive=' + _rtSubscribed);
+                // Re-subscribe if WebSocket died while tab was inactive
+                if (!_rtSubscribed) {
+                    dbgLog('[Sync] WS dead — re-subscribing...');
+                    startRealtimeSub();
                 }
-                // Poll continues on its own interval
+                fetchLabData();
             }
         }
         document.addEventListener('visibilitychange', onVisibilityChange);
@@ -5208,10 +5247,13 @@ useEffect(() => {
         var lastFocusFetch = 0;
         function onWindowFocus() {
             var now = Date.now();
-            // Debounce: don't double-fire if visibilitychange already handled it
-            if (now - lastFocusFetch < 3000) return;
+            if (now - lastFocusFetch < 3000) return; // debounce
             lastFocusFetch = now;
-            console.log('[Sync] Window focus — fetching...');
+            dbgLog('[Sync] Window focus — rtLive=' + _rtSubscribed);
+            if (!_rtSubscribed) {
+                dbgLog('[Sync] WS not subscribed — re-subscribing on focus...');
+                startRealtimeSub();
+            }
             fetchLabData();
         }
         window.addEventListener('focus', onWindowFocus);
@@ -6080,7 +6122,7 @@ useEffect(() => {
                             },
                             style:{background:'none',border:'1.5px solid #E5E7EB',borderRadius:20,padding:'4px 10px',fontSize:11,fontWeight:600,color:'var(--i2)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}
                         }, '👤 ', user.name.split(' ')[0]),
-                        React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, queueLen: _syncQueue.length, onClick: syncStatus==='error' ? ()=>{saveData(data,activeLab?.id);setSyncStatus('saved');} : ()=>setShowFbPanel(true) }),
+                        React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, queueLen: _syncQueue.length, rtLive: rtLive, onClick: syncStatus==='error' ? ()=>{saveData(data,activeLab?.id);setSyncStatus('saved');} : ()=>setShowFbPanel(true) }),
                         React.createElement("button", {
                             title: "Force refresh (hold 2s for Nuclear Sync)",
                             onClick: function() { if (fetchNowRef.current) { setSyncStatus('loading'); fetchNowRef.current(); } },
@@ -6164,7 +6206,7 @@ useEffect(() => {
                         React.createElement("span", { className: "hbadge" },
                             totPlants,
                             " plants"),
-                        React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, queueLen: _syncQueue.length, onClick: syncStatus === 'error' ? () => { saveData(data, activeLab === null || activeLab === void 0 ? void 0 : activeLab.id); setSyncStatus('saved'); } : () => setShowFbPanel(true) }),
+                        React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, queueLen: _syncQueue.length, rtLive: rtLive, onClick: syncStatus === 'error' ? () => { saveData(data, activeLab === null || activeLab === void 0 ? void 0 : activeLab.id); setSyncStatus('saved'); } : () => setShowFbPanel(true) }),
                         React.createElement("button", { className: `lkbtn${!locked ? ' edit' : ''}`, onClick: togLock }, locked ? 'Locked' : 'Edit mode'))),
                 alerts.length > 0 && React.createElement("div", { className: "alerts-bar" },
                     alerts.map(function(a, i) {
