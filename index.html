@@ -5614,7 +5614,7 @@ useEffect(() => {
             }).catch(function(){});
         }
 
-        function fetchLabData() {
+        function fetchLabData(isInitialLoad) {
             sbRead(activeLab.id)
                 .then(function(remote) {
                     // ── Version check: if server carries a newer build, force reload ────
@@ -5663,8 +5663,14 @@ useEffect(() => {
 
                             dbgLog('[State] Q=' + _syncQueue.length + ' dirty=' + isDirty + ' shouldApply=true (always on load)');
 
-                            // ALWAYS apply — never block on fresh load. 
-                            // LWW merge inside setData handles per-pot conflicts.
+                            // On initial load: always apply (prevents stuck loading screen).
+                            // On background refresh: respect dirty guard to avoid overwriting edits.
+                            var hasPendingEdits = _syncQueue.length > 0 || writeTimerRef.current !== null || (Date.now() - lastLocalWriteRef.current) < 5000;
+                            if (!isInitialLoad && hasPendingEdits) {
+                                dbgWarn('[State] BG fetch skipped — user has pending edits (Q=' + _syncQueue.length + ' timer=' + !!writeTimerRef.current + ')');
+                                setLastFetchTime(new Date());
+                                return;
+                            }
                             remoteUpdateRef.current = true;
                             setSyncCount(function(n){ return n + 1; });
                             if (activeLab) {
@@ -5722,7 +5728,7 @@ useEffect(() => {
                     }
                 });
         }
-        fetchNowRef.current = fetchLabData; // expose for manual refresh button
+        fetchNowRef.current = function() { fetchLabData(false); }; // expose for manual refresh button
         window._glForceRefresh = function() {
             console.log('[Sync] Manual pull-to-refresh triggered');
             fetchLabData();
@@ -5739,7 +5745,7 @@ useEffect(() => {
                 function(e)    { dbgErr('[ForcePush] ❌ Failed: ' + e.message); setSyncStatus('error'); }
             );
         };
-        fetchLabData();
+        fetchLabData(true); // initial load
         // Recover any unsaved data from a previous crashed/closed session
         if (_pendingOnLaunch && _pendingLabId === activeLab.id) {
             _pendingOnLaunch = false;
@@ -5755,7 +5761,7 @@ useEffect(() => {
                     var pendingTs = entry.ts || 0;
                     var serverTs  = (window._glLastRemote && window._glLastRemote._lww_ts) || 0;
                     console.warn('[Sync] Recovery compare — pending:' + new Date(pendingTs).toISOString() + ' server:' + new Date(serverTs).toISOString());
-                    if (pendingTs > serverTs) {
+                    if (pendingTs >= serverTs && entry.data) {
                         // Pending data is NEWER than what the server has — push it now
                         console.warn('[Sync] RECOVERING — pending data is newer, pushing to Supabase...');
                         dbgWarn('[Recovery] Pushing unsaved session data to server...');
@@ -5927,7 +5933,7 @@ useEffect(() => {
                     dbgLog('[Sync] WS dead — re-subscribing...');
                     startRealtimeSub();
                 }
-                fetchLabData();
+                fetchLabData(false); // background refresh — respect dirty guard
             }
         }
         document.addEventListener('visibilitychange', onVisibilityChange);
@@ -5944,7 +5950,7 @@ useEffect(() => {
                 dbgLog('[Sync] WS not subscribed — re-subscribing on focus...');
                 startRealtimeSub();
             }
-            fetchLabData();
+            fetchLabData(false); // focus refresh — respect dirty guard
         }
         window.addEventListener('focus', onWindowFocus);
 
@@ -5954,7 +5960,7 @@ useEffect(() => {
         function onPageShow(e) {
             if (e.persisted) {
                 console.log('[Sync] Page restored from bfcache — force-fetching...');
-                fetchLabData();
+                fetchLabData(false); // bfcache restore — respect dirty guard
             }
         }
         window.addEventListener('pageshow', onPageShow);
