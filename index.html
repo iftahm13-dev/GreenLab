@@ -202,7 +202,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 /* ═══════════════════════════════════
    MAIN CONTENT AREA
 ═══════════════════════════════════ */
-.main{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden;background:#F9FAFB;border-left:1px solid #F0F0F0;position:relative}
+.main{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden;background:#F9FAFB;border-left:1px solid #F0F0F0}
 
 /* Top toolbar */
 .toolbar{
@@ -618,23 +618,18 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 
 /* ── Horizontal tab bar ── */
 .tab-bar{
-  flex-shrink:0;display:flex;flex-direction:column;gap:0;
-  padding:0;background:#F9FAFB;
+  flex-shrink:0;display:flex;align-items:center;gap:8px;
+  padding:10px 18px;background:#F9FAFB;
   border-bottom:1px solid #EBEBEB;
-}
-.tab-bar-row{
-  display:flex;align-items:center;gap:5px;
-  padding:4px 12px;
+  height:56px;position:sticky;top:0;z-index:50;
   overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;
-  min-height:38px;
 }
-.tab-bar-row:first-child{border-bottom:1px solid #F0F0F0}
-.tab-bar-row::-webkit-scrollbar{display:none}
+.tab-bar::-webkit-scrollbar{display:none}
 .tab-btn{
-  display:inline-flex;align-items:center;gap:4px;
-  height:30px;padding:0 10px 0 4px;
+  display:inline-flex;align-items:center;gap:5px;
+  height:34px;padding:0 12px 0 6px;
   border:1.5px solid #E5E7EB;border-radius:50px;
-  background:#fff;font-size:11px;font-weight:500;
+  background:#fff;font-size:12px;font-weight:500;
   color:#6B7280;cursor:pointer;
   transition:all .15s;white-space:nowrap;
   font-family:'Poppins',sans-serif;flex-shrink:0;
@@ -664,10 +659,9 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
   .sb-overlay{display:block;position:fixed;inset:0;z-index:299;background:rgba(0,0,0,.35);backdrop-filter:blur(2px)}
   .app{height:100%;min-height:0}
   .main{width:100%;min-width:0}
-  .tab-bar{padding:0;height:auto}
-  .tab-bar-row{padding:4px 8px;min-height:40px;gap:5px}
+  .tab-bar{padding:0 8px;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;height:52px}
   .tab-bar::-webkit-scrollbar{display:none}
-  .tab-btn{padding:0 10px;font-size:12px;height:34px;flex-shrink:0}
+  .tab-btn{padding:0 14px;font-size:14px;height:52px;flex-shrink:0}
   .tab-bar-r{gap:6px;flex-shrink:0}
   .hbadge{display:none}
   .mob-menu-btn{display:flex}
@@ -5457,47 +5451,6 @@ function GenotypeAutocomplete({ value, onChange, suggestions, genotypes, inputRe
     );
 }
 
-function ExperimentsTab({ experiments, plants, orders, user, onAdd, onEdit, onDelete, onAssign }) {
-    return React.createElement('div', { style:{flex:1,minHeight:0,display:'flex',flexDirection:'column',overflow:'hidden'} },
-        React.createElement('div', { style:{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 20px',borderBottom:'1px solid var(--bo)',flexShrink:0} },
-            React.createElement('div', { style:{fontWeight:700,fontSize:14,color:'var(--i1)'} }, '🧪 Experiments'),
-            React.createElement('button', { className:'btn btnp bsm', onClick:onAdd }, '+ New Experiment')
-        ),
-        React.createElement('div', { style:{flex:1,minHeight:0,overflowY:'auto',padding:'16px 20px',display:'flex',flexDirection:'column',gap:10} },
-            experiments.length === 0
-                ? React.createElement('div', { style:{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',gap:10,color:'var(--i4)'} },
-                    React.createElement('div', { style:{fontSize:40,opacity:.3} }, '🧪'),
-                    React.createElement('div', { style:{fontSize:13,fontWeight:600} }, 'No experiments yet'),
-                    React.createElement('div', { style:{fontSize:11} }, 'Create one to track treatments and pots')
-                  )
-                : experiments.map(function(ex) {
-                    var cnt = plants.filter(function(p){ return p.experiment_id === ex.id; }).length;
-                    var oc  = (orders||[]).filter(function(o){ return o.experiment_id === ex.id; }).length;
-                    var dotColor = EC[ex.color_index % 8];
-                    return React.createElement('div', { key:ex.id,
-                        style:{background:'#fff',border:'1.5px solid var(--bo)',borderRadius:12,padding:'14px 16px',
-                               borderLeft:'4px solid '+dotColor} },
-                        React.createElement('div', { style:{display:'flex',alignItems:'flex-start',gap:10} },
-                            React.createElement('div', { style:{flex:1,minWidth:0} },
-                                React.createElement('div', { style:{fontWeight:700,fontSize:13,color:'var(--i1)'} }, ex.name),
-                                React.createElement('div', { style:{fontSize:11,color:'var(--i4)',marginTop:2} },
-                                    (ex.owner_name||'—') + ' · ' + cnt + ' pot' + (cnt!==1?'s':'') + (oc>0?' · 📦 '+oc+' order'+(oc!==1?'s':''):'')
-                                ),
-                                ex.description && React.createElement('div', { style:{fontSize:11,color:'var(--i3)',marginTop:4} }, ex.description),
-                                ex.until_date && React.createElement('div', { style:{fontSize:10,color:'var(--i5)',marginTop:3} }, 'Until: '+ex.until_date)
-                            ),
-                            React.createElement('div', { style:{display:'flex',gap:6,flexShrink:0} },
-                                React.createElement('button', { className:'btn btns bxs', onClick:function(){ onEdit(ex); } }, 'Edit'),
-                                React.createElement('button', { className:'btn btns bxs', onClick:function(){ onAssign(ex.id); } }, 'Assign pots'),
-                                React.createElement('button', { className:'btn btnd bxs', onClick:function(){ onDelete(ex.id); } }, 'Delete')
-                            )
-                        )
-                    );
-                })
-        )
-    );
-}
-
 function App() {
     var _a, _b;
     const [activeLab, setActiveLab] = useState(function() {
@@ -6847,10 +6800,27 @@ useEffect(() => {
                                             t.rows * t.cols))));
                             }))),
                     React.createElement("div", { className: "pg", style: { borderTop: '1px solid var(--bo)', paddingTop: 11 } },
-                        React.createElement("div", { style: { fontSize: 10, color: 'var(--i4)', fontFamily: 'Inter' } },
-                            data.experiments.length === 0 ? 'No experiments' : data.experiments.length + ' experiment' + (data.experiments.length!==1?'s':''),
-                            React.createElement("button", { className: "btn btns bxs", style:{marginLeft:6,fontSize:9}, onClick: () => setTab('experiments') }, 'View →')
-                        )),
+                        React.createElement("div", { className: "pgt", style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+                            "Experiments",
+                            React.createElement("button", { className: "btn btns bxs", onClick: () => { setEFm({ name: '', owner_name: (user === null || user === void 0 ? void 0 : user.name) || '', description: '' }); setShowAExp(true); } }, "+")),
+                        data.experiments.length === 0 && React.createElement("div", { style: { fontSize: 10, color: 'var(--i5)', fontFamily: 'Inter' } }, "None yet"),
+                        data.experiments.map(ex => {
+                            const cnt = data.plants.filter(p => p.experiment_id === ex.id).length;
+                            return (React.createElement("div", { key: ex.id, className: "eli" },
+                                React.createElement("div", { style: { width: 10, height: 10, borderRadius: 3, background: EC[ex.color_index % 8], flexShrink: 0 } }),
+                                React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+                                    React.createElement("div", { style: { fontSize: 11, fontWeight: 500, color: 'var(--i2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, ex.name),
+                                    React.createElement("div", { style: { fontSize: 9, color: 'var(--i4)', fontFamily: 'Inter' } },
+                                        ex.owner_name ? ex.owner_name.split(' ')[0] : '—',
+                                        " \u00B7 ",
+                                        cnt,
+                                        " pot",
+                                        cnt !== 1 ? 's' : '',
+                                        (() => { const oc = (data.orders||[]).filter(o=>o.experiment_id===ex.id).length; return oc > 0 ? ' · 📦 ' + oc : ''; })())),
+                                React.createElement("div", { className: "eli-acts" },
+                                    React.createElement("button", { className: "eli-btn", onClick: () => startEditExp(ex) }, "Edit"),
+                                    React.createElement("button", { className: "eli-btn del", onClick: () => deleteExp(ex.id) }, "Del"))));
+                        }))),
                 React.createElement(WeatherWidget, null),
                 React.createElement("div", { className: "sb-bottom" },
 
@@ -6923,97 +6893,87 @@ useEffect(() => {
                     )
                 ),
                 React.createElement("div", { className: "tab-bar" },
-                    React.createElement("div", { className: "tab-bar-row" },
-                        React.createElement("button", { className: "mob-menu-btn", onClick: () => setMenuOpen(m => !m), "aria-label": "Menu" }, "\u2630"),
+                    React.createElement("button", { className: "mob-menu-btn", onClick: () => setMenuOpen(m => !m), "aria-label": "Menu" }, "\u2630"),
                     React.createElement("button", { key: 'layout', className: `tab-btn${tab === 'layout' ? ' on' : ''}`, onClick: () => { setTab('layout'); setMenuOpen(false); if ('layout' !== 'layout') { setTblSelMode(false); setSelTbls(new Set()); } } },
-                        React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='layout' ? 'rgba(255,255,255,.22)' : '#78C0431A', color: tab==='layout' ? '#fff' : '#78C043', marginRight:1 } },
+                        React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='layout' ? 'rgba(255,255,255,.22)' : '#78C0431A', color: tab==='layout' ? '#fff' : '#78C043', marginRight:1 } },
                             React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\"/></svg>' } })
                         ),
                         "Layout"
                     ),
                     React.createElement("button", { key: 'search', className: `tab-btn${tab === 'search' ? ' on' : ''}`, onClick: () => { setTab('search'); setMenuOpen(false); if ('search' !== 'layout') { setTblSelMode(false); setSelTbls(new Set()); } } },
-                        React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='search' ? 'rgba(255,255,255,.22)' : '#78C0431A', color: tab==='search' ? '#fff' : '#78C043', marginRight:1 } },
+                        React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='search' ? 'rgba(255,255,255,.22)' : '#78C0431A', color: tab==='search' ? '#fff' : '#78C043', marginRight:1 } },
                             React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><line x1=\"21\" y1=\"21\" x2=\"16.65\" y2=\"16.65\"/></svg>' } })
                         ),
                         "Plants"
                     ),
                     React.createElement("button", { key: 'schedule', className: `tab-btn${tab === 'schedule' ? ' on' : ''}`, onClick: () => { setTab('schedule'); setMenuOpen(false); if ('schedule' !== 'layout') { setTblSelMode(false); setSelTbls(new Set()); } } },
-                        React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='schedule' ? 'rgba(255,255,255,.22)' : '#FFB74D1A', color: tab==='schedule' ? '#fff' : '#FFB74D', marginRight:1 } },
+                        React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='schedule' ? 'rgba(255,255,255,.22)' : '#FFB74D1A', color: tab==='schedule' ? '#fff' : '#FFB74D', marginRight:1 } },
                             React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"18\" rx=\"2\"/><line x1=\"16\" y1=\"2\" x2=\"16\" y2=\"6\"/><line x1=\"8\" y1=\"2\" x2=\"8\" y2=\"6\"/><line x1=\"3\" y1=\"10\" x2=\"21\" y2=\"10\"/></svg>' } })
                         ),
                         "Schedule"
                     ),
                     React.createElement("button", { key: 'team', className: `tab-btn${tab === 'team' ? ' on' : ''}`, onClick: () => { setTab('team'); setMenuOpen(false); if ('team' !== 'layout') { setTblSelMode(false); setSelTbls(new Set()); } } },
-                        React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='team' ? 'rgba(255,255,255,.22)' : '#64B5F61A', color: tab==='team' ? '#fff' : '#64B5F6', marginRight:1 } },
+                        React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='team' ? 'rgba(255,255,255,.22)' : '#64B5F61A', color: tab==='team' ? '#fff' : '#64B5F6', marginRight:1 } },
                             React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M23 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/></svg>' } })
                         ),
                         "Team"
                     ),
                     React.createElement("button", { key: 'stock', className: `tab-btn${tab === 'stock' ? ' on' : ''}`, onClick: () => { setTab('stock'); setMenuOpen(false); if ('stock' !== 'layout') { setTblSelMode(false); setSelTbls(new Set()); } } },
-                        React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='stock' ? 'rgba(255,255,255,.22)' : '#FF8A651A', color: tab==='stock' ? '#fff' : '#FF8A65', marginRight:1 } },
+                        React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='stock' ? 'rgba(255,255,255,.22)' : '#FF8A651A', color: tab==='stock' ? '#fff' : '#FF8A65', marginRight:1 } },
                             React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z\"/></svg>' } })
                         ),
                         "Stock"
                     ),
                     React.createElement("button", { key: 'orders', className: `tab-btn${tab === 'orders' ? ' on' : ''}`, onClick: () => { setTab('orders'); setMenuOpen(false); if ('orders' !== 'layout') { setTblSelMode(false); setSelTbls(new Set()); } } },
-                        React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='orders' ? 'rgba(255,255,255,.22)' : '#BA68C81A', color: tab==='orders' ? '#fff' : '#BA68C8', marginRight:1 } },
+                        React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='orders' ? 'rgba(255,255,255,.22)' : '#BA68C81A', color: tab==='orders' ? '#fff' : '#BA68C8', marginRight:1 } },
                             React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"9\" cy=\"21\" r=\"1\"/><circle cx=\"20\" cy=\"21\" r=\"1\"/><path d=\"M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6\"/></svg>' } })
                         ),
                         "Orders"
                     ),
-                        React.createElement("div", { style:{flex:1} }),
-                        React.createElement("div", { className: "tab-bar-r" },
-                            onlineUsers.length > 0 && React.createElement("div", { className: "online-bar", title: onlineUsers.map(u=>u.name).join(', ') + ' online' },
-                                React.createElement("span", { className: "online-bar-lbl" }, "● Online"),
-                                onlineUsers.slice(0,5).map(u => React.createElement("div", { key: u.name, className: "online-av", style: { background: u.color }, title: u.name },
-                                    u.photo ? React.createElement("img", { src: u.photo, alt: u.name }) : u.name.charAt(0),
-                                    React.createElement("div", { className: "online-dot" })
-                                ))
-                            ),
-                            React.createElement("span", { className: "hbadge" }, totPlants, " plants"),
-                            React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, queueLen: _syncQueue.length, rtLive: rtLive, lastServerSync: lastServerSync, onForceSave: function(){ if(window._glForcePush) window._glForcePush(); } }),
-                            React.createElement("button", { className: `lkbtn${!locked ? ' edit' : ''}`, onClick: togLock }, locked ? 'Locked' : 'Edit mode')
-                        )
-                    ),
-                    React.createElement("div", { className: "tab-bar-row" },
                     React.createElement("button", { key: 'measures', className: `tab-btn${tab === 'measures' ? ' on' : ''}`, onClick: () => { setTab('measures'); setMenuOpen(false); } },
-                        React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='measures' ? 'rgba(255,255,255,.22)' : '#10B9811A', color: tab==='measures' ? '#fff' : '#10B981', marginRight:1 } },
+                        React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='measures' ? 'rgba(255,255,255,.22)' : '#10B9811A', color: tab==='measures' ? '#fff' : '#10B981', marginRight:1 } },
                             React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18\"/></svg>' } })
                         ),
                         "Measures"
                     ),
                     React.createElement("button", { key: 'messages', className: `tab-btn${tab === 'messages' ? ' on' : ''}`, onClick: () => { setTab('messages'); setMenuOpen(false); setLastMsgRead(r=>({...r,[activeLab?.id]:new Date().toISOString()})); } },
-                        React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='messages' ? 'rgba(255,255,255,.22)' : '#F59E0B1A', color: tab==='messages' ? '#fff' : '#F59E0B', marginRight:1, position:'relative' } },
+                        React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='messages' ? 'rgba(255,255,255,.22)' : '#F59E0B1A', color: tab==='messages' ? '#fff' : '#F59E0B', marginRight:1, position:'relative' } },
                             React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\"/></svg>' } }),
                             (() => { const lastRead = lastMsgRead[activeLab?.id]; const unread = (data.messages||[]).filter(m=>!lastRead||m.created_at>lastRead).length; return unread>0 && React.createElement("span",{style:{position:'absolute',top:-5,right:-5,background:'#ef4444',color:'#fff',borderRadius:'50%',width:14,height:14,fontSize:8,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',border:'1.5px solid #fff'}},unread>9?'9+':unread); })()
                         ),
                         "Messages"
                     ),
                     React.createElement("button", { key: 'dash', className: `tab-btn${tab === 'dash' ? ' on' : ''}`, onClick: () => { setTab('dash'); setMenuOpen(false); if ('dash' !== 'layout') { setTblSelMode(false); setSelTbls(new Set()); } } },
-                        React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='dash' ? 'rgba(255,255,255,.22)' : '#4DB6AC1A', color: tab==='dash' ? '#fff' : '#4DB6AC', marginRight:1 } },
+                        React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='dash' ? 'rgba(255,255,255,.22)' : '#4DB6AC1A', color: tab==='dash' ? '#fff' : '#4DB6AC', marginRight:1 } },
                             React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"18\" y1=\"20\" x2=\"18\" y2=\"10\"/><line x1=\"12\" y1=\"20\" x2=\"12\" y2=\"4\"/><line x1=\"6\" y1=\"20\" x2=\"6\" y2=\"14\"/></svg>' } })
                         ),
                         "Dashboard"
                     ),
                     React.createElement("button", { key: 'registry', className: `tab-btn${tab === 'registry' ? ' on' : ''}`, onClick: () => { setTab('registry'); setMenuOpen(false); setTblSelMode(false); setSelTbls(new Set()); } },
-                        React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='registry' ? 'rgba(255,255,255,.22)' : '#78C0431A', color: tab==='registry' ? '#fff' : '#78C043', marginRight:1 } },
+                        React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='registry' ? 'rgba(255,255,255,.22)' : '#78C0431A', color: tab==='registry' ? '#fff' : '#78C043', marginRight:1 } },
                             React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><ellipse cx=\"12\" cy=\"5\" rx=\"9\" ry=\"3\"/><path d=\"M21 12c0 1.66-4 3-9 3s-9-1.34-9-3\"/><path d=\"M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5\"/></svg>' } })
                         ),
                         "Registry"
                     ),
                     React.createElement("button", { key: 'notes', className: `tab-btn${tab === 'notes' ? ' on' : ''}`, onClick: () => { setTab('notes'); setMenuOpen(false); } },
-                        React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='notes' ? 'rgba(255,255,255,.22)' : '#F472B61A', color: tab==='notes' ? '#fff' : '#F472B6', marginRight:1 } },
+                        React.createElement("span", { style: { width:26, height:26, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='notes' ? 'rgba(255,255,255,.22)' : '#F472B61A', color: tab==='notes' ? '#fff' : '#F472B6', marginRight:1 } },
                             React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/></svg>' } })
                         ),
                         "Notes"
                     ),
-React.createElement("button", { key: 'experiments', className: `tab-btn${tab === 'experiments' ? ' on' : ''}`, onClick: () => { setTab('experiments'); setMenuOpen(false); setTblSelMode(false); setSelTbls(new Set()); } },
-                            React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='experiments' ? 'rgba(255,255,255,.22)' : '#3b82f61A', color: tab==='experiments' ? '#fff' : '#3b82f6', marginRight:1 } },
-                                React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18\"/></svg>' } })
-                            ),
-                            "Experiments"
+                    React.createElement("div", { className: "tab-bar-r" },
+                        onlineUsers.length > 0 && React.createElement("div", { className: "online-bar", title: onlineUsers.map(u=>u.name).join(', ') + ' online' },
+                            React.createElement("span", { className: "online-bar-lbl" }, "● Online"),
+                            onlineUsers.slice(0,5).map(u => React.createElement("div", { key: u.name, className: "online-av", style: { background: u.color }, title: u.name },
+                                u.photo ? React.createElement("img", { src: u.photo, alt: u.name }) : u.name.charAt(0),
+                                React.createElement("div", { className: "online-dot" })
+                            ))
                         ),
-                    ))),
+                        React.createElement("span", { className: "hbadge" },
+                            totPlants,
+                            " plants"),
+                        React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, queueLen: _syncQueue.length, rtLive: rtLive, lastServerSync: lastServerSync, onForceSave: function(){ if(window._glForcePush) window._glForcePush(); } }),
+                        React.createElement("button", { className: `lkbtn${!locked ? ' edit' : ''}`, onClick: togLock }, locked ? 'Locked' : 'Edit mode'))),
                 alerts.length > 0 && React.createElement("div", { className: "alerts-bar" },
                     alerts.map(function(a, i) {
                         return React.createElement("span", { key: i, className: "alert-chip " + a.type }, a.text);
@@ -7189,7 +7149,6 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
                 tab === 'orders' && React.createElement(OrdersView, { orders: data.orders||[], users: data.users, curUser: user, exps: data.experiments||[], onAdd: addOrder, onUpd: updOrder, onDel: delOrder, syncStatus: syncStatus }),
                 tab === 'schedule' && React.createElement(ScheduleView, { tables: data.tables, users: data.users, schedules: data.schedules||[], onAdd: addSchedule, onDel: delSchedule, currentUser: user ? user.name : '' }),
                 tab === 'timeline' && React.createElement(ExperimentTimelineView, { experiments: data.experiments || [], onSaveMilestone: saveMilestone, onDeleteMilestone: deleteMilestone, currentUser: user }),
-                tab === 'experiments' && React.createElement(ExperimentsTab, { experiments: data.experiments||[], plants: data.plants||[], orders: data.orders||[], user: user, onAdd: ()=>{ setEFm({name:'',owner_name:(user&&user.name)||'',description:'',until_date:'',planned_genotypes:[]}); setShowAExp(true); }, onEdit: startEditExp, onDelete: deleteExp, onAssign: (expId)=>{ var _a; setAssExpFm({mode:'existing',newName:'',newOwner:(user&&user.name)||'',newDesc:'',newUntilDate:'',existId:expId||((_a=data.experiments[0])&&_a.id)||''}); setShowAssExp(true); } }),
                 tab === 'registry' && React.createElement(GenotypeRegistry, { genotypes: data.genotypes || [], plants: data.plants || [], onSave: saveGenotype, onDelete: deleteGenotype }),
                 tab === 'dash' && React.createElement(DashView, { greenhouses: data.greenhouses, tables: data.tables, structs: data.structs || [], plants: data.plants || [], experiments: data.experiments || [] }))),
 
