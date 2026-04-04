@@ -1173,6 +1173,25 @@ function sbRead(labId) {
         });
 }
 
+// sbListLabs: fetch all lab_ids from Supabase (so labs survive localStorage wipe)
+function sbListLabs() {
+    var sb = getSB();
+    if (!sb) return Promise.resolve([]);
+    return sb.from('lab_data').select('lab_id, data->name, data->icon, data->created_at')
+        .then(function(res) {
+            if (res.error) { dbgWarn('[Labs] sbListLabs error: ' + res.error.message); return []; }
+            return (res.data || []).map(function(row) {
+                return {
+                    id: row.lab_id,
+                    name: row.name || row.lab_id,
+                    icon: row.icon || '🌿',
+                    created_at: row.created_at || ''
+                };
+            });
+        })
+        .catch(function() { return []; });
+}
+
 // sbWrite: upsert full lab record to Supabase
 function sbWrite(labId, data) {
     var sizeKB = Math.round(JSON.stringify(data).length / 1024);
@@ -3913,18 +3932,36 @@ function LabSelectScreen({onSelectLab}){
     }
   };
 
-  // Load labs from Firestore on mount
+  // Load labs: merge localStorage + Supabase so labs survive a browser wipe
   React.useEffect(() => {
-    // JSONBin stores one bin per lab — lab list lives in localStorage
-      var existing = loadLabs();
-      if (existing.length === 0) {
-        var barLab = {id:'barlab-default', name:'Bar Lab', icon:'🌿', photo:null, created_at:now()};
-        saveLabs([barLab]);
-        existing = [barLab];
-      }
-      setLabs(existing);
-      setLoading(false);
-      return function() {};
+    var local = loadLabs();
+    // Show local labs immediately so UI isn't blank
+    if (local.length > 0) { setLabs(local); setLoading(false); }
+    // Then fetch from Supabase and merge in any labs not in local list
+    sbListLabs().then(function(remote) {
+        var merged = local.slice();
+        remote.forEach(function(rLab) {
+            if (!merged.find(function(l){ return l.id === rLab.id; })) {
+                merged.push(rLab);
+            }
+        });
+        if (merged.length === 0) {
+            var barLab = {id:'barlab-default', name:'Bar Lab', icon:'🌿', photo:null, created_at:now()};
+            merged = [barLab];
+        }
+        saveLabs(merged);
+        setLabs(merged);
+        setLoading(false);
+    }).catch(function() {
+        // Supabase unreachable — fall back to local only
+        if (local.length === 0) {
+            var barLab = {id:'barlab-default', name:'Bar Lab', icon:'🌿', photo:null, created_at:now()};
+            saveLabs([barLab]);
+            setLabs([barLab]);
+        }
+        setLoading(false);
+    });
+    return function() {};
   }, []);
 
   const saveLabs2 = function(updatedLabs) {
@@ -4681,7 +4718,10 @@ function upsertGenotypeRecord(data, rec) {
     var existing = (data.genotypes || []);
     var idx = rec.id ? existing.findIndex(function(g){ return g.id === rec.id; })
                      : existing.findIndex(function(g){ return g.name === rec.name; });
-    var entry = Object.assign({ id: uid(), shortcut: '', description: '' }, rec, { updated_at: new Date().toISOString() });
+    // Strip undefined id so it doesn't overwrite the generated uid()
+    var recClean = Object.assign({}, rec);
+    if (!recClean.id) delete recClean.id;
+    var entry = Object.assign({ id: uid(), shortcut: '', description: '' }, recClean, { updated_at: new Date().toISOString() });
     var updated = idx >= 0
         ? existing.map(function(g, i){ return i === idx ? entry : g; })
         : existing.concat([entry]);
@@ -5175,7 +5215,7 @@ function NotesEditor({ value, onChange }) {
 }
 
 // ── Genotype Registry ─────────────────────────────────────────────────────
-function GenotypeRegistry({ genotypes, plants, onSave, onDelete }) {
+function GenotypeRegistry({ genotypes, plants, onSave, onDelete, notify }) {
     var [editId, setEditId]   = React.useState(null); // null = adding new
     var [showForm, setShowForm] = React.useState(false);
     var [fm, setFm] = React.useState({ name:'', shortcut:'', description:'' });
@@ -5190,6 +5230,7 @@ function GenotypeRegistry({ genotypes, plants, onSave, onDelete }) {
     function submit() {
         if (!fm.name.trim()) return;
         onSave({ id: editId || undefined, name: fm.name.trim(), shortcut: fm.shortcut.trim().toLowerCase(), description: fm.description.trim() });
+        if (notify) notify(editId ? 'Genotype updated' : 'Genotype added');
         setShowForm(false); setEditId(null);
     }
 
@@ -5303,7 +5344,7 @@ function GenotypeRegistry({ genotypes, plants, onSave, onDelete }) {
                                             style:{fontSize:10,padding:'3px 8px'} }, 'Edit'),
                                         confirmDel === (g.id||g.name)
                                             ? React.createElement('button', { className:'btn btnd bxs',
-                                                onClick:function(){ onDelete(g.id||g.name); setConfirmDel(null); },
+                                                onClick:function(){ onDelete(g.id||g.name); setConfirmDel(null); if (notify) notify('Genotype removed'); },
                                                 style:{fontSize:10,padding:'3px 8px'} }, 'Confirm?')
                                             : React.createElement('button', { className:'btn btnd bxs',
                                                 onClick:function(){ setConfirmDel(g.id||g.name); },
@@ -5325,10 +5366,11 @@ function GenotypeRegistry({ genotypes, plants, onSave, onDelete }) {
 function GenotypeAutocomplete({ value, onChange, suggestions, genotypes, inputRef, onKeyDown, onDeleteSuggestion }) {
     var [open, setOpen] = React.useState(false);
     var [hi, setHi]     = React.useState(-1);
-    var wrap = React.useRef();
-    var [dropRect, setDropRect] = React.useState(null);
+    var inputEl = React.useRef();
+    var pickingRef = React.useRef(false);
+    // dropPos: calculated fresh each render when open
+    var [dropPos, setDropPos] = React.useState(null);
 
-    // Filter suggestions by typed value: match full name OR shortcut
     var filtered = React.useMemo(function() {
         var lv = (value || '').toLowerCase();
         if (!lv) return suggestions.slice(0, 12);
@@ -5340,29 +5382,42 @@ function GenotypeAutocomplete({ value, onChange, suggestions, genotypes, inputRe
 
     React.useEffect(function(){ setHi(-1); }, [filtered.length]);
 
-    React.useEffect(function() {
-        var fn = function(e) { if (wrap.current && !wrap.current.contains(e.target)) setOpen(false); };
-        document.addEventListener('mousedown', fn);
-        document.addEventListener('touchstart', fn, { passive: true });
-        return function() { document.removeEventListener('mousedown', fn); document.removeEventListener('touchstart', fn); };
-    }, []);
+    // Recalculate dropdown position whenever it opens or value changes
+    React.useLayoutEffect(function() {
+        if (!open || !inputEl.current) return;
+        var r = inputEl.current.getBoundingClientRect();
+        var vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        var vOff = window.visualViewport ? window.visualViewport.offsetTop : 0;
+        var spaceBelow = vh - (r.bottom - vOff);
+        var dropH = Math.min(filtered.length * 52 + 8, 220);
+        var top = spaceBelow < dropH + 8 ? (r.top - vOff - dropH - 4) : (r.bottom - vOff + 2);
+        setDropPos({ top: top, left: r.left, width: Math.max(r.width, 260) });
+    }, [open, filtered.length]);
 
-    function updateRect() {
-        if (wrap.current) {
-            var r = wrap.current.getBoundingClientRect();
-            var vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-            var vOffset = window.visualViewport ? window.visualViewport.offsetTop : 0;
-            var spaceBelow = vh - (r.bottom - vOffset);
-            var top = spaceBelow < 200 ? (r.top - vOffset - 200) : (r.bottom - vOffset + 2);
-            setDropRect({ top: top, left: r.left, width: Math.max(r.width, 280) });
-        }
-    }
+    // Close on outside tap/click
+    React.useEffect(function() {
+        if (!open) return;
+        var fn = function(e) {
+            if (inputEl.current && !inputEl.current.closest('.ac-wrap').contains(e.target) &&
+                !e.target.closest('.ac-drop-geno')) {
+                setOpen(false);
+            }
+        };
+        // Use capture so we see the event before anything else
+        document.addEventListener('mousedown', fn, true);
+        document.addEventListener('touchstart', fn, { passive: true, capture: true });
+        return function() {
+            document.removeEventListener('mousedown', fn, true);
+            document.removeEventListener('touchstart', fn, { capture: true });
+        };
+    }, [open]);
 
     function pick(item) {
-        // Resolve shortcut to full name
-        var resolved = item.label;
-        onChange(resolved);
-        setOpen(false); setHi(-1);
+        pickingRef.current = true;
+        onChange(item.label);
+        setOpen(false);
+        setHi(-1);
+        setTimeout(function(){ pickingRef.current = false; }, 400);
     }
 
     function hKey(e) {
@@ -5373,7 +5428,6 @@ function GenotypeAutocomplete({ value, onChange, suggestions, genotypes, inputRe
         else if (e.key === 'Escape') { setOpen(false); }
         else if (e.key === 'Tab' && hi >= 0) { e.preventDefault(); pick(filtered[hi]); }
         else if ((e.key === 'Enter' || e.key === 'Tab') && hi < 0) {
-            // No dropdown selection — try shortcut resolve
             var lc = (value || '').toLowerCase();
             var sc = (genotypes||[]).find(function(g){ return g.shortcut && g.shortcut.toLowerCase() === lc; });
             if (sc && sc.name !== value) { e.preventDefault(); onChange(sc.name); setOpen(false); return; }
@@ -5382,58 +5436,64 @@ function GenotypeAutocomplete({ value, onChange, suggestions, genotypes, inputRe
         else if (onKeyDown) { onKeyDown(e); }
     }
 
-    var dropdown = open && filtered.length > 0 && dropRect
+    var dropdown = open && filtered.length > 0 && dropPos
         ? ReactDOM.createPortal(
-            React.createElement('div', { className: 'ac-drop',
-                style:{ position:'fixed', top:dropRect.top, left:dropRect.left, width:dropRect.width, zIndex:99999, maxHeight:220, overflowY:'auto' }
+            React.createElement('div', { className: 'ac-drop ac-drop-geno',
+                style:{ position:'fixed', top:dropPos.top, left:dropPos.left, width:dropPos.width,
+                        zIndex:999999, maxHeight:220, overflowY:'auto',
+                        background:'#fff', border:'1.5px solid var(--bo)',
+                        borderRadius:'var(--r2)', boxShadow:'var(--sh2)' }
             },
             filtered.map(function(item, i) {
-                // Highlight matching shortcut
                 var shortcutMatch = item.shortcut && (value||'').toLowerCase() && item.shortcut.toLowerCase().includes((value||'').toLowerCase());
                 return React.createElement('div', { key:item.label,
                     className: 'ac-item' + (hi===i?' hi':''),
-                    style:{ display:'flex', alignItems:'center', gap:8, padding:'6px 10px' }
+                    style:{ display:'flex', alignItems:'center', gap:8, padding:'10px 12px', cursor:'pointer',
+                            minHeight:44, boxSizing:'border-box' },
+                    onMouseDown: function(e){ e.preventDefault(); pick(item); },
+                    onTouchStart: function(e){ e.stopPropagation(); },
+                    onTouchEnd: function(e){ e.preventDefault(); e.stopPropagation(); pick(item); }
                 },
                     React.createElement('div', { style:{flex:1,minWidth:0} },
-                        React.createElement('div', { style:{fontWeight:600,fontSize:12,color:'var(--i1)',
+                        React.createElement('div', { style:{fontWeight:600,fontSize:13,color:'var(--i1)',
                             wordBreak:'break-all',fontFamily:'Inter,monospace'} }, item.label),
-                        (item.shortcut || item.desc) && React.createElement('div', { style:{fontSize:10,color:'var(--i4)',marginTop:1,display:'flex',gap:6} },
+                        (item.shortcut || item.desc) && React.createElement('div', {
+                            style:{fontSize:11,color:'var(--i4)',marginTop:2,display:'flex',gap:6,flexWrap:'wrap'}},
                             item.shortcut && React.createElement('span', {
-                                style:{background: shortcutMatch?'#dbeafe':'#f1f5f9',color: shortcutMatch?'#1d4ed8':'var(--i4)',
-                                    borderRadius:3,padding:'0 4px',fontFamily:'monospace',fontWeight:700}
+                                style:{background: shortcutMatch?'#dbeafe':'#f1f5f9',
+                                       color: shortcutMatch?'#1d4ed8':'var(--i4)',
+                                       borderRadius:3,padding:'1px 5px',fontFamily:'monospace',fontWeight:700}
                             }, item.shortcut),
-                            item.desc && React.createElement('span', { style:{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'} }, item.desc)
+                            item.desc && React.createElement('span', {
+                                style:{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:180}
+                            }, item.desc)
                         )
                     ),
                     onDeleteSuggestion && React.createElement('span', {
-                        style:{ color:'#ef4444', fontSize:13, padding:'2px 4px', cursor:'pointer', flexShrink:0 },
+                        style:{ color:'#ef4444', fontSize:16, padding:'4px 8px', cursor:'pointer', flexShrink:0 },
                         onMouseDown: function(e){ e.preventDefault(); e.stopPropagation(); onDeleteSuggestion(item.label); setOpen(false); },
                         onTouchEnd: function(e){ e.preventDefault(); e.stopPropagation(); onDeleteSuggestion(item.label); setOpen(false); }
                     }, '×')
                 );
-            })
-        ), document.body)
+            })), document.body)
         : null;
 
-    return React.createElement('div', { className:'ac-wrap', ref:wrap, style:{position:'relative'} },
+    return React.createElement('div', { className:'ac-wrap', style:{position:'relative'} },
         React.createElement('input', {
-            ref: inputRef,
+            ref: function(el){ inputEl.current = el; if (inputRef) { if (typeof inputRef === 'function') inputRef(el); else inputRef.current = el; } },
             className: 'fi big',
             value: value,
-            onChange: function(e){ onChange(e.target.value); setOpen(true); updateRect(); },
-            onFocus: function(){ updateRect(); setOpen(true); },
+            onChange: function(e){ onChange(e.target.value); setOpen(true); },
+            onFocus: function(){ setOpen(true); },
             onBlur: function() {
-                // Resolve shortcut on blur — delay to let dropdown mousedown/touchend fire first
                 setTimeout(function() {
-                    if (!value) return;
+                    if (pickingRef.current || !value) return;
                     var lc = value.toLowerCase();
-                    // Exact shortcut match → resolve to full name
                     var sc = (genotypes||[]).find(function(g){ return g.shortcut && g.shortcut.toLowerCase() === lc; });
                     if (sc && sc.name !== value) { onChange(sc.name); return; }
-                    // Partial shortcut match (typed prefix) → resolve if exactly one match
                     var partials = (genotypes||[]).filter(function(g){ return g.shortcut && g.shortcut.toLowerCase().startsWith(lc); });
                     if (partials.length === 1 && partials[0].name !== value) { onChange(partials[0].name); }
-                }, 250);
+                }, 400);
             },
             onKeyDown: hKey,
             placeholder: 'Full name or shortcut (e.g. ckx → pFIL>>CKX3)',
@@ -5665,9 +5725,9 @@ useEffect(() => {
 
                             // On initial load: always apply (prevents stuck loading screen).
                             // On background refresh: respect dirty guard to avoid overwriting edits.
-                            var hasPendingEdits = _syncQueue.length > 0 || writeTimerRef.current !== null || (Date.now() - lastLocalWriteRef.current) < 5000;
+                            var hasPendingEdits = _syncQueue.length > 0 || _syncRunning || writeTimerRef.current !== null || (Date.now() - lastLocalWriteRef.current) < 5000;
                             if (!isInitialLoad && hasPendingEdits) {
-                                dbgWarn('[State] BG fetch skipped — user has pending edits (Q=' + _syncQueue.length + ' timer=' + !!writeTimerRef.current + ')');
+                                dbgWarn('[State] BG fetch skipped — user has pending edits (Q=' + _syncQueue.length + ' running=' + _syncRunning + ' timer=' + !!writeTimerRef.current + ')');
                                 setLastFetchTime(new Date());
                                 return;
                             }
@@ -5689,14 +5749,8 @@ useEffect(() => {
                             if (remote.greenhouses && remote.greenhouses.length > 0) {
                                 setGhId(function(cur){ return cur || remote.greenhouses[0].id; });
                             }
-                            setUser(function(cur) {
-                                if (cur) return cur;
-                                try {
-                                    var lastUid = localStorage.getItem('gl_last_user');
-                                    if (lastUid && remote.users) return remote.users.find(function(u){return u.id===lastUid;})||null;
-                                } catch(e) {}
-                                return null;
-                            });
+                            // Do NOT auto-restore last user — always show login screen on each visit
+                            setUser(function(cur) { return cur; }); // keep existing if already set (e.g. same session)
                             setLastFetchTime(new Date());
                             setSyncStatus(function(cur) {
                                 if (cur === 'pending' || cur === 'saving') return cur;
@@ -5792,10 +5846,10 @@ useEffect(() => {
 
         function applyRemotePayload(remote) {
             // Task 1: tight dirty guard — only block if actively writing right now
-            var hasPendingWrites = _syncQueue.length > 0 || writeTimerRef.current !== null;
+            var hasPendingWrites = _syncQueue.length > 0 || _syncRunning || writeTimerRef.current !== null;
             var msSinceWrite = Date.now() - lastLocalWriteRef.current;
             if (hasPendingWrites || forceWriteRef.current || msSinceWrite < 2000) {
-                dbgLog('[Realtime] Skipped — dirty (Q=' + _syncQueue.length + ' timer=' + !!writeTimerRef.current + ' msSince=' + msSinceWrite + ')');
+                dbgLog('[Realtime] Skipped — dirty (Q=' + _syncQueue.length + ' running=' + _syncRunning + ' timer=' + !!writeTimerRef.current + ' msSince=' + msSinceWrite + ')');
                 return;
             }
             if (remote._appVersion && remote._appVersion !== APP_VERSION) {
@@ -5824,14 +5878,8 @@ useEffect(() => {
                     if (remote.greenhouses && remote.greenhouses.length > 0) {
                         setGhId(function(cur){ return cur || remote.greenhouses[0].id; });
                     }
-                    setUser(function(cur) {
-                        if (cur) return cur;
-                        try {
-                            var lastUid = localStorage.getItem('gl_last_user');
-                            if (lastUid && remote.users) return remote.users.find(function(u){ return u.id === lastUid; }) || null;
-                        } catch(e) {}
-                        return null;
-                    });
+                    // Do NOT auto-restore last user — always show login screen on each visit
+                    setUser(function(cur) { return cur; }); // keep existing if already set
                     setSyncStatus(function(cur) { return (cur === 'pending' || cur === 'saving') ? cur : 'synced'; });
                 });
             } catch(fsErr) {
@@ -6112,7 +6160,9 @@ useEffect(() => {
         setGhId(null);
         setUser(null);
     }, []);
-    const locked = data.locked !== false;
+    const _isMob = window.innerWidth <= 1024;
+    // Mobile: always locked unless explicitly unlocked this session (sessionStorage resets on close)
+    const locked = _isMob ? !sessionStorage.getItem('gl_sess_unlocked') : (data.locked !== false);
     const aGh = useMemo(() => data.greenhouses.find(g => g.id === ghId), [data, ghId]);
     const aTbls = useMemo(() => data.tables.filter(t => t.greenhouse_id === ghId), [data, ghId]);
     const aPlants = useMemo(() => data.plants.filter(p => p.greenhouse_id === ghId), [data, ghId]);
@@ -6565,12 +6615,10 @@ useEffect(() => {
     const saveGenotype = function(rec) {
         forceWriteRef.current = true;
         setData(function(d){ return upsertGenotypeRecord(d, rec); });
-        notify('Genotype saved');
     };
     const deleteGenotype = function(id) {
         forceWriteRef.current = true;
         setData(function(d){ return deleteGenotypeRecord(d, id); });
-        notify('Genotype removed');
     };
     const deleteMilestone = (expId, msId) => {
         forceWriteRef.current = true;
@@ -6624,6 +6672,7 @@ useEffect(() => {
     const removeStockItem = id => setData(d => (Object.assign(Object.assign({}, d), { stock: (d.stock || []).filter(s => s.id !== id) })));
     const qtyStockItem = (id, delta) => setData(d => (Object.assign(Object.assign({}, d), { stock: (d.stock || []).map(s => s.id === id ? Object.assign(Object.assign({}, s), { quantity: Math.max(0, s.quantity + delta) }) : s) })));
     const togLock = () => { if (!locked) {
+        if (_isMob) sessionStorage.removeItem('gl_sess_unlocked');
         setData(d => (Object.assign(Object.assign({}, d), { locked: true })));
         setEditTbl(null);
         notify('Layout locked');
@@ -7187,7 +7236,7 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
                 tab === 'schedule' && React.createElement(ScheduleView, { tables: data.tables, users: data.users, schedules: data.schedules||[], onAdd: addSchedule, onDel: delSchedule, currentUser: user ? user.name : '' }),
                 tab === 'timeline' && React.createElement(ExperimentTimelineView, { experiments: data.experiments || [], onSaveMilestone: saveMilestone, onDeleteMilestone: deleteMilestone, currentUser: user }),
                 tab === 'experiments' && React.createElement(ExperimentsTab, { experiments: data.experiments||[], plants: data.plants||[], orders: data.orders||[], user: user, onAdd: ()=>{ setEFm({name:'',owner_name:(user&&user.name)||'',description:'',until_date:'',planned_genotypes:[]}); setShowAExp(true); }, onEdit: startEditExp, onDelete: deleteExp, onAssign: (expId)=>{ var _a; setAssExpFm({mode:'existing',newName:'',newOwner:(user&&user.name)||'',newDesc:'',newUntilDate:'',existId:expId||((_a=data.experiments[0])&&_a.id)||''}); setShowAssExp(true); } }),
-                tab === 'registry' && React.createElement(GenotypeRegistry, { genotypes: data.genotypes || [], plants: data.plants || [], onSave: saveGenotype, onDelete: deleteGenotype }),
+                tab === 'registry' && React.createElement(GenotypeRegistry, { genotypes: data.genotypes || [], plants: data.plants || [], onSave: saveGenotype, onDelete: deleteGenotype, notify: notify }),
                 tab === 'dash' && React.createElement(DashView, { greenhouses: data.greenhouses, tables: data.tables, structs: data.structs || [], plants: data.plants || [], experiments: data.experiments || [] }))),
 
             React.createElement("div", { className: "mob-bottom-nav" },
@@ -7403,7 +7452,7 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
                 React.createElement("select", { className: "mosel", value: nMFm.position, onChange: e => setNMFm(f => (Object.assign(Object.assign({}, f), { position: e.target.value }))) },
                     React.createElement("option", { value: "" }, "\u2014 Select \u2014"),
                     LPOS.map(p => React.createElement("option", { key: p, value: p }, p))))),
-        showUL && React.createElement(Modal, { title: "Unlock Layout", onClose: () => setShowUL(false), onConfirm: () => { setData(d => (Object.assign(Object.assign({}, d), { locked: false }))); setShowUL(false); notify('Edit mode active'); }, confirmLabel: "Unlock", sub: "Move tables, add/remove objects." },
+        showUL && React.createElement(Modal, { title: "Unlock Layout", onClose: () => setShowUL(false), onConfirm: () => { if (_isMob) sessionStorage.setItem('gl_sess_unlocked','1'); setData(d => (Object.assign(Object.assign({}, d), { locked: false }))); setShowUL(false); notify('Edit mode active'); }, confirmLabel: "Unlock", sub: "Move tables, add/remove objects." },
             React.createElement("div", { className: "ulkw" }, "Plant data is always editable regardless of lock state.")),
         showShare && React.createElement(Modal, { title: "Share GreenLab", sub: "Send this link to lab members.", onClose: () => setShowShare(false), onConfirm: () => { var _a; (_a = navigator.clipboard) === null || _a === void 0 ? void 0 : _a.writeText(window.location.href); notify('Link copied!'); setShowShare(false); }, confirmLabel: "Copy Link" },
             React.createElement("div", { style: { background: 'var(--cr2)', border: '1px solid var(--bo)', borderRadius: 'var(--r)', padding: '8px 10px', fontFamily: 'Inter', fontSize: 11, color: 'var(--i3)', wordBreak: 'break-all' } }, window.location.href),
