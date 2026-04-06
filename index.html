@@ -1427,8 +1427,7 @@ function saveLabData(labId, d) { try {
         plants: d.plants ? d.plants.map(function(p){var p2=Object.assign({},p);delete p2.image;delete p2.genotype_description;delete p2._localOnly;delete p2._syncFailed;return p2;}) : d.plants,
         stock:  d.stock  ? d.stock.map( function(s){
             var s2=Object.assign({},s);
-            // Include image in JSONBin if small enough (compressed images are ~3-8KB)
-            if(s2.image && s2.image.length > 25000) delete s2.image;
+            // Keep stock images in localStorage snapshot (they're small, ~5-15KB)
             return s2;
         }) : d.stock,
         orders: d.orders ? d.orders.map(function(o){var o2=Object.assign({},o);delete o2.item_image;delete o2.quotation_file;return o2;}) : d.orders,
@@ -1981,19 +1980,25 @@ function compressImageField(b64, maxPx, quality) {
 function estimateDocSize(d) {
     return Math.round(JSON.stringify(d).length / 1024);
 }
-// ── Image persistence (stock/plant images are too large for JSONBin) ───
+// ── Image persistence ───────────────────────────────────────────────────────
+// Stock images: saved to IDB (large quota) AND included in Supabase sync (they're small).
+// Plant images: local-only (too large for sync), stored in IDB + localStorage fallback.
 var GL_IMG_KEY = 'gl_images_v2';
 function saveImages(d) {
+    // Save plant images and order files to localStorage (local-only, too large for sync)
     try {
         var imgs = {};
         (d.plants||[]).forEach(function(p){ if(p.image) imgs['p_'+p.id]=p.image; });
-        (d.stock||[]).forEach(function(i){ if(i.image) imgs['s_'+i.id]=i.image; });
         (d.orders||[]).forEach(function(o){ if(o.quotation_file) imgs['q_'+o.id]=o.quotation_file; });
         localStorage.setItem(GL_IMG_KEY, JSON.stringify(imgs));
-        (d.stock||[]).forEach(function(i){ if(i.image){ try{localStorage.setItem('gl_stk_img_'+i.id,i.image);}catch(e2){} } });
-    } catch(e) { console.warn('[IMG] save failed:', e.message); }
+    } catch(e) { console.warn('[IMG] localStorage save failed:', e.message); }
+    // Save stock images to IDB — no quota issues, survives localStorage purge
+    (d.stock||[]).forEach(function(i){
+        if (i.image) idbPut('kv', 'stkimg_'+i.id, i.image).catch(function(){});
+    });
 }
 function loadImages(d) {
+    // Synchronous part: restore plant images + orders from localStorage
     try {
         var imgs = {};
         try { var raw = localStorage.getItem(GL_IMG_KEY); if(raw) imgs=JSON.parse(raw); } catch(e2){}
@@ -2001,11 +2006,31 @@ function loadImages(d) {
         try{var npRaw=localStorage.getItem('gl_note_pdfs');if(npRaw)notePdfs=JSON.parse(npRaw);}catch(ep){}
         return Object.assign({}, d, {
             plants: (d.plants||[]).map(function(p){ return imgs['p_'+p.id] ? Object.assign({},p,{image:imgs['p_'+p.id]}) : p; }),
-            stock:  (d.stock||[]).map(function(i){ var img=imgs['s_'+i.id]||localStorage.getItem('gl_stk_img_'+i.id); return img ? Object.assign({},i,{image:img}) : i; }),
+            // Stock images come from Supabase data directly (image field included in sync now)
+            // IDB fallback is loaded asynchronously via loadStockImagesFromIDB
+            stock:  d.stock || [],
             orders: (d.orders||[]).map(function(o){ return imgs['q_'+o.id] ? Object.assign({},o,{quotation_file:imgs['q_'+o.id]}) : o; }),
             notes:  (d.notes||[]).map(function(note){ return notePdfs['np_'+note.id] ? Object.assign({},note,{pdf:notePdfs['np_'+note.id]}) : note; }),
         });
     } catch(e) { return d; }
+}
+// Load stock images from IDB as fallback for items missing an image (e.g. old data pre-sync)
+function loadStockImagesFromIDB(stockItems, setDataFn) {
+    if (!stockItems || stockItems.length === 0) return;
+    var missing = stockItems.filter(function(s){ return !s.image; });
+    if (missing.length === 0) return;
+    missing.forEach(function(s) {
+        idbGet('kv', 'stkimg_'+s.id).then(function(img) {
+            if (!img) return;
+            setDataFn(function(d) {
+                return Object.assign({}, d, {
+                    stock: (d.stock||[]).map(function(item) {
+                        return item.id === s.id && !item.image ? Object.assign({},item,{image:img}) : item;
+                    })
+                });
+            });
+        }).catch(function(){});
+    });
 }
 function saveData(d, labId, onOK, onFail) {
     // Step 1: stamp with LWW timestamp
@@ -2032,12 +2057,16 @@ function saveData(d, labId, onOK, onFail) {
     var writeData = Object.assign({}, stamped, {
         tables: d.tables ? d.tables.map(function(t){var t2=Object.assign({},t);delete t2._localOnly;delete t2._syncFailed;return t2;}) : d.tables,
         plants: d.plants ? d.plants.map(function(p){var p2=Object.assign({},p);delete p2.image;delete p2.genotype_description;delete p2._localOnly;delete p2._syncFailed;return p2;}) : d.plants,
-        stock:  d.stock  ? d.stock.map(function(s){var s2=Object.assign({},s);delete s2.image;return s2;}) : d.stock,
+        stock:  d.stock  ? d.stock.map(function(s){var s2=Object.assign({},s);
+            // Keep stock images in Supabase — they're small (200px JPEG ~5-15KB)
+            // Only strip if somehow oversized (>60KB = corrupted/uncompressed)
+            if(s2.image && s2.image.length > 80000) delete s2.image;
+            return s2;}) : d.stock,
         orders: d.orders ? d.orders.map(function(o){var o2=Object.assign({},o);delete o2.item_image;delete o2.quotation_file;return o2;}) : d.orders,
         notes:  d.notes  ? d.notes.map(function(note){var n2=Object.assign({},note);delete n2.pdf;return n2;}) : d.notes
     });
     var sizeKB = Math.round(JSON.stringify(writeData).length / 1024);
-    var MAX_KB = 480; // JSONBin free tier safe limit
+    var MAX_KB = 2000; // Supabase jsonb column supports up to ~1GB; 2MB is safe
 
     // If payload is too large, progressively strip largest blobs
     if (sizeKB > MAX_KB) {
@@ -2048,7 +2077,7 @@ function saveData(d, labId, onOK, onFail) {
         sizeKB = Math.round(JSON.stringify(writeData).length / 1024);
     }
     if (sizeKB > MAX_KB) {
-        console.warn('[DB] Still ' + sizeKB + 'KB — stripping stock images');
+        console.warn('[DB] Still ' + sizeKB + 'KB — stripping stock images as last resort');
         writeData = Object.assign({}, writeData, {
             stock: (writeData.stock||[]).map(function(s){ var s2=Object.assign({},s); delete s2.image; return s2; }),
         });
@@ -5744,7 +5773,10 @@ useEffect(() => {
                                     : (reactState && reactState.plants && reactState.plants.length > 0)
                                         ? reactState
                                         : remote; // nothing local — use server as-is
-                                return loadImages(mergeRemoteData(remote, bestLocal));
+                                var merged = loadImages(mergeRemoteData(remote, bestLocal));
+                                // Load any stock images missing from Supabase data (IDB fallback)
+                                setTimeout(function(){ loadStockImagesFromIDB(merged.stock, setData); }, 0);
+                                return merged;
                             });
                             if (remote.greenhouses && remote.greenhouses.length > 0) {
                                 setGhId(function(cur){ return cur || remote.greenhouses[0].id; });
@@ -5872,8 +5904,11 @@ useEffect(() => {
                     remoteUpdateRef.current = true;
                     setSyncCount(function(n){ return n + 1; });
                     setLastFetchTime(new Date());
+                    var _mergedStock = null;
                     setData(function(localData) {
-                        return loadImages(mergeRemoteData(remote, localData));
+                        var m = loadImages(mergeRemoteData(remote, localData));
+                        _mergedStock = m.stock;
+                        return m;
                     });
                     if (remote.greenhouses && remote.greenhouses.length > 0) {
                         setGhId(function(cur){ return cur || remote.greenhouses[0].id; });
@@ -5882,13 +5917,15 @@ useEffect(() => {
                     setUser(function(cur) { return cur; }); // keep existing if already set
                     setSyncStatus(function(cur) { return (cur === 'pending' || cur === 'saving') ? cur : 'synced'; });
                 });
+                // Load IDB stock images after flushSync completes
+                if (_mergedStock) setTimeout(function(){ loadStockImagesFromIDB(_mergedStock, setData); }, 0);
             } catch(fsErr) {
                 // flushSync can throw if called during render — fall back to normal batched update
                 dbgWarn('[Realtime] flushSync skipped: ' + fsErr.message);
                 remoteUpdateRef.current = true;
                 setSyncCount(function(n){ return n + 1; });
                 setLastFetchTime(new Date());
-                setData(function(localData) { return loadImages(mergeRemoteData(remote, localData)); });
+                setData(function(localData) { var m=loadImages(mergeRemoteData(remote,localData)); setTimeout(function(){loadStockImagesFromIDB(m.stock,setData);},0); return m; });
                 setSyncStatus(function(cur) { return (cur === 'pending' || cur === 'saving') ? cur : 'synced'; });
             }
         }
