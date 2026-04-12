@@ -1765,7 +1765,7 @@ function ExpOverlay({ tables, plants, exps, users }) {
     const data = useMemo(() => {
         return exps.map(exp => {
             const bt = {};
-            plants.filter(p => p.experiment_id === exp.id).forEach(p => {
+            plants.filter(p => hasExp(p, exp.id)).forEach(p => {
                 if (!bt[p.table_id]) bt[p.table_id] = [];
                 bt[p.table_id].push(p);
             });
@@ -1870,11 +1870,11 @@ function TableBlock({ table, plants, locked, isSel, activePotId, selMode, selPot
             const p = plants.find(x => x.row === row && x.col === col);
             return (React.createElement(PotCell, { key: `${row}-${col}`, plant: p, ppx: ppx, isActive: p && p.id === activePotId, isSel: p && selPots.includes(p.id), selMode: selMode, teMode: te,
                             onPotClick: (e, pl) => { onPotClick(e, table.id, row, col, pl); }, onPotSel: onPotSel, onDel: onDel,
-                            expInitials: (() => { if (!p || !p.experiment_id) return null; const exp = (exps||[]).find(ex=>ex.id===p.experiment_id); if (!exp) return null; return (exp.owner_name ? exp.owner_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() : exp.name.slice(0,2).toUpperCase()); })(),
-                            expColor: (() => { if (!p || !p.experiment_id) return null; const exp = (exps||[]).find(ex=>ex.id===p.experiment_id); if (!exp) return null; return EC[exp.color_index%8]; })(),
+                            expInitials: (() => { var eids=p?getExpIds(p):[]; if(!eids.length) return null; var exp=(exps||[]).find(ex=>eids.includes(ex.id)); if(!exp) return null; var extra=eids.length>1?'+'+(eids.length-1):''; return (exp.owner_name?exp.owner_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase():exp.name.slice(0,2).toUpperCase())+extra; })(),
+                            expColor: (() => { if (!p || !getExpIds(p).length) return null; var _eids=getExpIds(p); const exp=(exps||[]).find(ex=>_eids.includes(ex.id)); if (!exp) return null; return EC[exp.color_index%8]; })(),
                             onExpHover: onExpTip ? (clientX, clientY) => {
-                                if (!p || !p.experiment_id) { onExpTip(null); return; }
-                                const exp = (exps||[]).find(ex=>ex.id===p.experiment_id);
+                                if (!p || !getExpIds(p).length) { onExpTip(null); return; }
+                                var _eids2=getExpIds(p); const exp=(exps||[]).find(ex=>_eids2.includes(ex.id));
                                 if (!exp) { onExpTip(null); return; }
                                 const owner = (users||[]).find(u=>u.name===exp.owner_name);
                                 onExpTip({ x: clientX, y: clientY, exp, owner });
@@ -2339,7 +2339,7 @@ function MeasuresView({ measures, experiments, plants, tables, users, onSave, cu
 
     const sess = sessions.find(s=>s.id===activeSession);
     const sessPlants = sess ? plants.filter(p => {
-        if (sess.experiment_id) return p.experiment_id === sess.experiment_id && p.genotype;
+        if (sess.experiment_id) return hasExp(p, sess.experiment_id) && p.genotype;
         return p.genotype;
     }) : [];
 
@@ -2893,11 +2893,17 @@ function tlDiff(oldP, newP, userName, exps) {
     if (JSON.stringify(newSts.slice().sort()) !== JSON.stringify(oldSts.slice().sort()) && newSts.length > 0) {
         events.push({ type:'status', text:'Status: '+newSts.join(' + ')+(newP.disease_name?' ('+newP.disease_name+')':'')+(newP.pest_name?' / '+newP.pest_name:''), date:d, by:by });
     }
-    if ((newP.experiment_id||'') !== (oldP.experiment_id||'')) {
-        var expName = newP.experiment_id ? ((exps||[]).find(function(ex){return ex.id===newP.experiment_id;})||{}).name||newP.experiment_id : null;
-        if (expName) events.push({ type:'experiment', text:'Assigned to experiment: ' + expName, date:d, by:by });
-        else if (oldP.experiment_id) events.push({ type:'experiment', text:'Removed from experiment', date:d, by:by });
-    }
+    var newIds = getExpIds(newP), oldIds = getExpIds(oldP);
+    var added   = newIds.filter(function(id){ return !oldIds.includes(id); });
+    var removed = oldIds.filter(function(id){ return !newIds.includes(id); });
+    added.forEach(function(id){
+        var expName = ((exps||[]).find(function(ex){return ex.id===id;})||{}).name||id;
+        events.push({ type:'experiment', text:'Assigned to experiment: '+expName, date:d, by:by });
+    });
+    removed.forEach(function(id){
+        var expName = ((exps||[]).find(function(ex){return ex.id===id;})||{}).name||id;
+        events.push({ type:'experiment', text:'Removed from experiment: '+expName, date:d, by:by });
+    });
     if ((newP.date_moved_in||'') !== (oldP.date_moved_in||'') && newP.date_moved_in) {
         events.push({ type:'moved_in', text:'Moved into greenhouse: ' + newP.date_moved_in, date:d, by:by });
     }
@@ -2966,7 +2972,7 @@ function PlannedGenotypesEditor({ value, onChange }) {
 function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, users, genotypes, onSaveGenoDesc, measures, tables, greenhouses }) {
     const CROPS = ['Tomato', 'Cucumber', 'Eggplant', 'Basil', 'Arabidopsis', 'Pepper', 'Lettuce', 'Strawberry', 'Wheat', 'Maize', 'Other'];
     const CROP_ICONS = {'Tomato':'🍅','Cucumber':'🥒','Eggplant':'🍆','Basil':'🌿','Arabidopsis':'🌱','Pepper':'🫑','Lettuce':'🥬','Strawberry':'🍓','Wheat':'🌾','Maize':'🌽','Other':'🪴'};
-    const [f, setF] = useState({ genotype: plant.genotype || '', treatment: plant.treatment || '', treatments: plant.treatments || [], cross_parent1: plant.cross_parent1 || '', cross_parent2: plant.cross_parent2 || '', planting_date: plant.planting_date || '', status: plant.status || 'empty', statuses: plant.statuses || (plant.status && plant.status !== 'empty' ? [plant.status] : []), disease_name: plant.disease_name || '', sick_severity: plant.sick_severity || 0, pest_name: plant.pest_name || '', pest_severity: plant.pest_severity || 0, crop: plant.crop || 'Tomato', owner: plant.owner || '', date_moved_in: plant.date_moved_in || '', date_until: plant.date_until || '', notes: plant.notes || '', pot_style: plant.pot_style || 'conic', pot_color: plant.pot_color || 'bsugar', image: plant.image || null, photos: plant.photos || (plant.image ? [{id:'i0',data:plant.image,date:''}] : []), experiment_id: plant.experiment_id || null });
+    const [f, setF] = useState({ genotype: plant.genotype || '', treatment: plant.treatment || '', treatments: plant.treatments || [], cross_parent1: plant.cross_parent1 || '', cross_parent2: plant.cross_parent2 || '', planting_date: plant.planting_date || '', status: plant.status || 'empty', statuses: plant.statuses || (plant.status && plant.status !== 'empty' ? [plant.status] : []), disease_name: plant.disease_name || '', sick_severity: plant.sick_severity || 0, pest_name: plant.pest_name || '', pest_severity: plant.pest_severity || 0, crop: plant.crop || 'Tomato', owner: plant.owner || '', date_moved_in: plant.date_moved_in || '', date_until: plant.date_until || '', notes: plant.notes || '', pot_style: plant.pot_style || 'conic', pot_color: plant.pot_color || 'bsugar', image: plant.image || null, photos: plant.photos || (plant.image ? [{id:'i0',data:plant.image,date:''}] : []), experiment_id: plant.experiment_id || null, experiment_ids: Array.isArray(plant.experiment_ids) ? plant.experiment_ids : (plant.experiment_id ? [plant.experiment_id] : []) });
     const [lbIdx, setLbIdx] = React.useState(null);
     // Genotype Description: read from global genotypes table, write back globally
     const [genoDesc, setGenoDesc] = React.useState(function(){
@@ -3261,14 +3267,22 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
                 ),
                 (!CROPS.slice(0, -1).includes(f.crop) && f.crop) && (React.createElement("input", { className: "fi", style: { marginTop: 5 }, value: f.crop === 'Other' ? '' : f.crop, onChange: e => set('crop', e.target.value), placeholder: "Enter crop name..." }))),
             React.createElement("div", null,
-                React.createElement("label", { className: "fl" }, "Experiment"),
+                React.createElement("label", { className: "fl" }, "Experiments"),
                 React.createElement("div", { className: "exsel" },
-                    React.createElement("div", { className: `exsopt${!f.experiment_id ? ' on' : ''}`, onClick: () => set('experiment_id', null) },
-                        React.createElement("div", { style: { width: 10, height: 10, borderRadius: 3, background: 'var(--bo)', flexShrink: 0 } }),
-                        React.createElement("span", { style: { color: 'var(--i4)' } }, "None")),
-                    exps.map(ex => React.createElement("div", { key: ex.id, className: `exsopt${f.experiment_id === ex.id ? ' on' : ''}`, onClick: () => set('experiment_id', ex.id) },
-                        React.createElement("div", { style: { width: 10, height: 10, borderRadius: 3, background: EC[ex.color_index % 8], flexShrink: 0 } }),
-                        React.createElement("span", { style: { flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, ex.name))))),
+                    exps.length === 0 && React.createElement("div", { style:{fontSize:11,color:'var(--i4)',padding:'4px 0'} }, "No experiments yet"),
+                    exps.map(function(ex) {
+                        var ids = Array.isArray(f.experiment_ids) ? f.experiment_ids : (f.experiment_id ? [f.experiment_id] : []);
+                        var on = ids.includes(ex.id);
+                        return React.createElement("div", { key: ex.id, className: 'exsopt'+(on?' on':''), onClick: function() {
+                            var cur = Array.isArray(f.experiment_ids) ? f.experiment_ids : (f.experiment_id ? [f.experiment_id] : []);
+                            var next = on ? cur.filter(function(id){ return id!==ex.id; }) : cur.concat([ex.id]);
+                            set('experiment_ids', next);
+                            set('experiment_id', next[0]||null);
+                        } },
+                            React.createElement("div", { style: { width: 10, height: 10, borderRadius: 3, background: on ? EC[ex.color_index%8] : 'var(--bo)', flexShrink: 0 } }),
+                            React.createElement("span", { style: { flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' } }, ex.name),
+                            on && React.createElement("span", { style:{fontSize:9,color:'var(--fo3)',fontWeight:700,marginLeft:'auto'} }, "✓"));
+                    }))),
             React.createElement("div", null,
                 React.createElement("label", { className: "fl" }, "Photos" + ((f.photos&&f.photos.length)?' ('+f.photos.length+')':'')),
                 (f.photos && f.photos.length > 0) && React.createElement("div", { style:{display:'flex',gap:6,flexWrap:'wrap',marginBottom:6} },
@@ -3345,7 +3359,7 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
                 React.createElement("div", { style: { display: 'flex', gap: 6 } },
                     React.createElement("button", { className: "btn btns bxs", style: { fontSize: 10 }, onClick: function() {
                         var code = plant.id.slice(0,12).toUpperCase();
-                        var exp  = (exps||[]).find(function(e){ return e.id === plant.experiment_id; });
+                        var _expIds = getExpIds(plant); var exp = { name: _expIds.map(function(id){ return ((exps||[]).find(function(e){return e.id===id;})||{}).name||''; }).filter(Boolean).join(', ') };
                         var bars = code128B(code);
                         var totalU = bars.reduce(function(s,b){return s+b.w;},0);
                         var W=200,H=48,uw=W/totalU;
@@ -3368,7 +3382,7 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
                         var sessList = measures || [];
                         var measHeaders = sessList.map(function(s){ return s.name+' ('+s.unit+')'; });
                         var headers = ['Pot ID','Greenhouse','Table','Row','Col','Genotype','Treatment','Status','Planting Date','Experiment','Crop','Owner','Notes'].concat(measHeaders);
-                        var expR = (exps||[]).find(function(e){ return e.id === plant.experiment_id; }) || {};
+                        var _expIdsR = getExpIds(plant); var expR = { name: _expIdsR.map(function(id){ return ((exps||[]).find(function(e){return e.id===id;})||{}).name||''; }).filter(Boolean).join(', ') };
                         var base = [plant.id, ghNm, tblNm,
                             plant.row!=null?plant.row+1:'', plant.col!=null?plant.col+1:'',
                             plant.genotype||'', plant.treatment||'', plant.status||'',
@@ -3435,7 +3449,7 @@ function SearchView({ plants, tables, ghs, exps, onSel }) {
             React.createElement("div", { style: { fontSize: 30, opacity: .3 } }, "\uD83C\uDF31"),
             React.createElement("div", { style: { fontSize: 12 } }, q ? 'No matches' : 'No data yet'))
             : res.map(p => {
-                const ex = exps.find(e => e.id === p.experiment_id);
+                const exIds = getExpIds(p); const ex = exps.find(e => exIds.includes(e.id));
                 return (React.createElement("div", { key: p.id, className: "rc", onClick: () => onSel(p) },
                     React.createElement(PotSVG, { sid: p.pot_style || 'conic', sz: 30, sc: p.status !== 'empty' ? p.status : null, colorId: p.pot_color || 'bsugar' }),
                     React.createElement("div", { className: "rcinfo" },
@@ -4576,7 +4590,7 @@ function DashView({ greenhouses, tables, structs, plants, experiments }) {
                 React.createElement("h3", { style: { alignSelf:'center', marginBottom:8 } }, "Experiments"),
                 React.createElement("div", { style: { width:'100%', display:'flex', flexDirection:'column', gap:8 } },
                     (experiments||[]).map(function(ex) {
-                        var cnt = (plants||[]).filter(function(p){return p.experiment_id===ex.id;}).length;
+                        var cnt = (plants||[]).filter(function(p){return hasExp(p,ex.id);}).length;
                         var isActive = !ex.until_date || new Date(ex.until_date) >= new Date();
                         var daysLeft = ex.until_date ? Math.ceil((new Date(ex.until_date)-new Date())/86400000) : null;
                         var col = EC[ex.color_index % 8];
@@ -5647,7 +5661,7 @@ function ExperimentsTab({ experiments, plants, orders, user, onAdd, onEdit, onDe
                     React.createElement('div', { style:{fontSize:11} }, 'Create one to track treatments and pots')
                   )
                 : experiments.map(function(ex) {
-                    var cnt = plants.filter(function(p){ return p.experiment_id === ex.id; }).length;
+                    var cnt = plants.filter(function(p){ return hasExp(p, ex.id); }).length;
                     var oc  = (orders||[]).filter(function(o){ return o.experiment_id === ex.id; }).length;
                     var dotColor = EC[ex.color_index % 8];
                     return React.createElement('div', { key:ex.id,
@@ -5672,6 +5686,24 @@ function ExperimentsTab({ experiments, plants, orders, user, onAdd, onEdit, onDe
                 })
         )
     );
+}
+
+// ── Multi-experiment helpers ──────────────────────────────────────────────
+function getExpIds(plant) {
+    // Support both legacy experiment_id (string) and new experiment_ids (array)
+    if (Array.isArray(plant.experiment_ids)) return plant.experiment_ids;
+    if (plant.experiment_id) return [plant.experiment_id];
+    return [];
+}
+function hasExp(plant, eid) { return getExpIds(plant).includes(eid); }
+function addExp(plant, eid) {
+    var ids = getExpIds(plant);
+    if (ids.includes(eid)) return plant;
+    return Object.assign({}, plant, { experiment_ids: ids.concat([eid]), experiment_id: ids.concat([eid])[0] });
+}
+function removeExp(plant, eid) {
+    var ids = getExpIds(plant).filter(function(id){ return id !== eid; });
+    return Object.assign({}, plant, { experiment_ids: ids, experiment_id: ids[0] || null });
 }
 
 // ── Code128B barcode renderer (pure SVG, no deps) ────────────────────────
@@ -5751,7 +5783,7 @@ function BarcodeExportModal({ pots, tables, greenhouses, measures, experiments, 
             status: p.status || '',
             treat:  p.treatment || '',
             date:   p.planting_date || '',
-            exp:    (experiments.find(function(e){ return e.id === p.experiment_id; }) || {}).name || '',
+            exp:    getExpIds(p).map(function(id){ return (experiments.find(function(e){return e.id===id;})||{}).name||''; }).filter(Boolean).join(', '),
         };
     }
     function doPrint() { window.print(); }
@@ -5763,7 +5795,7 @@ function BarcodeExportModal({ pots, tables, greenhouses, measures, experiments, 
         var rows = pots.map(function(p) {
             var tbl = tables.find(function(t){ return t.id === p.table_id; }) || {};
             var gh  = greenhouses.find(function(g){ return g.id === p.greenhouse_id; }) || {};
-            var exp = experiments.find(function(e){ return e.id === p.experiment_id; }) || {};
+            var expNames = getExpIds(p).map(function(id){ return (experiments.find(function(e){return e.id===id;})||{}).name||''; }).filter(Boolean).join(', '); var exp = { name: expNames };
             var base = [
                 p.id, gh.name||'', tbl.name||'',
                 p.row != null ? p.row + 1 : '',
@@ -5807,6 +5839,152 @@ function BarcodeExportModal({ pots, tables, greenhouses, measures, experiments, 
             React.createElement('div', { className: 'bc-modal-foot' },
                 React.createElement('button', { className: 'btn btns', onClick: doCSV }, '⬇ Export Excel/CSV'),
                 React.createElement('button', { className: 'btn btnp', onClick: doPrint }, '🖨 Print Labels'))));
+}
+
+// ── Plant Data Viewer ─────────────────────────────────────────────────────
+function PlantDataViewer({ pots, tables, greenhouses, experiments, measures, onClose }) {
+    var [tab, setTab] = React.useState('summary'); // 'summary' | 'measures' | 'timeline'
+    var [selIds, setSelIds] = React.useState(pots.map(function(p){return p.id;}));
+
+    var selected = pots.filter(function(p){ return selIds.includes(p.id); });
+
+    function tblName(p)  { return (tables.find(function(t){return t.id===p.table_id;})||{}).name||'?'; }
+    function ghName(p)   { return (greenhouses.find(function(g){return g.id===p.greenhouse_id;})||{}).name||'?'; }
+    function expNames(p) { return getExpIds(p).map(function(id){ return (experiments.find(function(e){return e.id===id;})||{}).name||''; }).filter(Boolean).join(', ')||'—'; }
+    function age(p)      { if(!p.planting_date) return '—'; var d=Math.floor((Date.now()-new Date(p.planting_date))/86400000); return d+'d'; }
+    function measVal(sessId, potId) {
+        var s=(measures||[]).find(function(s){return s.id===sessId;});
+        if(!s) return '';
+        var r=(s.rows||[]).find(function(r){return r.pot_id===potId;});
+        return r?r.value:'';
+    }
+
+    function downloadCSV() {
+        var sessList = measures || [];
+        // Header row 1: info fields + one col-group per session
+        var infoHeaders = ['Pot ID','Greenhouse','Table','Row','Col','Genotype','Treatment','Status','Planting Date','Age (days)','Experiment(s)','Crop','Owner','Notes'];
+        var measHeaders = sessList.map(function(s){ return s.name+' ('+s.unit+')'; });
+        var headers = infoHeaders.concat(measHeaders);
+
+        var rows = selected.map(function(p) {
+            var ageDays = p.planting_date ? Math.floor((Date.now()-new Date(p.planting_date))/86400000) : '';
+            var base = [p.id, ghName(p), tblName(p),
+                p.row!=null?p.row+1:'', p.col!=null?p.col+1:'',
+                p.genotype||'', p.treatment||'', p.status||'',
+                p.planting_date||'', ageDays, expNames(p),
+                p.crop||'', p.owner||'', (p.notes||'').replace(/\n/g,' ')];
+            var meas = sessList.map(function(s){ return measVal(s.id,p.id); });
+            return base.concat(meas);
+        });
+
+        // Also append timeline rows as a second section
+        var timelineRows = [];
+        selected.forEach(function(p) {
+            (p.timeline||[]).forEach(function(ev) {
+                timelineRows.push([p.id, p.genotype||'', ev.date?ev.date.slice(0,10):'', ev.by||'', ev.type||'', ev.text||'']);
+            });
+        });
+
+        var q = function(x){ return '"'+(x==null?'':String(x)).replace(/"/g,'""')+'"'; };
+        var csv = [headers].concat(rows).map(function(r){return r.map(q).join(',');}).join('\n');
+        if (timelineRows.length) {
+            csv += '\n\n"--- TIMELINE ---"\n';
+            csv += ['Pot ID','Genotype','Date','By','Event','Detail'].map(q).join(',') + '\n';
+            csv += timelineRows.map(function(r){return r.map(q).join(',');}).join('\n');
+        }
+        var a = document.createElement('a');
+        a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+        a.download = 'plant_data_'+new Date().toISOString().slice(0,10)+'.csv';
+        a.click();
+    }
+
+    var sessList = measures || [];
+
+    return React.createElement('div', { className:'bc-modal-ov', onClick:function(e){if(e.target===e.currentTarget)onClose();} },
+        React.createElement('div', { className:'bc-modal', style:{width:'min(1000px,98vw)',maxHeight:'92vh'} },
+            // Header
+            React.createElement('div', { className:'bc-modal-hdr' },
+                React.createElement('h3', null, '📊 Plant Data — '+selected.length+' / '+pots.length+' pots'),
+                React.createElement('div', { style:{display:'flex',gap:6,alignItems:'center'} },
+                    React.createElement('button', { className:'btn btnp bsm', onClick:downloadCSV }, '⬇ Excel / CSV'),
+                    React.createElement('button', { className:'btn btns bsm', onClick:onClose }, '✕ Close'))),
+            // Sub-tabs
+            React.createElement('div', { style:{display:'flex',gap:0,borderBottom:'1px solid var(--bo)',flexShrink:0} },
+                ['summary','measures','timeline'].map(function(t) {
+                    return React.createElement('button', { key:t, onClick:function(){setTab(t);},
+                        style:{padding:'8px 18px',fontSize:12,fontWeight:tab===t?700:500,
+                               borderBottom:tab===t?'2px solid var(--acc)':'2px solid transparent',
+                               background:'none',border:'none',borderBottom:tab===t?'2px solid #78C043':'2px solid transparent',
+                               cursor:'pointer',color:tab===t?'var(--acc)':'var(--i3)',fontFamily:'inherit'} },
+                        t==='summary'?'Summary':t==='measures'?'Measurements':'Timeline');
+                })),
+            // Body
+            React.createElement('div', { className:'bc-modal-body', style:{padding:0} },
+                // Pot selector strip
+                React.createElement('div', { style:{padding:'8px 14px',borderBottom:'1px solid var(--bo)',background:'var(--bg)',display:'flex',flexWrap:'wrap',gap:5} },
+                    pots.map(function(p) {
+                        var on = selIds.includes(p.id);
+                        return React.createElement('div', { key:p.id, onClick:function(){setSelIds(function(s){return on?s.filter(function(x){return x!==p.id;}):s.concat([p.id]);});},
+                            style:{padding:'3px 8px',borderRadius:20,fontSize:11,cursor:'pointer',fontWeight:500,
+                                   background:on?'#78C043':'var(--bo)',color:on?'#fff':'var(--i3)',transition:'all .1s'} },
+                            p.genotype||(p.row!=null?'R'+(p.row+1)+'C'+(p.col+1):'pot'));
+                    })),
+                // SUMMARY TAB
+                tab==='summary' && React.createElement('div', { style:{overflowX:'auto',padding:0} },
+                    React.createElement('table', { style:{width:'100%',borderCollapse:'collapse',fontSize:11} },
+                        React.createElement('thead', null,
+                            React.createElement('tr', { style:{background:'var(--bg)',position:'sticky',top:0} },
+                                ['Genotype','Table','Loc','Status','Age','Experiment(s)','Treatment','Owner','Crop'].map(function(h) {
+                                    return React.createElement('th', {key:h, style:{padding:'8px 10px',textAlign:'left',fontWeight:700,fontSize:10,color:'var(--i4)',letterSpacing:'.06em',textTransform:'uppercase',borderBottom:'1.5px solid var(--bo)',whiteSpace:'nowrap'}}, h);
+                                }))),
+                        React.createElement('tbody', null,
+                            selected.map(function(p,i) {
+                                return React.createElement('tr', {key:p.id, style:{background:i%2===0?'#fff':'var(--bg)',borderBottom:'1px solid var(--bo)'}},
+                                    React.createElement('td', {style:{padding:'7px 10px',fontWeight:600,color:'var(--fo2)'}}, p.genotype||'—'),
+                                    React.createElement('td', {style:{padding:'7px 10px',color:'var(--i3)'}}, tblName(p)),
+                                    React.createElement('td', {style:{padding:'7px 10px',color:'var(--i4)',fontFamily:'monospace',fontSize:10}}, 'R'+(p.row+1)+'C'+(p.col+1)),
+                                    React.createElement('td', {style:{padding:'7px 10px'}}, React.createElement('span', {style:{fontSize:10,padding:'1px 7px',borderRadius:20,background:p.status==='healthy'?'#dcfce7':p.status==='dead'?'#fee2e2':p.status==='wilting'?'#fef9c3':'#f3f4f6',color:p.status==='healthy'?'#166534':p.status==='dead'?'#991b1b':p.status==='wilting'?'#854d0e':'#374151',fontWeight:600}}, p.status||'—')),
+                                    React.createElement('td', {style:{padding:'7px 10px',color:'var(--i4)'}}, age(p)),
+                                    React.createElement('td', {style:{padding:'7px 10px',color:'var(--i3)',maxWidth:180,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}, expNames(p)),
+                                    React.createElement('td', {style:{padding:'7px 10px',color:'var(--i3)'}}, p.treatment||'—'),
+                                    React.createElement('td', {style:{padding:'7px 10px',color:'var(--i4)'}}, p.owner||'—'),
+                                    React.createElement('td', {style:{padding:'7px 10px',color:'var(--i4)'}}, p.crop||'—')
+                                );
+                            })))),
+                // MEASURES TAB
+                tab==='measures' && React.createElement('div', { style:{overflowX:'auto',padding:0} },
+                    sessList.length===0
+                        ? React.createElement('div', {style:{padding:40,textAlign:'center',color:'var(--i4)',fontSize:13}}, 'No measurement sessions recorded yet.')
+                        : React.createElement('table', { style:{width:'100%',borderCollapse:'collapse',fontSize:11} },
+                            React.createElement('thead', null,
+                                React.createElement('tr', { style:{background:'var(--bg)'} },
+                                    React.createElement('th', {style:{padding:'8px 10px',textAlign:'left',fontWeight:700,fontSize:10,color:'var(--i4)',letterSpacing:'.06em',textTransform:'uppercase',borderBottom:'1.5px solid var(--bo)',position:'sticky',left:0,background:'var(--bg)',zIndex:1}}, 'Genotype / Loc'),
+                                    sessList.map(function(s) {
+                                        return React.createElement('th', {key:s.id, style:{padding:'8px 10px',textAlign:'center',fontWeight:700,fontSize:10,color:'var(--i4)',letterSpacing:'.04em',borderBottom:'1.5px solid var(--bo)',whiteSpace:'nowrap'}},
+                                            s.name, React.createElement('br',null), React.createElement('span',{style:{fontWeight:400,fontSize:9}},'('+s.unit+')'));
+                                    }))),
+                            React.createElement('tbody', null,
+                                selected.map(function(p,i) {
+                                    return React.createElement('tr', {key:p.id, style:{background:i%2===0?'#fff':'var(--bg)',borderBottom:'1px solid var(--bo)'}},
+                                        React.createElement('td', {style:{padding:'7px 10px',fontWeight:600,color:'var(--fo2)',position:'sticky',left:0,background:i%2===0?'#fff':'var(--bg)',zIndex:1,whiteSpace:'nowrap'}},
+                                            p.genotype||'—', React.createElement('span',{style:{fontWeight:400,color:'var(--i4)',fontSize:10,marginLeft:5}},'R'+(p.row+1)+'C'+(p.col+1))),
+                                        sessList.map(function(s) {
+                                            var v = measVal(s.id, p.id);
+                                            return React.createElement('td', {key:s.id, style:{padding:'7px 10px',textAlign:'center',color:v?'var(--i1)':'var(--i5)'}}, v||'—');
+                                        }));
+                                })))),
+                // TIMELINE TAB
+                tab==='timeline' && React.createElement('div', { style:{padding:12} },
+                    selected.flatMap(function(p) {
+                        return (p.timeline||[]).slice().reverse().map(function(ev,i) {
+                            return React.createElement('div', {key:p.id+i, style:{display:'flex',gap:10,padding:'6px 0',borderBottom:'1px solid var(--bo)'}},
+                                React.createElement('div', {style:{width:80,flexShrink:0,fontSize:10,color:'var(--i4)',fontFamily:'monospace',paddingTop:1}}, ev.date?ev.date.slice(0,10):''),
+                                React.createElement('div', {style:{width:100,flexShrink:0,fontWeight:600,fontSize:11,color:'var(--fo2)'}}, p.genotype||('R'+(p.row+1)+'C'+(p.col+1))),
+                                React.createElement('div', {style:{fontSize:11,color:'var(--i2)',flex:1}}, ev.text||''),
+                                ev.by && React.createElement('div', {style:{fontSize:10,color:'var(--i5)',flexShrink:0}}, ev.by));
+                        });
+                    }).sort(function(a,b){ return 0; }) // already reversed per plant
+                ))));
 }
 
 function BulkGenoField({ selPots, genotypes, plants, forceWriteRef, setData, nowFn, notify }) {
@@ -5883,6 +6061,7 @@ function App() {
     const [showShare, setShowShare] = useState(false);
     const [showAStr, setShowAStr] = useState(false);
     const [showBarcodes, setShowBarcodes] = useState(false);
+    const [showDataViewer, setShowDataViewer] = useState(false);
     const [showAMem, setShowAMem] = useState(false);
     const [ghFm, setGhFm] = useState({ name: '', width: 600, length: 400 });
     const [tFm, setTFm] = useState({ name: '', width: 230, length: 125, rows: 3, cols: 6 });
@@ -6857,7 +7036,7 @@ useEffect(() => {
     }, [data]);
     const savePlant = (upd, deleteGeno) => {
         if (deleteGeno) {
-            setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => p.genotype === deleteGeno ? Object.assign(Object.assign({}, p), { genotype:'', treatment:'', status:'empty', planting_date:'', notes:'', image:null, experiment_id:null }) : p) })));
+            setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => p.genotype === deleteGeno ? Object.assign(Object.assign({}, p), { genotype:'', treatment:'', status:'empty', planting_date:'', notes:'', image:null, experiment_id:null, experiment_ids:[] }) : p) })));
             setPopup(null); setActPot(null); notify('Genotype "' + deleteGeno + '" removed from all pots');
             return;
         }
@@ -6873,7 +7052,7 @@ useEffect(() => {
         setPopup(null); setActPot(null); notify('Saved'); logActivity('Updated pot: ' + (w.genotype || 'empty'));
     };
     /* delete pot = clear data, keep slot */
-    const delPot = id => { setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => p.id !== id ? p : Object.assign(Object.assign({}, p), { genotype: '', treatment: '', planting_date: '', notes: '', status: 'empty', image: null, experiment_id: null, updated_at: now() })) }))); notify('Pot cleared'); };
+    const delPot = id => { setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => p.id !== id ? p : Object.assign(Object.assign({}, p), { genotype: '', treatment: '', planting_date: '', notes: '', status: 'empty', image: null, experiment_id: null, experiment_ids: [], updated_at: now() })) }))); notify('Pot cleared'); };
     /* selection */
     const togSel = id => setSelPots(ps => ps.includes(id) ? ps.filter(x => x !== id) : [...ps, id]);
     const assExp = () => {
@@ -6882,12 +7061,12 @@ useEffect(() => {
             if (!assExpFm.newName.trim())
                 return;
             const ex = { id: uid(), name: assExpFm.newName.trim(), owner_name: assExpFm.newOwner || (user === null || user === void 0 ? void 0 : user.name) || '', description: assExpFm.newDesc, until_date: assExpFm.newUntilDate || '', created_at: now(), color_index: data.experiments.length % 8 };
-            setData(d => { const nd = Object.assign(Object.assign({}, d), { experiments: [...d.experiments, ex], plants: d.plants.map(p => selPots.includes(p.id) ? Object.assign(Object.assign({}, p), { experiment_id: ex.id }) : p) }); return nd; });
+            setData(d => { const nd = Object.assign(Object.assign({}, d), { experiments: [...d.experiments, ex], plants: d.plants.map(p => selPots.includes(p.id) ? addExp(p, ex.id) : p) }); return nd; });
         }
         else {
             if (!eid)
                 return;
-            setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => selPots.includes(p.id) ? Object.assign(Object.assign({}, p), { experiment_id: eid }) : p) })));
+            setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => selPots.includes(p.id) ? addExp(p, eid) : p) })));
         }
         setSelMode(false);
         setSelPots([]);
@@ -6929,7 +7108,7 @@ useEffect(() => {
     const deleteExp = id => {
         if (!window.confirm('Delete this experiment? Pots assigned to it will become unassigned. No pots are deleted.'))
             return;
-        setData(d => (Object.assign(Object.assign({}, d), { experiments: d.experiments.filter(e => e.id !== id), plants: d.plants.map(p => p.experiment_id === id ? Object.assign(Object.assign({}, p), { experiment_id: null }) : p) })));
+        setData(d => (Object.assign(Object.assign({}, d), { experiments: d.experiments.filter(e => e.id !== id), plants: d.plants.map(p => hasExp(p,id) ? removeExp(p,id) : p) })));
         notify('Experiment deleted — pots unassigned');
     };
     const addSchedule = entry => { forceWriteRef.current = true; setData(d => ({...d, schedules:[...(d.schedules||[]),entry]})); };
@@ -7150,7 +7329,7 @@ useEffect(() => {
                                 React.createElement("input", { type: "number", min: "1", max: "20", value: sTbl.cols, onChange: e => updGrid(sTbl.rows, +e.target.value) }))),
                         React.createElement("div", { style: { display: 'flex', gap: 5, marginTop: 7, flexWrap: 'wrap' } },
                             React.createElement("button", { className: "btn btns bsm", style: { flex: 1 }, onClick: () => setEditTbl(editTbl === selTbl ? null : selTbl) }, editTbl === selTbl ? 'Done editing' : 'Edit pots'),
-                            React.createElement("button", { className: "btn btns bsm", onClick: () => { if (window.confirm('Clear all pots in this table? Genotypes and data will be erased but the table stays.')) { setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => p.table_id === selTbl ? Object.assign(Object.assign({}, p), { genotype: '', treatment: '', planting_date: '', notes: '', status: 'empty', image: null, experiment_id: null }) : p) }))); notify('All pots cleared'); } } }, "Clear all"),
+                            React.createElement("button", { className: "btn btns bsm", onClick: () => { if (window.confirm('Clear all pots in this table? Genotypes and data will be erased but the table stays.')) { setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => p.table_id === selTbl ? Object.assign(Object.assign({}, p), { genotype: '', treatment: '', planting_date: '', notes: '', status: 'empty', image: null, experiment_id: null, experiment_ids: [] }) : p) }))); notify('All pots cleared'); } } }, "Clear all"),
                             React.createElement("button", { className: "btn btnd bsm", onClick: () => hDrag(selTbl, null, null, true) }, "Delete"))),
                     aGh && locked && React.createElement(React.Fragment, null,
                         React.createElement("div", { className: "pg", style: { borderTop: '1px solid var(--bo)', paddingTop: 11 } },
@@ -7454,6 +7633,7 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
                     }}),
                     React.createElement("button", { className: "btn btnp bsm", onClick: () => { var _a; setAssExpFm({ mode: 'existing', newName: '', newOwner: (user === null || user === void 0 ? void 0 : user.name) || '', newDesc: '', newUntilDate: '', existId: ((_a = data.experiments[0]) === null || _a === void 0 ? void 0 : _a.id) || '' }); setShowAssExp(true); } }, "Assign exp."),
                     React.createElement("button", { className: "btn btns bsm", onClick: () => setShowBarcodes(true) }, "🏷 Labels"),
+                    React.createElement("button", { className: "btn btns bsm", onClick: () => setShowDataViewer(true) }, "📊 View Data"),
                     React.createElement("button", { style:{background:'rgba(255,255,255,.12)',color:'#fff',border:'none',borderRadius:6,padding:'3px 10px',cursor:'pointer',fontSize:11}, onClick: () => { setSelPots([]); setSelMode(false); } }, "✕ Done")),
                 tab === 'layout' && React.createElement(React.Fragment, null,
                     React.createElement("div", { className: "alert-legend", style:{display:"flex",alignItems:"center",gap:8,flexWrap:"nowrap",overflow:"hidden"} },
@@ -7684,7 +7864,7 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
                 React.createElement("input", { className: "moi", type: "date", value: eFm.until_date || '', onChange: e => setEFm(f => (Object.assign(Object.assign({}, f), { until_date: e.target.value }))) })),
             React.createElement(PlannedGenotypesEditor, { value: eFm.planned_genotypes || [], onChange: v => setEFm(f => ({...f, planned_genotypes: v})) }),
             React.createElement("div", { style: { fontSize: 11, color: 'var(--i4)', marginTop: 4 } },
-                data.plants.filter(p => p.experiment_id === editExpId).length,
+                data.plants.filter(p => hasExp(p, editExpId)).length,
                 " pot(s) currently linked to this experiment.")),
         showAssExp && React.createElement(Modal, { title: "Assign Experiment", sub: `${selPots.length} pots selected`, onClose: () => { var _a; setShowAssExp(false); setAssExpFm({ mode: 'existing', newName: '', newOwner: '', newDesc: '', newUntilDate: '', existId: ((_a = data.experiments[0]) === null || _a === void 0 ? void 0 : _a.id) || '' }); }, onConfirm: assExp, confirmLabel: "Assign" },
             React.createElement("div", { style: { display: 'flex', gap: 6, marginBottom: 10 } },
@@ -7717,7 +7897,7 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
                     React.createElement("label", { className: "mol" }, "In greenhouse until"),
                     React.createElement("input", { className: "moi", type: "date", value: assExpFm.newUntilDate || '', onChange: e => setAssExpFm(f => (Object.assign(Object.assign({}, f), { newUntilDate: e.target.value }))) })))),
             React.createElement("div", { style: { marginTop: 10 } },
-                React.createElement("button", { className: "btn btnd bsm", onClick: () => { setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => selPots.includes(p.id) ? Object.assign(Object.assign({}, p), { experiment_id: null }) : p) }))); setSelMode(false); setSelPots([]); setShowAssExp(false); notify('Removed from exp'); } }, "Remove from experiment"))),
+                React.createElement("button", { className: "btn btnd bsm", onClick: () => { var eid2 = assExpFm.existId; setData(d => (Object.assign(Object.assign({}, d), { plants: d.plants.map(p => selPots.includes(p.id) ? (eid2 ? removeExp(p,eid2) : Object.assign({},p,{experiment_ids:[],experiment_id:null})) : p) }))); setSelMode(false); setSelPots([]); setShowAssExp(false); notify('Removed from exp'); } }, "Remove from experiment"))),
         showAStr && React.createElement(Modal, { title: "Add Object", onClose: () => setShowAStr(false), onConfirm: addStruct, confirmLabel: "Add" },
             React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7, marginBottom: 10 } }, STYPES.map(t => React.createElement("div", { key: t.id, onClick: () => setNStType(t.id), style: { padding: '9px 8px', border: `2px solid ${nStType === t.id ? 'var(--fo2)' : 'var(--bo)'}`, borderRadius: 'var(--r)', cursor: 'pointer', background: nStType === t.id ? 'var(--ll)' : '#fff', display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 500, color: 'var(--i2)' } },
                 React.createElement("span", { style: { fontSize: 18 } }, t.id === 'door' ? '🚪' : t.id === 'ac' ? '❄️' : t.id === 'hall' ? '🏠' : '🚶'),
@@ -7751,6 +7931,7 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
                 : `You are about to permanently delete table "${delConfirm.name}" and all its pot data.`, labId: activeLab === null || activeLab === void 0 ? void 0 : activeLab.id, onConfirm: delConfirm.onConfirm, onClose: () => setDelConfirm(null) }),
         showFbPanel && React.createElement(FirebasePanel, { onClose: () => setShowFbPanel(false), activityLog: activityLog }),
         showBarcodes && React.createElement(BarcodeExportModal, { pots: data.plants.filter(function(p){ return selPots.includes(p.id); }), tables: data.tables, greenhouses: data.greenhouses, measures: data.measures || [], experiments: data.experiments, onClose: () => setShowBarcodes(false) }),
+        showDataViewer && React.createElement(PlantDataViewer, { pots: data.plants.filter(function(p){ return selPots.includes(p.id); }), tables: data.tables, greenhouses: data.greenhouses, experiments: data.experiments, measures: data.measures || [], onClose: () => setShowDataViewer(false) }),
         notif && React.createElement("div", { className: "notif" },
             React.createElement("div", { className: "ndot" }),
             notif)));
