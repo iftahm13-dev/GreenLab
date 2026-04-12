@@ -246,7 +246,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .sobj.locked{cursor:default}
 
 /* Table blocks */
-.tbl{position:absolute;background:#fff;border:1.5px solid #e5e7eb;border-radius:14px;display:flex;flex-direction:column;overflow:visible;transition:border-color .15s;box-shadow:var(--sh);z-index:1;visibility:visible}
+.tbl{position:absolute;background:#fff;border:2px solid #D1D5DB;border-radius:14px;display:flex;flex-direction:column;overflow:visible;transition:border-color .15s,box-shadow .15s;box-shadow:0 2px 8px rgba(0,0,0,.10),0 1px 3px rgba(0,0,0,.07);z-index:1;visibility:visible}
 .tbl:hover{border-color:#c3e6a8;box-shadow:0 4px 16px rgba(120,192,67,.1)}
 .tbl.sel{border-color:#78C043;box-shadow:0 0 0 3px rgba(120,192,67,.25),var(--sh-card);background:#edf7e3;z-index:3}
 .tbl.tedit{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12);z-index:3}
@@ -292,6 +292,9 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .bulk-panel strong{color:#78C043}
 .bulk-panel select{background:#334155;color:#fff;border:1px solid #475569;border-radius:6px;padding:3px 6px;font-size:11px;font-family:Poppins,sans-serif}
 .bulk-panel input{background:#334155;color:#fff;border:1px solid #475569;border-radius:6px;padding:3px 8px;font-size:11px;font-family:Poppins,sans-serif;width:100px}
+.bulk-panel .ac-wrap{display:inline-flex;align-items:center}
+.bulk-panel .ac-wrap input.fi{background:#334155!important;color:#fff!important;border:1px solid #475569!important;border-radius:6px!important;padding:3px 8px!important;font-size:11px!important;font-family:Poppins,sans-serif!important;width:140px!important;height:auto!important;min-height:0!important;box-shadow:none!important}
+.bulk-panel .ac-wrap input.fi::placeholder{color:#94a3b8!important}
 .tbl.dragging{box-shadow:var(--sh2);opacity:.93;z-index:200;cursor:grabbing!important}
 .tbl.dbg-highlight{border:3px solid #ef4444!important;background:rgba(239,68,68,.08)!important;z-index:100!important}
 .tbl.dbg-highlight .thd{background:#fef2f2!important}
@@ -302,7 +305,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .thinfo{font-size:9px;color:var(--i4)}
 .thedit{font-size:11px;background:#78C043;border:none;color:#fff;border-radius:50px;padding:5px 14px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all .12s;box-shadow:0 1px 4px rgba(120,192,67,.3)}
 .thedit:hover{background:#69ad38;box-shadow:0 2px 8px rgba(120,192,67,.4)}
-.pgrid{flex:1;display:grid;padding:5px;overflow:visible;align-items:center;justify-items:center}
+.pgrid{flex:1;display:grid;padding:5px;overflow:visible;align-items:center;justify-items:center;background:#F3F4F6;border-radius:0 0 12px 12px}
 
 /* Pot cells */
 .pcw{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:pointer;position:relative;user-select:none}
@@ -313,7 +316,8 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .pcw.temode:hover .psvg{transform:none}
 .pcw.temode:hover .pdel{display:flex}
 .pcw.sel-mode{cursor:cell}
-.pcw.pot-sel{outline:2.5px solid #78C043;outline-offset:3px;border-radius:8px;background:rgba(120,192,67,.08);z-index:15}
+.pcw.pot-sel{outline:3px solid #78C043;outline-offset:3px;border-radius:8px;background:rgba(120,192,67,.10);z-index:20;box-shadow:0 0 0 5px rgba(120,192,67,.18),0 0 12px rgba(120,192,67,.25)}
+.pslot.pot-sel{outline:3px solid #78C043;outline-offset:3px;border-radius:8px;background:rgba(120,192,67,.10);z-index:20;box-shadow:0 0 0 5px rgba(120,192,67,.18),0 0 12px rgba(120,192,67,.25)}
 .pcw.pot-sel .psvg{transform:scale(1.06)}
 .pcw.pot-sel .plbl{background:rgba(196,230,168,.8);color:#2d6a1f}
 .psvg{transition:transform .1s;display:block}
@@ -606,6 +610,19 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .online-av img{width:100%;height:100%;object-fit:cover}
 .online-dot{position:absolute;bottom:-1px;right:-1px;width:8px;height:8px;border-radius:50%;background:#22c55e;border:1.5px solid #fff}
 .notif{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 20px;border-radius:24px;font-size:12px;font-weight:500;box-shadow:var(--shg);z-index:2000;animation:fi .18s ease;display:flex;align-items:center;gap:8px;white-space:nowrap;pointer-events:none}
+/* Barcode export modal */
+.bc-modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3000;display:flex;align-items:center;justify-content:center}
+.bc-modal{background:#fff;border-radius:16px;width:min(780px,96vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.bc-modal-hdr{padding:16px 20px 12px;border-bottom:1px solid var(--bo);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.bc-modal-hdr h3{flex:1;font-size:15px;font-weight:700;color:var(--i1);margin:0}
+.bc-modal-body{flex:1;overflow-y:auto;padding:16px}
+.bc-modal-foot{padding:12px 20px;border-top:1px solid var(--bo);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0}
+.bc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.bc-card{border:1.5px solid #E5E7EB;border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;background:#fff;page-break-inside:avoid}
+.bc-card-lbl{font-size:10px;font-weight:700;color:#111;text-align:center;word-break:break-all;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bc-card-sub{font-size:9px;color:#6B7280;text-align:center;line-height:1.4}
+.bc-card-id{font-size:8px;color:#9CA3AF;font-family:monospace}
+@media print{.bc-modal-hdr,.bc-modal-foot{display:none!important}.bc-modal{width:100%;max-height:none;box-shadow:none;border-radius:0}.bc-modal-ov{position:static;background:none}.bc-modal-body{padding:8px}.bc-grid{gap:6px}}
 .ndot{width:6px;height:6px;border-radius:50%;background:#78C043;flex-shrink:0}
 .empty-st{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--i4);padding:40px}
 .ac-wrap{position:relative;width:100%}
@@ -1699,7 +1716,7 @@ function PotSVG({ sid = 'round', sz = 40, sc = null, hi = false, iu = null, colo
 
 }
 /* PotCell: always shows label below pot icon. Never shifts on delete. */
-function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onDel, expInitials, expColor, onExpHover, onExpLeave, expBg }) {
+function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onPotSel, onDel, expInitials, expColor, onExpHover, onExpLeave, expBg }) {
     const filled = !!((plant === null || plant === void 0 ? void 0 : plant.genotype) || (plant === null || plant === void 0 ? void 0 : plant.treatment));
     var _sts = (plant && plant.statuses && plant.statuses.length > 0) ? plant.statuses : (plant && plant.status && plant.status !== 'empty' ? [plant.status] : []);
     const sc = _sts.length > 0 ? _sts[0] : null; // primary status for PotSVG color
@@ -1711,17 +1728,15 @@ function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onD
     const disp = lbl.length > maxC ? lbl.slice(0, maxC - 1) + '…' : lbl;
     const svgSz = Math.round(ppx * .70);
     if (!plant || !filled) {
-        return (React.createElement("div", { className: 'pslot' + (teMode ? ' addmode' : ''), style: { width: ppx, height: ppx + LBH }, onClick: e => { e.stopPropagation(); if (teMode && plant)
-                onPotClick(e, plant); }, title: "Empty slot" },
-            React.createElement("svg", { width: svgSz, height: svgSz, viewBox: "0 0 34 38", style: { pointerEvents: 'none', opacity: .2, display: 'block' } },
-                React.createElement("path", { d: "M8 11 L6.5 33 Q6.5 35.5 8 35.5 L26 35.5 Q27.5 35.5 27.5 33 L26 11 Z", fill: "none", stroke: "#7a9080", strokeWidth: "1.5", strokeDasharray: "3 2" }),
-                React.createElement("path", { d: "M7.5 11 Q17 12.3 26.5 11", stroke: "#7a9080", strokeWidth: "2", fill: "none", strokeLinecap: "round" })),
+        return (React.createElement("div", { className: 'pslot' + (teMode ? ' addmode' : '') + (selMode ? ' addmode' : '') + (isSel ? ' pot-sel' : ''), style: { width: ppx, height: ppx + LBH }, onClick: e => { e.stopPropagation(); if (selMode && plant && onPotSel) { onPotSel(plant.id); return; } if (teMode && plant) onPotClick(e, plant); }, title: "Empty slot" },
+            React.createElement("svg", { width: svgSz, height: svgSz, viewBox: "0 0 34 38", style: { pointerEvents: 'none', opacity: isSel ? .6 : .2, display: 'block' } },
+                React.createElement("path", { d: "M8 11 L6.5 33 Q6.5 35.5 8 35.5 L26 35.5 Q27.5 35.5 27.5 33 L26 11 Z", fill: "none", stroke: isSel ? "#78C043" : "#7a9080", strokeWidth: "1.5", strokeDasharray: "3 2" }),
+                React.createElement("path", { d: "M7.5 11 Q17 12.3 26.5 11", stroke: isSel ? "#78C043" : "#7a9080", strokeWidth: "2", fill: "none", strokeLinecap: "round" })),
             React.createElement("div", { style: { height: LBH, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: fs - 1, color: '#c0ccc4', fontFamily: 'Inter,sans-serif', userSelect: 'none' } }, teMode ? '+' : '')));
+                    fontSize: fs - 1, color: isSel ? '#78C043' : '#c0ccc4', fontFamily: 'Inter,sans-serif', userSelect: 'none', fontWeight: isSel ? 700 : 400 } }, selMode ? (isSel ? '✓' : '+') : (teMode ? '+' : ''))));
     }
     const alertCls = hasPests ? ' alert-pest' : hasSick ? ' alert-sick' : '';
-    return (React.createElement("div", { className: 'pcw' + (isActive ? ' active' : '') + (isSel ? ' pot-sel' : '') + (selMode ? ' sel-mode' : '') + (teMode ? ' temode' : '') + alertCls, style: { width: ppx, height: ppx + LBH, position: 'relative', background: expBg || undefined, borderRadius: expBg ? 6 : undefined }, title: lbl + (plant.treatment ? ' | ' + plant.treatment : '') + (sc === 'sick' ? ' ⚠ SICK' : sc === 'pests' ? ' 🐛 PESTS' : ''), onClick: e => { e.stopPropagation(); if (selMode || !teMode)
-            onPotClick(e, plant); },
+    return (React.createElement("div", { className: 'pcw' + (isActive ? ' active' : '') + (isSel ? ' pot-sel' : '') + (selMode ? ' sel-mode' : '') + (teMode ? ' temode' : '') + alertCls, style: { width: ppx, height: ppx + LBH, position: 'relative', background: expBg || undefined, borderRadius: expBg ? 6 : undefined }, title: lbl + (plant.treatment ? ' | ' + plant.treatment : '') + (sc === 'sick' ? ' ⚠ SICK' : sc === 'pests' ? ' 🐛 PESTS' : ''), onClick: e => { e.stopPropagation(); if (selMode && onPotSel) { onPotSel(plant.id); return; } if (!teMode) onPotClick(e, plant); },
         onMouseEnter: expInitials && onExpHover ? e => onExpHover(e.clientX, e.clientY) : undefined,
         onMouseMove:  expInitials && onExpHover ? e => onExpHover(e.clientX, e.clientY) : undefined,
         onMouseLeave: expInitials && onExpLeave ? () => onExpLeave() : undefined },
@@ -1854,10 +1869,7 @@ function TableBlock({ table, plants, locked, isSel, activePotId, selMode, selPot
         React.createElement("div", { className: "pgrid", style: { gridTemplateColumns: `repeat(${table.cols},${ppx}px)`, gridTemplateRows: `repeat(${table.rows},${ppx + LBH}px)`, gap: GAP + 'px', justifyContent: 'center', alignContent: 'center' } }, Array.from({ length: table.rows }, (_, row) => Array.from({ length: table.cols }, (_, col) => {
             const p = plants.find(x => x.row === row && x.col === col);
             return (React.createElement(PotCell, { key: `${row}-${col}`, plant: p, ppx: ppx, isActive: p && p.id === activePotId, isSel: p && selPots.includes(p.id), selMode: selMode, teMode: te,
-                            onPotClick: (e, pl) => { if (selMode && pl) {
-                    onPotSel(pl.id);
-                    return;
-                } onPotClick(e, table.id, row, col, pl); }, onDel: onDel,
+                            onPotClick: (e, pl) => { onPotClick(e, table.id, row, col, pl); }, onPotSel: onPotSel, onDel: onDel,
                             expInitials: (() => { if (!p || !p.experiment_id) return null; const exp = (exps||[]).find(ex=>ex.id===p.experiment_id); if (!exp) return null; return (exp.owner_name ? exp.owner_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() : exp.name.slice(0,2).toUpperCase()); })(),
                             expColor: (() => { if (!p || !p.experiment_id) return null; const exp = (exps||[]).find(ex=>ex.id===p.experiment_id); if (!exp) return null; return EC[exp.color_index%8]; })(),
                             onExpHover: onExpTip ? (clientX, clientY) => {
@@ -2951,7 +2963,7 @@ function PlannedGenotypesEditor({ value, onChange }) {
 }
 
 /* Pot popup */
-function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, users, genotypes, onSaveGenoDesc }) {
+function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, users, genotypes, onSaveGenoDesc, measures, tables, greenhouses }) {
     const CROPS = ['Tomato', 'Cucumber', 'Eggplant', 'Basil', 'Arabidopsis', 'Pepper', 'Lettuce', 'Strawberry', 'Wheat', 'Maize', 'Other'];
     const CROP_ICONS = {'Tomato':'🍅','Cucumber':'🥒','Eggplant':'🍆','Basil':'🌿','Arabidopsis':'🌱','Pepper':'🫑','Lettuce':'🥬','Strawberry':'🍓','Wheat':'🌾','Maize':'🌽','Other':'🪴'};
     const [f, setF] = useState({ genotype: plant.genotype || '', treatment: plant.treatment || '', treatments: plant.treatments || [], cross_parent1: plant.cross_parent1 || '', cross_parent2: plant.cross_parent2 || '', planting_date: plant.planting_date || '', status: plant.status || 'empty', statuses: plant.statuses || (plant.status && plant.status !== 'empty' ? [plant.status] : []), disease_name: plant.disease_name || '', sick_severity: plant.sick_severity || 0, pest_name: plant.pest_name || '', pest_severity: plant.pest_severity || 0, crop: plant.crop || 'Tomato', owner: plant.owner || '', date_moved_in: plant.date_moved_in || '', date_until: plant.date_until || '', notes: plant.notes || '', pot_style: plant.pot_style || 'conic', pot_color: plant.pot_color || 'bsugar', image: plant.image || null, photos: plant.photos || (plant.image ? [{id:'i0',data:plant.image,date:''}] : []), experiment_id: plant.experiment_id || null });
@@ -3327,6 +3339,57 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
             React.createElement("button", { className: "btn btnp bsm", style: { flex: 1 }, onClick: doSave }, "Save"),
             (f.genotype || f.treatment) && React.createElement("button", { className: "btn btnd bxs", onClick: () => onSave(Object.assign(Object.assign({}, plant), { genotype: '', treatment: '', notes: '', status: 'empty', image: null })) }, "Clear"),
             React.createElement("span", { style: { fontSize: 10, color: 'var(--i5)', marginLeft: 'auto', fontFamily: 'Inter' } }, "Enter to save")),
+        React.createElement("div", { style: { borderTop: '1px solid var(--bo)', padding: '10px 14px 8px', background: 'var(--bg)' } },
+            React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 } },
+                React.createElement("span", { style: { fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--i4)' } }, "\uD83C\uDFF7 Label"),
+                React.createElement("div", { style: { display: 'flex', gap: 6 } },
+                    React.createElement("button", { className: "btn btns bxs", style: { fontSize: 10 }, onClick: function() {
+                        var code = plant.id.slice(0,12).toUpperCase();
+                        var exp  = (exps||[]).find(function(e){ return e.id === plant.experiment_id; });
+                        var bars = code128B(code);
+                        var totalU = bars.reduce(function(s,b){return s+b.w;},0);
+                        var W=200,H=48,uw=W/totalU;
+                        var rectStr='';var x=0;
+                        bars.forEach(function(b){var bw=b.w*uw;if(b.dark)rectStr+='<rect x="'+x.toFixed(2)+'" y="0" width="'+bw.toFixed(2)+'" height="'+H+'" fill="#000"/>';x+=bw;});
+                        var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Label</title><style>body{margin:16px;font-family:Inter,sans-serif;text-align:center}svg{display:block;margin:0 auto 6px}.lbl{font-size:13px;font-weight:700;margin-bottom:2px}.sub{font-size:10px;color:#666;line-height:1.6}.code{font-size:9px;color:#999;font-family:monospace;margin-top:4px}@media print{body{margin:4px}}</style></head><body>';
+                        html+='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'+rectStr+'</svg>';
+                        html+='<div class="lbl">'+( plant.genotype||'Empty pot')+'</div>';
+                        html+='<div class="sub">'+ghNm+' \u203A '+tblNm+' \u00B7 R'+(plant.row+1)+'C'+(plant.col+1);
+                        if (plant.treatment) html+='<br>\uD83D\uDC89 '+plant.treatment;
+                        if (plant.planting_date) html+='<br>\uD83D\uDCC5 '+plant.planting_date;
+                        if (exp) html+='<br>\uD83E\uDDEA '+exp.name;
+                        html+='</div><div class="code">'+code+'</div></body></html>';
+                        var win=window.open('','_blank','width=380,height=300');
+                        if (!win) return;
+                        win.document.write(html); win.document.close(); win.focus();
+                        setTimeout(function(){ win.print(); }, 400);
+                    } }, "\uD83D\uDDA8 Print"),
+                    React.createElement("button", { className: "btn btns bxs", style: { fontSize: 10 }, onClick: function() {
+                        var sessList = measures || [];
+                        var measHeaders = sessList.map(function(s){ return s.name+' ('+s.unit+')'; });
+                        var headers = ['Pot ID','Greenhouse','Table','Row','Col','Genotype','Treatment','Status','Planting Date','Experiment','Crop','Owner','Notes'].concat(measHeaders);
+                        var expR = (exps||[]).find(function(e){ return e.id === plant.experiment_id; }) || {};
+                        var base = [plant.id, ghNm, tblNm,
+                            plant.row!=null?plant.row+1:'', plant.col!=null?plant.col+1:'',
+                            plant.genotype||'', plant.treatment||'', plant.status||'',
+                            plant.planting_date||'', expR.name||'', plant.crop||'', plant.owner||'', (plant.notes||'').replace(/\n/g,' ')];
+                        var measVals = sessList.map(function(s){
+                            var row=(s.rows||[]).find(function(r){return r.pot_id===plant.id;});
+                            return row?row.value:'';
+                        });
+                        var csv=[headers,base.concat(measVals)].map(function(r){return r.map(function(x){return '"'+(x==null?'':String(x)).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+                        var a=document.createElement('a');
+                        a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+                        a.download='plant_'+(plant.genotype||plant.id.slice(0,6)).replace(/[^a-zA-Z0-9_-]/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.csv';
+                        a.click();
+                    } }, "\u2B07 CSV"))),
+            React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 12 } },
+                React.createElement(BarcodeSVG, { text: plant.id.slice(0,12).toUpperCase(), width: 140, height: 36 }),
+                React.createElement("div", { style: { fontSize: 9, color: 'var(--i4)', fontFamily: 'monospace', lineHeight: 1.6 } },
+                    React.createElement("div", { style: { fontWeight: 700, color: 'var(--i2)', fontSize: 11, fontFamily: 'Poppins,sans-serif', marginBottom: 2 } }, plant.genotype || '\u2014'),
+                    ghNm + ' \u203A ' + tblNm,
+                    React.createElement('br', null),
+                    'R' + (plant.row+1) + 'C' + (plant.col+1) + (plant.planting_date ? ' \u00B7 ' + plant.planting_date : '')))),
         React.createElement("div", { style: { borderTop: '1px solid var(--bo)' } },
             React.createElement(TimelineSection, { timeline: plant.timeline || [] }))));
 }
@@ -4181,6 +4244,35 @@ function PasswordConfirmModal({ title, warning, labId, onConfirm, onClose }) {
             React.createElement("div", { className: "moacts" },
                 React.createElement("button", { className: "btn btns", onClick: onClose }, "Cancel"),
                 React.createElement("button", { className: "btn btnd", onClick: check }, "Confirm Delete")))));
+}
+/* Unlock layout confirm — password-gates table moving */
+function UnlockConfirmModal({ labId, onConfirm, onClose }) {
+    const [pw, setPw] = useState('');
+    const [err, setErr] = useState('');
+    const check = () => {
+        if (hashPw(pw) === getDelPwHash(labId)) {
+            onConfirm();
+            onClose();
+        } else {
+            setErr('Incorrect password.');
+            setPw('');
+        }
+    };
+    useEffect(() => { const fn = e => { if (e.key === 'Escape') onClose(); }; window.addEventListener('keydown', fn); return () => window.removeEventListener('keydown', fn); }, [onClose]);
+    return (React.createElement("div", { className: "mov", onClick: e => e.target === e.currentTarget && onClose() },
+        React.createElement("div", { className: "mo" },
+            React.createElement("div", { className: "motit" }, "🔒 Unlock Layout"),
+            React.createElement("div", { style: { fontSize: 12, color: 'var(--i3)', marginBottom: 12, lineHeight: 1.5 } }, "Enter the lab password to unlock table positioning. Plant data is always editable regardless of lock state."),
+            React.createElement("div", { className: "mof" },
+                React.createElement("label", { className: "mol" }, "Lab password"),
+                React.createElement("input", { className: "moi", type: "password", value: pw, autoFocus: true, placeholder: "Enter password...", onChange: e => { setPw(e.target.value); setErr(''); }, onKeyDown: e => { if (e.key === 'Enter') check(); if (e.key === 'Escape') onClose(); } }),
+                err && React.createElement("div", { className: "pw-err" }, err)),
+            React.createElement("div", { style: { fontSize: 11, color: 'var(--i4)', marginTop: 4 } },
+                "Default password: ",
+                React.createElement("code", { style: { background: 'var(--cr2)', padding: '1px 5px', borderRadius: 3, fontFamily: 'Inter' } }, "greenlab2025")),
+            React.createElement("div", { className: "moacts" },
+                React.createElement("button", { className: "btn btns", onClick: onClose }, "Cancel"),
+                React.createElement("button", { className: "btn btnp", onClick: check }, "Unlock")))));
 }
 function LoginScreen({ users, onLogin, labName }) {
     const [nm, setNm] = useState('');
@@ -5582,6 +5674,173 @@ function ExperimentsTab({ experiments, plants, orders, user, onAdd, onEdit, onDe
     );
 }
 
+// ── Code128B barcode renderer (pure SVG, no deps) ────────────────────────
+function code128B(text) {
+    var C128 = [
+        [2,1,2,2,2,2],[2,2,2,1,2,2],[2,2,2,2,2,1],[1,2,1,2,2,3],[1,2,1,3,2,2],
+        [1,3,1,2,2,2],[1,2,2,2,1,3],[1,2,2,3,1,2],[1,3,2,2,1,2],[2,2,1,2,1,3],
+        [2,2,1,3,1,2],[2,3,1,2,1,2],[1,1,2,2,3,2],[1,2,2,1,3,2],[1,2,2,2,3,1],
+        [1,1,3,2,2,2],[1,2,3,1,2,2],[1,2,3,2,2,1],[2,2,3,2,1,1],[2,2,1,1,3,2],
+        [2,2,1,2,3,1],[2,1,3,2,1,2],[2,2,3,1,1,2],[3,1,2,1,3,1],[3,1,1,2,2,2],  // 0-24
+        [3,2,1,1,2,2],[3,2,1,2,2,1],[3,1,2,2,1,2],[3,2,2,1,1,2],[3,2,2,2,1,1],  // 25-29
+        [2,1,2,1,2,3],[2,1,2,3,2,1],[2,3,2,1,2,1],[1,1,1,3,2,3],[1,3,1,1,2,3],  // 30-34
+        [1,3,1,3,2,1],[1,1,2,3,1,3],[1,3,2,1,1,3],[1,3,2,3,1,1],[2,1,1,3,1,3],  // 35-39
+        [2,3,1,1,1,3],[2,3,1,3,1,1],[1,1,2,1,3,3],[1,1,2,3,3,1],[1,3,2,1,3,1],  // 40-44
+        [1,1,3,1,2,3],[1,1,3,3,2,1],[1,3,3,1,2,1],[3,1,3,1,2,1],[2,1,1,3,3,1],  // 45-49
+        [2,3,1,1,3,1],[2,1,3,1,1,3],[2,1,3,3,1,1],[2,1,3,1,3,1],[3,1,1,1,2,3],  // 50-54
+        [3,1,1,3,2,1],[3,3,1,1,2,1],[3,1,2,1,1,3],[3,1,2,3,1,1],[3,3,2,1,1,1],  // 55-59
+        [3,1,4,1,1,1],[2,2,1,4,1,1],[4,3,1,1,1,1],[1,1,1,2,2,4],[1,1,1,4,2,2],  // 60-64
+        [1,2,1,1,2,4],[1,2,1,4,2,1],[1,4,1,1,2,2],[1,4,1,2,2,1],[1,1,2,2,1,4],  // 65-69
+        [1,1,2,4,1,2],[1,2,2,1,1,4],[1,2,2,4,1,1],[1,4,2,1,1,2],[1,4,2,2,1,1],  // 70-74
+        [2,4,1,2,1,1],[2,2,1,1,1,4],[4,1,3,1,1,1],[2,4,1,1,1,2],[1,3,4,1,1,1],  // 75-79
+        [1,1,1,2,4,2],[1,2,1,1,4,2],[1,2,1,2,4,1],[1,1,4,2,1,2],[1,2,4,1,1,2],  // 80-84
+        [1,2,4,2,1,1],[4,1,1,2,1,2],[4,2,1,1,1,2],[4,2,1,2,1,1],[2,1,2,1,4,1],  // 85-89
+        [2,1,4,1,2,1],[4,1,2,1,2,1],[1,1,1,1,4,3],[1,1,1,3,4,1],[1,3,1,1,4,1],  // 90-94
+        [1,1,4,1,1,3],[1,1,4,3,1,1],[4,1,1,1,1,3],[4,1,1,3,1,1],[1,1,3,1,4,1],  // 95-99
+        [1,1,4,1,3,1],[3,1,1,1,4,1],[4,1,1,1,3,1],[2,1,1,4,1,2],[2,1,1,2,1,4],  // 100-104
+        [2,1,1,4,3,1],[2,3,3,1,1,1,2]  // 105 start-B, 106 stop
+    ];
+    var START_B = 104, STOP = 106;
+    var codes = [START_B];
+    var check = START_B;
+    for (var i = 0; i < text.length; i++) {
+        var c = text.charCodeAt(i) - 32;
+        if (c < 0 || c > 94) c = 0;
+        codes.push(c);
+        check += c * (i + 1);
+    }
+    codes.push(check % 103);
+    codes.push(STOP);
+    var bars = [];
+    codes.forEach(function(code) {
+        var pat = C128[code];
+        pat.forEach(function(w, i) { bars.push({ w: w, dark: i % 2 === 0 }); });
+    });
+    // terminal bar
+    bars.push({ w: 2, dark: true });
+    return bars;
+}
+
+function BarcodeSVG({ text, width, height }) {
+    var bars = code128B(text);
+    var totalU = bars.reduce(function(s, b) { return s + b.w; }, 0);
+    var unitW = width / totalU;
+    var rects = [];
+    var x = 0;
+    bars.forEach(function(b, i) {
+        var bw = b.w * unitW;
+        if (b.dark) rects.push(React.createElement('rect', { key: i, x: x, y: 0, width: bw, height: height, fill: '#000' }));
+        x += bw;
+    });
+    return React.createElement('svg', { width: width, height: height, viewBox: '0 0 ' + width + ' ' + height, xmlns: 'http://www.w3.org/2000/svg', style: { display: 'block' } }, rects);
+}
+
+function BarcodeExportModal({ pots, tables, greenhouses, measures, experiments, onClose }) {
+    // pots = array of plant objects to label
+    function getLabel(p) {
+        var tbl = tables.find(function(t){ return t.id === p.table_id; }) || {};
+        var gh  = greenhouses.find(function(g){ return g.id === p.greenhouse_id; }) || {};
+        return {
+            id:     p.id,
+            code:   p.id.slice(0, 12).toUpperCase(),
+            geno:   p.genotype || '—',
+            tblNm:  tbl.name || '?',
+            ghNm:   gh.name || '?',
+            row:    p.row != null ? 'R' + (p.row + 1) : '',
+            col:    p.col != null ? 'C' + (p.col + 1) : '',
+            status: p.status || '',
+            treat:  p.treatment || '',
+            date:   p.planting_date || '',
+            exp:    (experiments.find(function(e){ return e.id === p.experiment_id; }) || {}).name || '',
+        };
+    }
+    function doPrint() { window.print(); }
+    function doCSV() {
+        // Full plant export with all measurements flattened
+        var sessList = measures || [];
+        var measHeaders = sessList.map(function(s){ return s.name + ' (' + s.unit + ')'; });
+        var headers = ['Pot ID','Greenhouse','Table','Row','Col','Genotype','Treatment','Status','Planting Date','Experiment','Crop','Owner','Notes'].concat(measHeaders);
+        var rows = pots.map(function(p) {
+            var tbl = tables.find(function(t){ return t.id === p.table_id; }) || {};
+            var gh  = greenhouses.find(function(g){ return g.id === p.greenhouse_id; }) || {};
+            var exp = experiments.find(function(e){ return e.id === p.experiment_id; }) || {};
+            var base = [
+                p.id, gh.name||'', tbl.name||'',
+                p.row != null ? p.row + 1 : '',
+                p.col != null ? p.col + 1 : '',
+                p.genotype||'', p.treatment||'', p.status||'',
+                p.planting_date||'', exp.name||'', p.crop||'', p.owner||'', (p.notes||'').replace(/\n/g,' ')
+            ];
+            var measVals = sessList.map(function(s) {
+                var row = (s.rows||[]).find(function(r){ return r.pot_id === p.id; });
+                return row ? row.value : '';
+            });
+            return base.concat(measVals);
+        });
+        var csv = [headers].concat(rows).map(function(r){
+            return r.map(function(x){ return '"' + (x == null ? '' : String(x)).replace(/"/g, '""') + '"'; }).join(',');
+        }).join('\n');
+        var a = document.createElement('a');
+        a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+        a.download = 'greenlab_plants_' + new Date().toISOString().slice(0,10) + '.csv';
+        a.click();
+    }
+    return React.createElement('div', { className: 'bc-modal-ov', onClick: function(e){ if (e.target === e.currentTarget) onClose(); } },
+        React.createElement('div', { className: 'bc-modal' },
+            React.createElement('div', { className: 'bc-modal-hdr' },
+                React.createElement('h3', null, '🏷 Barcode Labels — ' + pots.length + ' pots'),
+                React.createElement('button', { className: 'btn btns bsm', onClick: onClose }, '✕ Close')),
+            React.createElement('div', { className: 'bc-modal-body' },
+                React.createElement('div', { className: 'bc-grid' },
+                    pots.map(function(p) {
+                        var lb = getLabel(p);
+                        return React.createElement('div', { key: p.id, className: 'bc-card' },
+                            React.createElement(BarcodeSVG, { text: lb.code, width: 160, height: 40 }),
+                            React.createElement('div', { className: 'bc-card-lbl' }, lb.geno),
+                            React.createElement('div', { className: 'bc-card-sub' },
+                                lb.ghNm + ' · ' + lb.tblNm + ' · ' + lb.row + lb.col,
+                                lb.treat ? React.createElement('span', null, React.createElement('br', null), '💉 ' + lb.treat) : null,
+                                lb.date  ? React.createElement('span', null, React.createElement('br', null), '📅 ' + lb.date) : null,
+                                lb.exp   ? React.createElement('span', null, React.createElement('br', null), '🧪 ' + lb.exp) : null),
+                            React.createElement('div', { className: 'bc-card-id' }, lb.code));
+                    }))),
+            React.createElement('div', { className: 'bc-modal-foot' },
+                React.createElement('button', { className: 'btn btns', onClick: doCSV }, '⬇ Export Excel/CSV'),
+                React.createElement('button', { className: 'btn btnp', onClick: doPrint }, '🖨 Print Labels'))));
+}
+
+function BulkGenoField({ selPots, genotypes, plants, forceWriteRef, setData, nowFn, notify }) {
+    var [bgv, setBgv] = React.useState('');
+    var bulkGenoSugg = React.useMemo(function() {
+        var regGenos = (genotypes || []).map(function(g){ return { label: g.name, shortcut: g.shortcut || '', desc: g.description || '' }; });
+        var usedNames = [...new Set((plants || []).map(function(p){ return p.genotype; }).filter(Boolean))];
+        var extra = usedNames.filter(function(n){ return !(genotypes||[]).find(function(g){ return g.name===n; }); }).map(function(n){ return { label:n, shortcut:'', desc:'' }; });
+        return regGenos.concat(extra);
+    }, [genotypes, plants]);
+    function applyGeno(v) {
+        if (!v || !v.trim()) return;
+        forceWriteRef.current = true;
+        setData(function(d){ return Object.assign({}, d, { plants: d.plants.map(function(p){
+            return selPots.includes(p.id) ? Object.assign({}, p, { genotype: v.trim(), updated_at: nowFn() }) : p;
+        })});});
+        setBgv('');
+        notify(selPots.length + ' pots \u2192 ' + v.trim());
+    }
+    function handleChange(v) {
+        setBgv(v);
+        var isKnown = bulkGenoSugg.some(function(s){ return s.label === v; });
+        if (isKnown) { setTimeout(function(){ applyGeno(v); }, 50); }
+    }
+    return React.createElement(GenotypeAutocomplete, {
+        value: bgv,
+        onChange: handleChange,
+        suggestions: bulkGenoSugg,
+        genotypes: genotypes || [],
+        placeholder: 'Set genotype\u2026',
+        onKeyDown: function(e){ if (e.key === 'Enter') applyGeno(bgv); }
+    });
+}
+
 function App() {
     var _a, _b;
     const [activeLab, setActiveLab] = useState(function() {
@@ -5623,6 +5882,7 @@ function App() {
     const [showAssExp, setShowAssExp] = useState(false);
     const [showShare, setShowShare] = useState(false);
     const [showAStr, setShowAStr] = useState(false);
+    const [showBarcodes, setShowBarcodes] = useState(false);
     const [showAMem, setShowAMem] = useState(false);
     const [ghFm, setGhFm] = useState({ name: '', width: 600, length: 400 });
     const [tFm, setTFm] = useState({ name: '', width: 230, length: 125, rows: 3, cols: 6 });
@@ -7158,7 +7418,8 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
                         React.createElement("div", { className: "tsep" }),
                         React.createElement("button", { className: `selbtn${selMode ? ' on' : ''}`, onClick: () => { setSelMode(s => !s); setSelPots([]); } }, selMode ? 'Selecting...' : 'Select pots'),
                         React.createElement("button", { className: `selbtn${tblSelMode ? ' on' : ''}`, onClick: () => { setTblSelMode(m => { if (m) setSelTbls(new Set()); return !m; }); } }, tblSelMode ? `${selTbls.size} tables ✕` : 'Select tables'),
-                        React.createElement("button", { className: `selbtn${colorByExp ? ' on' : ''}`, onClick: () => setColorByExp(c => !c), title: "Color pots by experiment" }, colorByExp ? 'Exp colors on' : 'Color by exp')),
+                        React.createElement("button", { className: `selbtn${colorByExp ? ' on' : ''}`, onClick: () => setColorByExp(c => !c), title: "Color pots by experiment" }, colorByExp ? 'Exp colors on' : 'Color by exp'),
+                        aGh && React.createElement("button", { className: 'selbtn', title: 'Export all pots in this greenhouse as CSV / print barcode labels', onClick: () => { setSelPots(aPlants.filter(function(p){ return p.genotype; }).map(function(p){ return p.id; })); setShowBarcodes(true); } }, '🏷 Export GH')),
                     aGh && tab === 'layout' && React.createElement("div", { className: "tmeta" },
                         aGh.name,
                         " \u00B7 ",
@@ -7180,16 +7441,7 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
                         React.createElement('option', { value:'' }, 'Set status…'),
                         ['healthy','wilting','dead','sick','pests'].map(function(s){ return React.createElement('option',{key:s,value:s},s[0].toUpperCase()+s.slice(1)); })
                     ),
-                    React.createElement('input', { placeholder:'Set genotype…', style:{width:120}, onKeyDown: function(e) {
-                        if (e.key !== 'Enter' || !e.target.value.trim()) return;
-                        var v = e.target.value.trim();
-                        forceWriteRef.current = true;
-                        setData(function(d){ return Object.assign({}, d, { plants: d.plants.map(function(p){
-                            return selPots.includes(p.id) ? Object.assign({}, p, { genotype: v, updated_at: now() }) : p;
-                        })});});
-                        e.target.value = '';
-                        notify(selPots.length + ' pots → ' + v);
-                    }}),
+                    React.createElement(BulkGenoField, { selPots: selPots, genotypes: data.genotypes, plants: data.plants, forceWriteRef: forceWriteRef, setData: setData, nowFn: now, notify: notify }),
                     React.createElement('input', { placeholder:'Set treatment…', style:{width:120}, onKeyDown: function(e) {
                         if (e.key !== 'Enter' || !e.target.value.trim()) return;
                         var v = e.target.value.trim();
@@ -7201,6 +7453,7 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
                         notify(selPots.length + ' pots → ' + v);
                     }}),
                     React.createElement("button", { className: "btn btnp bsm", onClick: () => { var _a; setAssExpFm({ mode: 'existing', newName: '', newOwner: (user === null || user === void 0 ? void 0 : user.name) || '', newDesc: '', newUntilDate: '', existId: ((_a = data.experiments[0]) === null || _a === void 0 ? void 0 : _a.id) || '' }); setShowAssExp(true); } }, "Assign exp."),
+                    React.createElement("button", { className: "btn btns bsm", onClick: () => setShowBarcodes(true) }, "🏷 Labels"),
                     React.createElement("button", { style:{background:'rgba(255,255,255,.12)',color:'#fff',border:'none',borderRadius:6,padding:'3px 10px',cursor:'pointer',fontSize:11}, onClick: () => { setSelPots([]); setSelMode(false); } }, "✕ Done")),
                 tab === 'layout' && React.createElement(React.Fragment, null,
                     React.createElement("div", { className: "alert-legend", style:{display:"flex",alignItems:"center",gap:8,flexWrap:"nowrap",overflow:"hidden"} },
@@ -7326,7 +7579,7 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
                 )
             ),
 
-        popup && React.createElement(PotPopup, { key: popup.plant.id + '_' + (popup.plant.updated_at||'') + '_' + popup._nonce, plant: popup.plant, tblNm: popup.tblNm, ghNm: popup.ghNm, rect: popup.rect, exps: data.experiments, allPlants: data.plants, users: data.users, genotypes: data.genotypes || [], onSave: savePlant, onSaveGenoDesc: function(name, desc){ forceWriteRef.current=true; setData(function(d){ return upsertGenotypeDesc(d, name, desc); }); }, onClose: () => { setPopup(null); setActPot(null); } }),
+        popup && React.createElement(PotPopup, { key: popup.plant.id + '_' + (popup.plant.updated_at||'') + '_' + popup._nonce, plant: popup.plant, tblNm: popup.tblNm, ghNm: popup.ghNm, rect: popup.rect, exps: data.experiments, allPlants: data.plants, users: data.users, genotypes: data.genotypes || [], measures: data.measures || [], tables: data.tables || [], greenhouses: data.greenhouses || [], onSave: savePlant, onSaveGenoDesc: function(name, desc){ forceWriteRef.current=true; setData(function(d){ return upsertGenotypeDesc(d, name, desc); }); }, onClose: () => { setPopup(null); setActPot(null); } }),
         expTip && React.createElement("div", { className: "exp-tip", style: {
             left: Math.min(expTip.x + 14, window.innerWidth - 220),
             top: Math.max(8, expTip.y - 10)
@@ -7489,8 +7742,7 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
                 React.createElement("select", { className: "mosel", value: nMFm.position, onChange: e => setNMFm(f => (Object.assign(Object.assign({}, f), { position: e.target.value }))) },
                     React.createElement("option", { value: "" }, "\u2014 Select \u2014"),
                     LPOS.map(p => React.createElement("option", { key: p, value: p }, p))))),
-        showUL && React.createElement(Modal, { title: "Unlock Layout", onClose: () => setShowUL(false), onConfirm: () => { if (_isMob) sessionStorage.setItem('gl_sess_unlocked','1'); setData(d => (Object.assign(Object.assign({}, d), { locked: false }))); setShowUL(false); notify('Edit mode active'); }, confirmLabel: "Unlock", sub: "Move tables, add/remove objects." },
-            React.createElement("div", { className: "ulkw" }, "Plant data is always editable regardless of lock state.")),
+        showUL && React.createElement(UnlockConfirmModal, { labId: activeLab === null || activeLab === void 0 ? void 0 : activeLab.id, onClose: () => setShowUL(false), onConfirm: () => { if (_isMob) sessionStorage.setItem('gl_sess_unlocked','1'); setData(d => (Object.assign(Object.assign({}, d), { locked: false }))); notify('Edit mode active'); } }),
         showShare && React.createElement(Modal, { title: "Share GreenLab", sub: "Send this link to lab members.", onClose: () => setShowShare(false), onConfirm: () => { var _a; (_a = navigator.clipboard) === null || _a === void 0 ? void 0 : _a.writeText(window.location.href); notify('Link copied!'); setShowShare(false); }, confirmLabel: "Copy Link" },
             React.createElement("div", { style: { background: 'var(--cr2)', border: '1px solid var(--bo)', borderRadius: 'var(--r)', padding: '8px 10px', fontFamily: 'Inter', fontSize: 11, color: 'var(--i3)', wordBreak: 'break-all' } }, window.location.href),
             React.createElement("div", { style: { background: 'var(--ll)', border: '1px solid var(--ld)', borderRadius: 'var(--r)', padding: '8px 10px', marginTop: 8, fontSize: 11, color: 'var(--fo2)', lineHeight: 1.5 } }, "With Firebase Auth: anyone with this link signs in and sees shared data in real-time.")),
@@ -7498,6 +7750,7 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
                 ? `You are about to permanently delete "${delConfirm.name}" and all its tables, pots, and data.`
                 : `You are about to permanently delete table "${delConfirm.name}" and all its pot data.`, labId: activeLab === null || activeLab === void 0 ? void 0 : activeLab.id, onConfirm: delConfirm.onConfirm, onClose: () => setDelConfirm(null) }),
         showFbPanel && React.createElement(FirebasePanel, { onClose: () => setShowFbPanel(false), activityLog: activityLog }),
+        showBarcodes && React.createElement(BarcodeExportModal, { pots: data.plants.filter(function(p){ return selPots.includes(p.id); }), tables: data.tables, greenhouses: data.greenhouses, measures: data.measures || [], experiments: data.experiments, onClose: () => setShowBarcodes(false) }),
         notif && React.createElement("div", { className: "notif" },
             React.createElement("div", { className: "ndot" }),
             notif)));
