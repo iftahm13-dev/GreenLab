@@ -2268,7 +2268,8 @@ function Autocomplete({ value, onChange, onKeyDown, suggestions, placeholder, cl
    MEASURES TAB  (iPad-optimised data collection)
 ═══════════════════════════════════ */
 function MeasuresView({ measures, experiments, plants, tables, users, onSave, currentUser }) {
-    const [sessions, setSessions] = React.useState(measures || []);
+    // NO local sessions state — read directly from prop so saves are never lost
+    const sessions = measures || [];
     const [activeSession, setActiveSession] = React.useState(null);
     const [showNew, setShowNew] = React.useState(false);
     const [fm, setFm] = React.useState({ name:'', experiment_id:'', trait:'', unit:'', notes:'' });
@@ -2277,14 +2278,10 @@ function MeasuresView({ measures, experiments, plants, tables, users, onSave, cu
     const [showEmail, setShowEmail] = React.useState(false);
     const set = (k,v) => setFm(p=>({...p,[k]:v}));
 
-    // Sync with parent
-    React.useEffect(() => { setSessions(measures||[]); }, [measures]);
-
     const createSession = () => {
         if (!fm.name.trim()) return;
         const sess = { id: Math.random().toString(36).slice(2,9), name:fm.name.trim(), experiment_id:fm.experiment_id, trait:fm.trait, unit:fm.unit, notes:fm.notes, created_by:currentUser?.name||'', created_at:new Date().toISOString(), rows:[] };
         const updated = [...sessions, sess];
-        setSessions(updated);
         onSave(updated);
         setActiveSession(sess.id);
         setShowNew(false);
@@ -2293,20 +2290,17 @@ function MeasuresView({ measures, experiments, plants, tables, users, onSave, cu
 
     const addRow = (sessId, potId, value) => {
         const updated = sessions.map(s => s.id!==sessId ? s : {...s, rows:[...s.rows, { id:Math.random().toString(36).slice(2,9), pot_id:potId, value, measured_by:currentUser?.name||'', at:new Date().toISOString() }]});
-        setSessions(updated);
         onSave(updated);
     };
 
     const delRow = (sessId, rowId) => {
         const updated = sessions.map(s => s.id!==sessId ? s : {...s, rows:s.rows.filter(r=>r.id!==rowId)});
-        setSessions(updated);
         onSave(updated);
     };
 
     const delSession = (sessId) => {
         if (!window.confirm('Delete this measurement session?')) return;
         const updated = sessions.filter(s=>s.id!==sessId);
-        setSessions(updated);
         onSave(updated);
         if (activeSession===sessId) setActiveSession(null);
     };
