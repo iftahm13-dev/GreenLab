@@ -11,6 +11,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* ── Reset & base ── */
@@ -483,10 +485,10 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .stk-img img{width:100%;height:100%;object-fit:cover}
 .stk-nm{font-size:13px;font-weight:600;color:var(--i1);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .stk-cat{font-size:10px;color:var(--i4);flex-shrink:0;margin-top:2px}
-.stk-qty{display:flex;align-items:center;gap:6px;flex-shrink:0}
-.stk-qbtn{width:28px;height:28px;border-radius:var(--r);border:1.5px solid var(--bo);background:#fff;color:var(--i2);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;font-weight:700;transition:all .12s}
+.stk-qty{display:flex;flex-direction:column;gap:0;flex-shrink:0;min-width:80px}
+.stk-qbtn{width:24px;height:24px;border-radius:var(--r);border:1.5px solid var(--bo);background:#fff;color:var(--i2);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:700;transition:all .12s}
 .stk-qbtn:hover{background:#edf7e3;border-color:#c3e6a8}
-.stk-qval{font-size:14px;font-weight:700;color:var(--i1);min-width:30px;text-align:center}
+.stk-qval{font-size:13px;font-weight:700;color:var(--i1);min-width:26px;text-align:center}
 .stk-del{background:none;border:1.5px solid #fca5a5;color:var(--to);border-radius:var(--r);padding:5px 12px;font-size:11px;cursor:pointer;font-weight:600;transition:all .12s}
 .stk-del:hover{background:#fef2f2}
 .stk-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:180px;gap:10px;color:var(--i4)}
@@ -610,19 +612,32 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .online-av img{width:100%;height:100%;object-fit:cover}
 .online-dot{position:absolute;bottom:-1px;right:-1px;width:8px;height:8px;border-radius:50%;background:#22c55e;border:1.5px solid #fff}
 .notif{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 20px;border-radius:24px;font-size:12px;font-weight:500;box-shadow:var(--shg);z-index:2000;animation:fi .18s ease;display:flex;align-items:center;gap:8px;white-space:nowrap;pointer-events:none}
-/* Barcode export modal */
+/* Barcode / QR export modal */
 .bc-modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3000;display:flex;align-items:center;justify-content:center}
 .bc-modal{background:#fff;border-radius:16px;width:min(780px,96vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25)}
 .bc-modal-hdr{padding:16px 20px 12px;border-bottom:1px solid var(--bo);display:flex;align-items:center;gap:10px;flex-shrink:0}
 .bc-modal-hdr h3{flex:1;font-size:15px;font-weight:700;color:var(--i1);margin:0}
 .bc-modal-body{flex:1;overflow-y:auto;padding:16px}
 .bc-modal-foot{padding:12px 20px;border-top:1px solid var(--bo);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0}
-.bc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
-.bc-card{border:1.5px solid #E5E7EB;border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;background:#fff;page-break-inside:avoid}
-.bc-card-lbl{font-size:10px;font-weight:700;color:#111;text-align:center;word-break:break-all;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bc-card-sub{font-size:9px;color:#6B7280;text-align:center;line-height:1.4}
+.bc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+.bc-card{border:1.5px solid #E5E7EB;border-radius:10px;padding:12px;display:flex;flex-direction:column;align-items:center;gap:6px;background:#fff;page-break-inside:avoid}
+.bc-card-lbl{font-size:11px;font-weight:700;color:#111;text-align:center;word-break:break-all;max-width:160px}
+.bc-card-sub{font-size:9px;color:#6B7280;text-align:center;line-height:1.5}
 .bc-card-id{font-size:8px;color:#9CA3AF;font-family:monospace}
-@media print{.bc-modal-hdr,.bc-modal-foot{display:none!important}.bc-modal{width:100%;max-height:none;box-shadow:none;border-radius:0}.bc-modal-ov{position:static;background:none}.bc-modal-body{padding:8px}.bc-grid{gap:6px}}
+/* QR scanner overlay */
+.qr-scan-ov{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:4000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.pop-inline{position:static!important;box-shadow:none!important;border-radius:0!important;max-height:none!important;width:100%!important}
+.qr-scan-box{width:min(360px,90vw);background:#fff;border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.qr-scan-hdr{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--bo)}
+.qr-scan-hdr h3{margin:0;font-size:15px;font-weight:700}
+#qr-reader{width:100%}
+#qr-reader video{width:100%!important;border-radius:0}
+#qr-reader img{display:none}
+.qr-scan-status{padding:12px 16px;font-size:12px;color:var(--i3);text-align:center;min-height:42px;display:flex;align-items:center;justify-content:center}
+/* QR in popup */
+.qr-popup-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0 4px}
+.qr-popup-wrap canvas,.qr-popup-wrap img{border-radius:6px;border:1px solid var(--bo)}
+@media print{.bc-modal-hdr,.bc-modal-foot{display:none!important}.bc-modal{width:100%;max-height:none;box-shadow:none;border-radius:0}.bc-modal-ov{position:static;background:none}.bc-modal-body{padding:8px}.bc-grid{gap:8px}}
 .ndot{width:6px;height:6px;border-radius:50%;background:#78C043;flex-shrink:0}
 .empty-st{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--i4);padding:40px}
 .ac-wrap{position:relative;width:100%}
@@ -2754,7 +2769,7 @@ function MessagesView({ messages, onAdd, onEdit, onDel, currentUser, users }) {
 }
 
 /* Stock tab */
-function StockView({ stock, onAdd, onEdit, onRemove, onQty, lastSaved }) {
+function StockView({ stock, onAdd, onEdit, onRemove, onQty, onInUse, lastSaved }) {
     const [showAdd, setShowAdd] = useState(false);
     const [editId, setEditId] = useState(null);
     const [stkSearch, setStkSearch] = useState('');
@@ -2832,9 +2847,20 @@ function StockView({ stock, onAdd, onEdit, onRemove, onQty, lastSaved }) {
                         React.createElement("div", { style:{fontSize:14,fontWeight:600,color:'var(--i1)',wordBreak:'break-word',lineHeight:1.3} }, item.name),
                         item.notes && React.createElement("div", { style:{fontSize:11,color:'var(--i4)',marginTop:2} }, item.notes)),
                     React.createElement("div", { className: "stk-qty", style:{flexShrink:0} },
-                        React.createElement("button", { className: "stk-qbtn", onClick: () => onQty(item.id, -1) }, "-"),
-                        React.createElement("span", { className: "stk-qval" }, item.quantity),
-                        React.createElement("button", { className: "stk-qbtn", onClick: () => onQty(item.id, 1) }, "+")),
+                        React.createElement("div", { style:{textAlign:'center',marginBottom:4} },
+                            React.createElement("div", { style:{fontSize:9,color:'var(--i4)',fontWeight:600,letterSpacing:'.05em',textTransform:'uppercase'} }, 'Total'),
+                            React.createElement("div", { style:{display:'flex',alignItems:'center',gap:2} },
+                                React.createElement("button", { className: "stk-qbtn", onClick: () => onQty(item.id, -1) }, "-"),
+                                React.createElement("span", { className: "stk-qval" }, item.quantity),
+                                React.createElement("button", { className: "stk-qbtn", onClick: () => onQty(item.id, 1) }, "+"))),
+                        React.createElement("div", { style:{textAlign:'center',borderTop:'1px solid var(--bo)',paddingTop:4} },
+                            React.createElement("div", { style:{fontSize:9,color:'var(--am)',fontWeight:600,letterSpacing:'.05em',textTransform:'uppercase'} }, 'In Use'),
+                            React.createElement("div", { style:{display:'flex',alignItems:'center',gap:2} },
+                                React.createElement("button", { className: "stk-qbtn", style:{color:'var(--am)'}, onClick: () => onInUse(item.id, -1) }, "-"),
+                                React.createElement("span", { className: "stk-qval", style:{color: (item.in_use||0) > 0 ? 'var(--am)' : 'var(--i5)'} }, item.in_use||0),
+                                React.createElement("button", { className: "stk-qbtn", style:{color:'var(--am)'}, onClick: () => onInUse(item.id, 1) }, "+")),
+                            (item.quantity - (item.in_use||0)) >= 0 && React.createElement("div", { style:{fontSize:9,color:'var(--fo3)',marginTop:2} },
+                                (item.quantity - (item.in_use||0)) + ' avail.'))),
                     React.createElement("div", {style:{display:'flex',flexDirection:'column',gap:4,flexShrink:0}},
                         React.createElement("button", { className: "medbtn", onClick: () => { setEditId(item.id); setFm({ name: item.name, category: item.category, quantity: item.quantity, notes: item.notes || '', image: item.image || null }); } }, "Edit"),
                         React.createElement("button", { className: "stk-del", onClick: () => onRemove(item.id) }, "Del"))
@@ -2963,11 +2989,12 @@ function PlannedGenotypesEditor({ value, onChange }) {
 }
 
 /* Pot popup */
-function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, users, genotypes, onSaveGenoDesc, measures, tables, greenhouses }) {
+function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, users, genotypes, onSaveGenoDesc, measures, tables, greenhouses, _inline }) {
     const CROPS = ['Tomato', 'Cucumber', 'Eggplant', 'Basil', 'Arabidopsis', 'Pepper', 'Lettuce', 'Strawberry', 'Wheat', 'Maize', 'Other'];
     const CROP_ICONS = {'Tomato':'🍅','Cucumber':'🥒','Eggplant':'🍆','Basil':'🌿','Arabidopsis':'🌱','Pepper':'🫑','Lettuce':'🥬','Strawberry':'🍓','Wheat':'🌾','Maize':'🌽','Other':'🪴'};
     const [f, setF] = useState({ genotype: plant.genotype || '', treatment: plant.treatment || '', treatments: plant.treatments || [], cross_parent1: plant.cross_parent1 || '', cross_parent2: plant.cross_parent2 || '', planting_date: plant.planting_date || '', status: plant.status || 'empty', statuses: plant.statuses || (plant.status && plant.status !== 'empty' ? [plant.status] : []), disease_name: plant.disease_name || '', sick_severity: plant.sick_severity || 0, pest_name: plant.pest_name || '', pest_severity: plant.pest_severity || 0, crop: plant.crop || 'Tomato', owner: plant.owner || '', date_moved_in: plant.date_moved_in || '', date_until: plant.date_until || '', notes: plant.notes || '', pot_style: plant.pot_style || 'conic', pot_color: plant.pot_color || 'bsugar', image: plant.image || null, photos: plant.photos || (plant.image ? [{id:'i0',data:plant.image,date:''}] : []), experiment_id: plant.experiment_id || null, experiment_ids: Array.isArray(plant.experiment_ids) ? plant.experiment_ids : (plant.experiment_id ? [plant.experiment_id] : []) });
     const [lbIdx, setLbIdx] = React.useState(null);
+    const [showQR, setShowQR] = React.useState(false);
     // Genotype Description: read from global genotypes table, write back globally
     const [genoDesc, setGenoDesc] = React.useState(function(){
         if (!plant.genotype) return '';
@@ -3044,7 +3071,7 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
         set('image', rem.length > 0 ? rem[rem.length-1].data : null);
     };
     const isMob = window.innerWidth <= 1024;
-    const mobClass = isMob ? " mobile-sheet" : ""; return (React.createElement("div", { className: "pop" + mobClass, ref: ref, style: isMob ? {} : { top: pos.top, left: pos.left, maxHeight: Math.min(Math.round(window.innerHeight * 0.9), 560) } },
+    const mobClass = isMob ? " mobile-sheet" : ""; return (React.createElement("div", { className: "pop" + mobClass + (_inline ? " pop-inline" : ""), ref: ref, style: _inline ? {} : (isMob ? {} : { top: pos.top, left: pos.left, maxHeight: Math.min(Math.round(window.innerHeight * 0.9), 560) }) },
         React.createElement("div", { className: "pop-handle" }),
         React.createElement("div", { className: "pph" },
             React.createElement("div", { className: "pppre" },
@@ -3351,26 +3378,24 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
             React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 } },
                 React.createElement("span", { style: { fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--i4)' } }, "\uD83C\uDFF7 Label"),
                 React.createElement("div", { style: { display: 'flex', gap: 6 } },
-                    React.createElement("button", { className: "btn btns bxs", style: { fontSize: 10 }, onClick: function() {
-                        var code = plant.id.slice(0,12).toUpperCase();
+                    React.createElement("button", { className: "btn btns bxs", style: { fontSize: 10 }, onClick: function() { setShowQR(function(v){ return !v; }); } }, showQR ? 'Hide QR' : '\uD83D\uDCF1 Create QR Code'),
+                    showQR && React.createElement("button", { className: "btn btns bxs", style: { fontSize: 10 }, onClick: function() {
                         var _expIds = getExpIds(plant); var exp = { name: _expIds.map(function(id){ return ((exps||[]).find(function(e){return e.id===id;})||{}).name||''; }).filter(Boolean).join(', ') };
-                        var bars = code128B(code);
-                        var totalU = bars.reduce(function(s,b){return s+b.w;},0);
-                        var W=200,H=48,uw=W/totalU;
-                        var rectStr='';var x=0;
-                        bars.forEach(function(b){var bw=b.w*uw;if(b.dark)rectStr+='<rect x="'+x.toFixed(2)+'" y="0" width="'+bw.toFixed(2)+'" height="'+H+'" fill="#000"/>';x+=bw;});
-                        var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Label</title><style>body{margin:16px;font-family:Inter,sans-serif;text-align:center}svg{display:block;margin:0 auto 6px}.lbl{font-size:13px;font-weight:700;margin-bottom:2px}.sub{font-size:10px;color:#666;line-height:1.6}.code{font-size:9px;color:#999;font-family:monospace;margin-top:4px}@media print{body{margin:4px}}</style></head><body>';
-                        html+='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'+rectStr+'</svg>';
-                        html+='<div class="lbl">'+( plant.genotype||'Empty pot')+'</div>';
-                        html+='<div class="sub">'+ghNm+' \u203A '+tblNm+' \u00B7 R'+(plant.row+1)+'C'+(plant.col+1);
-                        if (plant.treatment) html+='<br>\uD83D\uDC89 '+plant.treatment;
-                        if (plant.planting_date) html+='<br>\uD83D\uDCC5 '+plant.planting_date;
-                        if (exp) html+='<br>\uD83E\uDDEA '+exp.name;
-                        html+='</div><div class="code">'+code+'</div></body></html>';
-                        var win=window.open('','_blank','width=380,height=300');
+                        var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Label</title>'
+                        +'<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>'
+                        +'<style>body{margin:16px;font-family:Inter,sans-serif;text-align:center}#qr{display:inline-block;margin:0 auto 8px}.lbl{font-size:13px;font-weight:700;margin-bottom:2px}.sub{font-size:10px;color:#666;line-height:1.6}.code{font-size:8px;color:#bbb;font-family:monospace;margin-top:4px}@media print{body{margin:4px}}</style></head><body>'
+                        +'<div id="qr"></div>'
+                        +'<div class="lbl">'+( plant.genotype||'Empty pot')+'</div>'
+                        +'<div class="sub">'+ghNm+' \u203A '+tblNm+' \u00B7 R'+(plant.row+1)+'C'+(plant.col+1)
+                        +(plant.treatment?'<br>\uD83D\uDC89 '+plant.treatment:'')
+                        +(plant.planting_date?'<br>\uD83D\uDCC5 '+plant.planting_date:'')
+                        +(exp&&exp.name?'<br>\uD83E\uDDEA '+exp.name:'')
+                        +'</div><div class="code">'+plant.id+'</div>'
+                        +'<script>new QRCode(document.getElementById("qr"),{text:"'+plant.id+'",width:140,height:140,correctLevel:QRCode.CorrectLevel.M});setTimeout(function(){window.print();},600);<\/script>'
+                        +'</body></html>';
+                        var win=window.open('','_blank','width=320,height=380');
                         if (!win) return;
                         win.document.write(html); win.document.close(); win.focus();
-                        setTimeout(function(){ win.print(); }, 400);
                     } }, "\uD83D\uDDA8 Print"),
                     React.createElement("button", { className: "btn btns bxs", style: { fontSize: 10 }, onClick: function() {
                         var sessList = measures || [];
@@ -3391,8 +3416,8 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
                         a.download='plant_'+(plant.genotype||plant.id.slice(0,6)).replace(/[^a-zA-Z0-9_-]/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.csv';
                         a.click();
                     } }, "\u2B07 CSV"))),
-            React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 12 } },
-                React.createElement(BarcodeSVG, { text: plant.id.slice(0,12).toUpperCase(), width: 140, height: 36 }),
+            showQR && React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 } },
+                React.createElement(QRCanvas, { value: plant.id, size: 88 }),
                 React.createElement("div", { style: { fontSize: 9, color: 'var(--i4)', fontFamily: 'monospace', lineHeight: 1.6 } },
                     React.createElement("div", { style: { fontWeight: 700, color: 'var(--i2)', fontSize: 11, fontFamily: 'Poppins,sans-serif', marginBottom: 2 } }, plant.genotype || '\u2014'),
                     ghNm + ' \u203A ' + tblNm,
@@ -5701,110 +5726,61 @@ function removeExp(plant, eid) {
 }
 
 // ── Code128B barcode renderer (pure SVG, no deps) ────────────────────────
-function code128B(text) {
-    var C128 = [
-        [2,1,2,2,2,2],[2,2,2,1,2,2],[2,2,2,2,2,1],[1,2,1,2,2,3],[1,2,1,3,2,2],
-        [1,3,1,2,2,2],[1,2,2,2,1,3],[1,2,2,3,1,2],[1,3,2,2,1,2],[2,2,1,2,1,3],
-        [2,2,1,3,1,2],[2,3,1,2,1,2],[1,1,2,2,3,2],[1,2,2,1,3,2],[1,2,2,2,3,1],
-        [1,1,3,2,2,2],[1,2,3,1,2,2],[1,2,3,2,2,1],[2,2,3,2,1,1],[2,2,1,1,3,2],
-        [2,2,1,2,3,1],[2,1,3,2,1,2],[2,2,3,1,1,2],[3,1,2,1,3,1],[3,1,1,2,2,2],  // 0-24
-        [3,2,1,1,2,2],[3,2,1,2,2,1],[3,1,2,2,1,2],[3,2,2,1,1,2],[3,2,2,2,1,1],  // 25-29
-        [2,1,2,1,2,3],[2,1,2,3,2,1],[2,3,2,1,2,1],[1,1,1,3,2,3],[1,3,1,1,2,3],  // 30-34
-        [1,3,1,3,2,1],[1,1,2,3,1,3],[1,3,2,1,1,3],[1,3,2,3,1,1],[2,1,1,3,1,3],  // 35-39
-        [2,3,1,1,1,3],[2,3,1,3,1,1],[1,1,2,1,3,3],[1,1,2,3,3,1],[1,3,2,1,3,1],  // 40-44
-        [1,1,3,1,2,3],[1,1,3,3,2,1],[1,3,3,1,2,1],[3,1,3,1,2,1],[2,1,1,3,3,1],  // 45-49
-        [2,3,1,1,3,1],[2,1,3,1,1,3],[2,1,3,3,1,1],[2,1,3,1,3,1],[3,1,1,1,2,3],  // 50-54
-        [3,1,1,3,2,1],[3,3,1,1,2,1],[3,1,2,1,1,3],[3,1,2,3,1,1],[3,3,2,1,1,1],  // 55-59
-        [3,1,4,1,1,1],[2,2,1,4,1,1],[4,3,1,1,1,1],[1,1,1,2,2,4],[1,1,1,4,2,2],  // 60-64
-        [1,2,1,1,2,4],[1,2,1,4,2,1],[1,4,1,1,2,2],[1,4,1,2,2,1],[1,1,2,2,1,4],  // 65-69
-        [1,1,2,4,1,2],[1,2,2,1,1,4],[1,2,2,4,1,1],[1,4,2,1,1,2],[1,4,2,2,1,1],  // 70-74
-        [2,4,1,2,1,1],[2,2,1,1,1,4],[4,1,3,1,1,1],[2,4,1,1,1,2],[1,3,4,1,1,1],  // 75-79
-        [1,1,1,2,4,2],[1,2,1,1,4,2],[1,2,1,2,4,1],[1,1,4,2,1,2],[1,2,4,1,1,2],  // 80-84
-        [1,2,4,2,1,1],[4,1,1,2,1,2],[4,2,1,1,1,2],[4,2,1,2,1,1],[2,1,2,1,4,1],  // 85-89
-        [2,1,4,1,2,1],[4,1,2,1,2,1],[1,1,1,1,4,3],[1,1,1,3,4,1],[1,3,1,1,4,1],  // 90-94
-        [1,1,4,1,1,3],[1,1,4,3,1,1],[4,1,1,1,1,3],[4,1,1,3,1,1],[1,1,3,1,4,1],  // 95-99
-        [1,1,4,1,3,1],[3,1,1,1,4,1],[4,1,1,1,3,1],[2,1,1,4,1,2],[2,1,1,2,1,4],  // 100-104
-        [2,1,1,4,3,1],[2,3,3,1,1,1,2]  // 105 start-B, 106 stop
-    ];
-    var START_B = 104, STOP = 106;
-    var codes = [START_B];
-    var check = START_B;
-    for (var i = 0; i < text.length; i++) {
-        var c = text.charCodeAt(i) - 32;
-        if (c < 0 || c > 94) c = 0;
-        codes.push(c);
-        check += c * (i + 1);
-    }
-    codes.push(check % 103);
-    codes.push(STOP);
-    var bars = [];
-    codes.forEach(function(code) {
-        var pat = C128[code];
-        pat.forEach(function(w, i) { bars.push({ w: w, dark: i % 2 === 0 }); });
-    });
-    // terminal bar
-    bars.push({ w: 2, dark: true });
-    return bars;
+// ── QR code helpers ──────────────────────────────────────────────────────
+// QR payload = full plant ID (not truncated) so scanner can match exactly
+function makeQRPayload(plantId) { return plantId; }
+
+// QR rendered into a container div using QRCode.js
+function QRCanvas({ value, size }) {
+    var ref = React.useRef();
+    React.useEffect(function() {
+        var el = ref.current;
+        if (!el || !value) return;
+        el.innerHTML = '';
+        if (typeof QRCode === 'undefined') return;
+        new QRCode(el, { text: value, width: size, height: size, correctLevel: QRCode.CorrectLevel.M });
+    }, [value, size]);
+    return React.createElement('div', { ref: ref, style:{display:'inline-block'} });
 }
 
-function BarcodeSVG({ text, width, height }) {
-    var bars = code128B(text);
-    var totalU = bars.reduce(function(s, b) { return s + b.w; }, 0);
-    var unitW = width / totalU;
-    var rects = [];
-    var x = 0;
-    bars.forEach(function(b, i) {
-        var bw = b.w * unitW;
-        if (b.dark) rects.push(React.createElement('rect', { key: i, x: x, y: 0, width: bw, height: height, fill: '#000' }));
-        x += bw;
-    });
-    return React.createElement('svg', { width: width, height: height, viewBox: '0 0 ' + width + ' ' + height, xmlns: 'http://www.w3.org/2000/svg', style: { display: 'block' } }, rects);
-}
-
+// ── QR Export Modal (replaces BarcodeExportModal) ────────────────────────
 function BarcodeExportModal({ pots, tables, greenhouses, measures, experiments, onClose }) {
-    // pots = array of plant objects to label
     function getLabel(p) {
         var tbl = tables.find(function(t){ return t.id === p.table_id; }) || {};
         var gh  = greenhouses.find(function(g){ return g.id === p.greenhouse_id; }) || {};
         return {
-            id:     p.id,
-            code:   p.id.slice(0, 12).toUpperCase(),
-            geno:   p.genotype || '—',
-            tblNm:  tbl.name || '?',
-            ghNm:   gh.name || '?',
-            row:    p.row != null ? 'R' + (p.row + 1) : '',
-            col:    p.col != null ? 'C' + (p.col + 1) : '',
-            status: p.status || '',
-            treat:  p.treatment || '',
-            date:   p.planting_date || '',
-            exp:    getExpIds(p).map(function(id){ return (experiments.find(function(e){return e.id===id;})||{}).name||''; }).filter(Boolean).join(', '),
+            id:    p.id,
+            geno:  p.genotype || '\u2014',
+            tblNm: tbl.name || '?',
+            ghNm:  gh.name || '?',
+            row:   p.row != null ? 'R' + (p.row + 1) : '',
+            col:   p.col != null ? 'C' + (p.col + 1) : '',
+            treat: p.treatment || '',
+            date:  p.planting_date || '',
+            exp:   getExpIds(p).map(function(id){ return (experiments.find(function(e){return e.id===id;})||{}).name||''; }).filter(Boolean).join(', '),
         };
     }
     function doPrint() { window.print(); }
     function doCSV() {
-        // Full plant export with all measurements flattened
         var sessList = measures || [];
         var measHeaders = sessList.map(function(s){ return s.name + ' (' + s.unit + ')'; });
-        var headers = ['Pot ID','Greenhouse','Table','Row','Col','Genotype','Treatment','Status','Planting Date','Experiment','Crop','Owner','Notes'].concat(measHeaders);
+        var headers = ['Pot ID','Greenhouse','Table','Row','Col','Genotype','Treatment','Status','Planting Date','Experiment(s)','Crop','Owner','Notes'].concat(measHeaders);
         var rows = pots.map(function(p) {
             var tbl = tables.find(function(t){ return t.id === p.table_id; }) || {};
             var gh  = greenhouses.find(function(g){ return g.id === p.greenhouse_id; }) || {};
-            var expNames = getExpIds(p).map(function(id){ return (experiments.find(function(e){return e.id===id;})||{}).name||''; }).filter(Boolean).join(', '); var exp = { name: expNames };
-            var base = [
-                p.id, gh.name||'', tbl.name||'',
-                p.row != null ? p.row + 1 : '',
-                p.col != null ? p.col + 1 : '',
+            var expN = getExpIds(p).map(function(id){ return (experiments.find(function(e){return e.id===id;})||{}).name||''; }).filter(Boolean).join(', ');
+            var base = [p.id, gh.name||'', tbl.name||'',
+                p.row!=null?p.row+1:'', p.col!=null?p.col+1:'',
                 p.genotype||'', p.treatment||'', p.status||'',
-                p.planting_date||'', exp.name||'', p.crop||'', p.owner||'', (p.notes||'').replace(/\n/g,' ')
-            ];
-            var measVals = sessList.map(function(s) {
-                var row = (s.rows||[]).find(function(r){ return r.pot_id === p.id; });
-                return row ? row.value : '';
+                p.planting_date||'', expN, p.crop||'', p.owner||'', (p.notes||'').replace(/\n/g,' ')];
+            var measVals = sessList.map(function(s){
+                var row=(s.rows||[]).find(function(r){return r.pot_id===p.id;});
+                return row?row.value:'';
             });
             return base.concat(measVals);
         });
         var csv = [headers].concat(rows).map(function(r){
-            return r.map(function(x){ return '"' + (x == null ? '' : String(x)).replace(/"/g, '""') + '"'; }).join(',');
+            return r.map(function(x){ return '"'+(x==null?'':String(x)).replace(/"/g,'""')+'"'; }).join(',');
         }).join('\n');
         var a = document.createElement('a');
         a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
@@ -5814,30 +5790,128 @@ function BarcodeExportModal({ pots, tables, greenhouses, measures, experiments, 
     return React.createElement('div', { className: 'bc-modal-ov', onClick: function(e){ if (e.target === e.currentTarget) onClose(); } },
         React.createElement('div', { className: 'bc-modal' },
             React.createElement('div', { className: 'bc-modal-hdr' },
-                React.createElement('h3', null, '🏷 Barcode Labels — ' + pots.length + ' pots'),
-                React.createElement('button', { className: 'btn btns bsm', onClick: onClose }, '✕ Close')),
+                React.createElement('h3', null, '\uD83D\uDCF1 QR Labels \u2014 ' + pots.length + ' pots'),
+                React.createElement('button', { className: 'btn btns bsm', onClick: onClose }, '\u2715 Close')),
             React.createElement('div', { className: 'bc-modal-body' },
                 React.createElement('div', { className: 'bc-grid' },
                     pots.map(function(p) {
                         var lb = getLabel(p);
                         return React.createElement('div', { key: p.id, className: 'bc-card' },
-                            React.createElement(BarcodeSVG, { text: lb.code, width: 160, height: 40 }),
+                            React.createElement(QRCanvas, { value: makeQRPayload(p.id), size: 120 }),
                             React.createElement('div', { className: 'bc-card-lbl' }, lb.geno),
                             React.createElement('div', { className: 'bc-card-sub' },
-                                lb.ghNm + ' · ' + lb.tblNm + ' · ' + lb.row + lb.col,
-                                lb.treat ? React.createElement('span', null, React.createElement('br', null), '💉 ' + lb.treat) : null,
-                                lb.date  ? React.createElement('span', null, React.createElement('br', null), '📅 ' + lb.date) : null,
-                                lb.exp   ? React.createElement('span', null, React.createElement('br', null), '🧪 ' + lb.exp) : null),
-                            React.createElement('div', { className: 'bc-card-id' }, lb.code));
+                                lb.ghNm + ' \u00B7 ' + lb.tblNm + ' \u00B7 ' + lb.row + lb.col,
+                                lb.treat ? React.createElement('span', null, React.createElement('br',null), '\uD83D\uDC89 ' + lb.treat) : null,
+                                lb.date  ? React.createElement('span', null, React.createElement('br',null), '\uD83D\uDCC5 ' + lb.date) : null,
+                                lb.exp   ? React.createElement('span', null, React.createElement('br',null), '\uD83E\uDDEA ' + lb.exp) : null),
+                            React.createElement('div', { className: 'bc-card-id' }, p.id.slice(0,12)));
                     }))),
             React.createElement('div', { className: 'bc-modal-foot' },
-                React.createElement('button', { className: 'btn btns', onClick: doCSV }, '⬇ Export Excel/CSV'),
-                React.createElement('button', { className: 'btn btnp', onClick: doPrint }, '🖨 Print Labels'))));
+                React.createElement('button', { className: 'btn btns', onClick: doCSV }, '\u2B07 Export Excel/CSV'),
+                React.createElement('button', { className: 'btn btnp', onClick: doPrint }, '\uD83D\uDDA8 Print QR Labels'))));
+}
+
+// ── Plant Scanner (QR camera reader) ─────────────────────────────────────
+function PlantScanner({ plants, measures, tables, greenhouses, experiments, onSave, currentUser, onSavePlant, allPlants, users, genotypes, onSaveGenoDesc, onClose }) {
+    var [status, setStatus]   = React.useState('init'); // init | scanning | error
+    var [plant,  setPlant]    = React.useState(null);
+    var scannerRef = React.useRef(null);
+
+    function startScanner() {
+        if (typeof Html5Qrcode === 'undefined') { setStatus('error'); return; }
+        var el = document.getElementById('qr-reader-scanner');
+        if (!el) return;
+        var scanner = new Html5Qrcode('qr-reader-scanner');
+        scannerRef.current = scanner;
+        scanner.start(
+            { facingMode: 'environment' },
+            { fps: 10, qrbox: { width: 240, height: 240 } },
+            function(decoded) {
+                var found = plants.find(function(p){ return p.id === decoded; });
+                if (found) {
+                    scanner.stop().catch(function(){});
+                    // Always use freshest plant data
+                    var fresh = plants.find(function(p){ return p.id === found.id; }) || found;
+                    setPlant(fresh);
+                    setStatus('found');
+                } else {
+                    setStatus('error');
+                    setTimeout(function(){ setStatus('scanning'); }, 1800);
+                }
+            },
+            function() {}
+        ).then(function(){ setStatus('scanning'); })
+         .catch(function(err){ setStatus('error'); console.warn('QR scanner:', err); });
+    }
+
+    React.useEffect(function() {
+        // small delay to let the DOM render the reader div first
+        var t = setTimeout(startScanner, 120);
+        return function() {
+            clearTimeout(t);
+            if (scannerRef.current) scannerRef.current.stop().catch(function(){});
+        };
+    }, []);
+
+    // When a plant is found, show its full popup
+    if (plant) {
+        var tbl = tables.find(function(t){ return t.id === plant.table_id; });
+        var gh  = greenhouses.find(function(g){ return g.id === plant.greenhouse_id; });
+        return React.createElement('div', { className: 'qr-scan-ov', onClick: function(e){ if(e.target===e.currentTarget){ onClose(); } } },
+            React.createElement('div', { style:{
+                position:'relative', background:'#fff', borderRadius:16,
+                width:'min(360px,98vw)', maxHeight:'96vh', overflowY:'auto',
+                boxShadow:'0 20px 60px rgba(0,0,0,.3)'
+            }},
+                // Scan-another bar at top
+                React.createElement('div', { style:{display:'flex',alignItems:'center',gap:8,padding:'10px 14px',borderBottom:'1px solid var(--bo)',background:'var(--ll)',borderRadius:'16px 16px 0 0'} },
+                    React.createElement('span', {style:{fontSize:11,fontWeight:600,color:'var(--fo2)',flex:1}}, '\uD83C\uDF31 Scanned: '+(plant.genotype||'pot')),
+                    React.createElement('button', { className:'btn btns bxs', style:{fontSize:10}, onClick:function(){
+                        setPlant(null); setStatus('init');
+                        setTimeout(startScanner, 120);
+                    }}, '\uD83D\uDD04 Scan another'),
+                    React.createElement('button', { className:'btn btns bxs', style:{fontSize:10}, onClick: onClose }, '\u2715')),
+                // Full PotPopup embedded (inline, not floating)
+                React.createElement(PotPopup, {
+                    plant: plant,
+                    tblNm: tbl ? tbl.name : '?',
+                    ghNm:  gh  ? gh.name  : '?',
+                    rect: null,
+                    exps: experiments,
+                    allPlants: allPlants || plants,
+                    users: users || [],
+                    genotypes: genotypes || [],
+                    measures: measures || [],
+                    tables: tables,
+                    greenhouses: greenhouses,
+                    onSave: function(upd, delGeno) {
+                        onSavePlant(upd, delGeno);
+                        // Refresh local plant state with saved data
+                        if (upd && !delGeno) setPlant(upd);
+                        else onClose();
+                    },
+                    onSaveGenoDesc: onSaveGenoDesc,
+                    onClose: onClose,
+                    _inline: true   // signal to PotPopup to use non-floating layout
+                })));
+    }
+
+    return React.createElement('div', { className: 'qr-scan-ov', onClick: function(e){ if(e.target===e.currentTarget) onClose(); } },
+        React.createElement('div', { className: 'qr-scan-box' },
+            React.createElement('div', { className: 'qr-scan-hdr' },
+                React.createElement('h3', null, '\uD83D\uDCF7 Scan Plant QR Code'),
+                React.createElement('button', { className:'btn btns bsm', onClick: onClose }, '\u2715 Close')),
+            React.createElement('div', { id: 'qr-reader-scanner' }),
+            React.createElement('div', { className: 'qr-scan-status' },
+                status === 'init'     ? 'Starting camera\u2026' :
+                status === 'scanning' ? '\uD83D\uDD0D Point at a plant QR code' :
+                status === 'error'    ? '\u26A0\uFE0F QR not matched \u2014 try again' : '')));
 }
 
 // ── Plant Data Viewer ─────────────────────────────────────────────────────
 function PlantDataViewer({ pots, tables, greenhouses, experiments, measures, onClose }) {
     var [tab, setTab] = React.useState('summary'); // 'summary' | 'measures' | 'timeline'
+
     var [selIds, setSelIds] = React.useState(pots.map(function(p){return p.id;}));
 
     var selected = pots.filter(function(p){ return selIds.includes(p.id); });
@@ -6056,6 +6130,7 @@ function App() {
     const [showAStr, setShowAStr] = useState(false);
     const [showBarcodes, setShowBarcodes] = useState(false);
     const [showDataViewer, setShowDataViewer] = useState(false);
+    const [showScanner, setShowScanner] = useState(false);
     const [showAMem, setShowAMem] = useState(false);
     const [ghFm, setGhFm] = useState({ name: '', width: 600, length: 400 });
     const [tFm, setTFm] = useState({ name: '', width: 230, length: 125, rows: 3, cols: 6 });
@@ -7141,6 +7216,7 @@ useEffect(() => {
     const editStockItem = (id, fm) => setData(d => (Object.assign(Object.assign({}, d), { stock: (d.stock || []).map(s => s.id === id ? Object.assign(Object.assign(Object.assign({}, s), fm), { quantity: +fm.quantity || 0, image: fm.image !== undefined ? fm.image : s.image }) : s) })));
     const removeStockItem = id => setData(d => (Object.assign(Object.assign({}, d), { stock: (d.stock || []).filter(s => s.id !== id) })));
     const qtyStockItem = (id, delta) => setData(d => (Object.assign(Object.assign({}, d), { stock: (d.stock || []).map(s => s.id === id ? Object.assign(Object.assign({}, s), { quantity: Math.max(0, s.quantity + delta) }) : s) })));
+    const inUseStockItem = (id, delta) => setData(d => (Object.assign(Object.assign({}, d), { stock: (d.stock || []).map(s => s.id === id ? Object.assign(Object.assign({}, s), { in_use: Math.max(0, (s.in_use||0) + delta) }) : s) })));
     const togLock = () => { if (!locked) {
         if (_isMob) sessionStorage.removeItem('gl_sess_unlocked');
         setData(d => (Object.assign(Object.assign({}, d), { locked: true })));
@@ -7592,7 +7668,8 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
                         React.createElement("button", { className: `selbtn${selMode ? ' on' : ''}`, onClick: () => { setSelMode(s => !s); setSelPots([]); } }, selMode ? 'Selecting...' : 'Select pots'),
                         React.createElement("button", { className: `selbtn${tblSelMode ? ' on' : ''}`, onClick: () => { setTblSelMode(m => { if (m) setSelTbls(new Set()); return !m; }); } }, tblSelMode ? `${selTbls.size} tables ✕` : 'Select tables'),
                         React.createElement("button", { className: `selbtn${colorByExp ? ' on' : ''}`, onClick: () => setColorByExp(c => !c), title: "Color pots by experiment" }, colorByExp ? 'Exp colors on' : 'Color by exp'),
-                        aGh && React.createElement("button", { className: 'selbtn', title: 'Export all pots in this greenhouse as CSV / print barcode labels', onClick: () => { setSelPots(aPlants.filter(function(p){ return p.genotype; }).map(function(p){ return p.id; })); setShowBarcodes(true); } }, '🏷 Export GH')),
+                        aGh && React.createElement("button", { className: 'selbtn', title: 'Export all pots in this greenhouse as CSV / print QR labels', onClick: () => { setSelPots(aPlants.filter(function(p){ return p.genotype; }).map(function(p){ return p.id; })); setShowBarcodes(true); } }, '\uD83D\uDCF1 Export GH'),
+                        React.createElement("button", { className: 'selbtn', title: 'Scan a plant QR code to open its data sheet', onClick: () => setShowScanner(true) }, '\uD83D\uDCF7 Scan QR')),
                     aGh && tab === 'layout' && React.createElement("div", { className: "tmeta" },
                         aGh.name,
                         " \u00B7 ",
@@ -7626,7 +7703,7 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
                         notify(selPots.length + ' pots → ' + v);
                     }}),
                     React.createElement("button", { className: "btn btnp bsm", onClick: () => { var _a; setAssExpFm({ mode: 'existing', newName: '', newOwner: (user === null || user === void 0 ? void 0 : user.name) || '', newDesc: '', newUntilDate: '', existId: ((_a = data.experiments[0]) === null || _a === void 0 ? void 0 : _a.id) || '' }); setShowAssExp(true); } }, "Assign exp."),
-                    React.createElement("button", { className: "btn btns bsm", onClick: () => setShowBarcodes(true) }, "🏷 Labels"),
+                    React.createElement("button", { className: "btn btns bsm", onClick: () => setShowBarcodes(true) }, "\uD83D\uDCF1 QR Labels"),
                     React.createElement("button", { className: "btn btns bsm", onClick: () => setShowDataViewer(true) }, "📊 View Data"),
                     React.createElement("button", { style:{background:'rgba(255,255,255,.12)',color:'#fff',border:'none',borderRadius:6,padding:'3px 10px',cursor:'pointer',fontSize:11}, onClick: () => { setSelPots([]); setSelMode(false); } }, "✕ Done")),
                 tab === 'layout' && React.createElement(React.Fragment, null,
@@ -7692,7 +7769,7 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
                             editTbl && ' · Table edit active'))),
                 tab === 'search' && React.createElement(SearchView, { plants: data.plants, tables: data.tables, ghs: data.greenhouses, exps: data.experiments, onSel: hSearchSel }),
                 tab === 'team' && React.createElement(TeamPage, { users: data.users, curUser: user, onUpdate: updUser, onDel: delUser, onAdd: () => setShowAMem(true) }),
-                tab === 'stock' && React.createElement(StockView, { stock: data.stock || [], onAdd: addStockItem, onEdit: editStockItem, onRemove: removeStockItem, onQty: qtyStockItem }),
+                tab === 'stock' && React.createElement(StockView, { stock: data.stock || [], onAdd: addStockItem, onEdit: editStockItem, onRemove: removeStockItem, onQty: qtyStockItem, onInUse: inUseStockItem }),
                 tab === 'measures' && React.createElement(MeasuresView, { measures:data.measures||[], experiments:data.experiments||[], plants:data.plants||[], tables:data.tables||[], users:data.users||[], onSave:saveMeasures, currentUser:user }),
                 tab === 'messages' && React.createElement(MessagesView, { messages:data.messages||[], onAdd:addMessage, onEdit:editMessage, onDel:delMessage, currentUser:user, users:data.users }),
                 tab === 'notes' && React.createElement(NotesView, { notes:data.notes||[], onAdd:addNote, onEdit:editNote, onDel:delNote, currentUser:user, users:data.users, labId: activeLab?.id }),
@@ -7926,6 +8003,7 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
         showFbPanel && React.createElement(FirebasePanel, { onClose: () => setShowFbPanel(false), activityLog: activityLog }),
         showBarcodes && React.createElement(BarcodeExportModal, { pots: data.plants.filter(function(p){ return selPots.includes(p.id); }), tables: data.tables, greenhouses: data.greenhouses, measures: data.measures || [], experiments: data.experiments, onClose: () => setShowBarcodes(false) }),
         showDataViewer && React.createElement(PlantDataViewer, { pots: data.plants.filter(function(p){ return selPots.includes(p.id); }), tables: data.tables, greenhouses: data.greenhouses, experiments: data.experiments, measures: data.measures || [], onClose: () => setShowDataViewer(false) }),
+        showScanner && React.createElement(PlantScanner, { plants: data.plants, measures: data.measures || [], tables: data.tables, greenhouses: data.greenhouses, experiments: data.experiments, onSave: saveMeasures, currentUser: user, onSavePlant: savePlant, allPlants: data.plants, users: data.users, genotypes: data.genotypes || [], onSaveGenoDesc: function(name, desc){ forceWriteRef.current=true; setData(function(d){ return upsertGenotypeDesc(d, name, desc); }); }, onClose: () => setShowScanner(false) }),
         notif && React.createElement("div", { className: "notif" },
             React.createElement("div", { className: "ndot" }),
             notif)));
