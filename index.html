@@ -351,7 +351,7 @@ body.sunlight .sunlight-btn.on{background:#000;color:#fff;border-color:#000}
 .pcw.pot-sel .psvg{transform:scale(1.06)}
 .pcw.pot-sel .plbl{background:rgba(196,230,168,.8);color:#2d6a1f}
 .psvg{transition:transform .1s;display:block}
-.plbl{display:flex;align-items:center;justify-content:center;font-weight:600;color:#111827;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;user-select:none;background:rgba(255,255,255,.95);border-radius:5px;padding:0 3px;box-shadow:0 1px 3px rgba(0,0,0,.07);flex-shrink:0;letter-spacing:-0.03em}
+.plbl{display:flex;align-items:center;justify-content:center;font-weight:700;color:#0a0a0a;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;user-select:none;background:rgba(255,255,255,.98);border-radius:5px;padding:0 4px;box-shadow:0 1px 4px rgba(0,0,0,.15);flex-shrink:0;letter-spacing:-0.02em;line-height:1}
 .pslot{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:default}
 .pslot.addmode{cursor:pointer}
 .pdel{display:none;position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--to);color:#fff;border:2px solid #fff;font-size:10px;cursor:pointer;align-items:center;justify-content:center;z-index:30;font-weight:700;line-height:1}
@@ -463,6 +463,7 @@ body.sunlight .sunlight-btn.on{background:#000;color:#fff;border-color:#000}
    MODAL
 ═══════════════════════════════════ */
 @keyframes fi{from{opacity:0}to{opacity:1}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 @keyframes mi{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
 .mov{position:fixed;inset:0;background:rgba(17,24,39,.4);backdrop-filter:blur(8px);z-index:1000;display:flex;align-items:center;justify-content:center;animation:fi .15s ease}
 .mo{background:#fff;border:1px solid #F0F0F0;border-radius:20px;padding:20px;width:400px;max-width:96vw;box-shadow:0 10px 25px -5px rgba(0,0,0,.1);animation:mi .18s ease}
@@ -1462,7 +1463,7 @@ console.log('[GreenLab] Supabase mode — project: oifuoyyisezudweeqwcr');
 console.log('[GreenLab] Real-time: Supabase Postgres changes subscription (instant sync, no polling).');
 
 const { useState, useEffect, useRef, useCallback, useMemo, useLayoutEffect } = React;
-const WS = 3, HDR = 26, MINP = 44, LBH = 16, MINZ = .15, MAXZ = 4;
+const WS = 3, HDR = 26, MINP = 44, LBH = 20, MINZ = .15, MAXZ = 4;
 const LABS_KEY = 'gl_labs_v1'; // stores array of {id,name,dataKey,created_at}
 const DEL_PW_KEY = 'gl_delpw'; // stores hashed delete password per lab
 const DEFAULT_DEL_PW = 'greenlab2025'; // default password — user can change later
@@ -1785,8 +1786,8 @@ function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onP
     const hasSick  = _sts.includes('sick');
     const hasPests = _sts.includes('pests');
     const lbl = (plant === null || plant === void 0 ? void 0 : plant.genotype) || '';
-    const fs = clamp(Math.round(ppx * .19), 8, 12);
-    const maxC = Math.max(3, Math.floor(ppx / 4.2));
+    const fs = clamp(Math.round(ppx * .24), 9, 14);
+    const maxC = Math.max(4, Math.floor(ppx / 3.2));
     const disp = lbl.length > maxC ? lbl.slice(0, maxC - 1) + '…' : lbl;
     const svgSz = Math.round(ppx * .70);
     if (!plant || !filled) {
@@ -2090,13 +2091,14 @@ function loadImages(d) {
     } catch(e) { return d; }
 }
 // Load stock images from IDB as fallback for items missing an image (e.g. old data pre-sync)
-function loadStockImagesFromIDB(stockItems, setDataFn) {
+function loadStockImagesFromIDB(stockItems, setDataFn, onBeforeSet) {
     if (!stockItems || stockItems.length === 0) return;
     var missing = stockItems.filter(function(s){ return !s.image; });
     if (missing.length === 0) return;
     missing.forEach(function(s) {
         idbGet('kv', 'stkimg_'+s.id).then(function(img) {
             if (!img) return;
+            if (onBeforeSet) onBeforeSet(); // e.g. set remoteUpdateRef=true
             setDataFn(function(d) {
                 return Object.assign({}, d, {
                     stock: (d.stock||[]).map(function(item) {
@@ -4174,9 +4176,16 @@ function LabSelectScreen({onSelectLab}){
   };
 
   if (loading) return React.createElement('div', {
-    style:{position:'fixed',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'#163026',gap:16}},
-    React.createElement('div',{style:{fontSize:40}},'🍅'),
-    React.createElement('div',{style:{color:'rgba(255,255,255,.7)',fontSize:14,fontFamily:'Inter,sans-serif'}},'Loading labs...')
+    style:{position:'fixed',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'#0d1b2a',gap:20}},
+    React.createElement('svg',{width:80,height:80,viewBox:'0 0 80 80',style:{animation:'spin 3s linear infinite'}},
+      React.createElement('circle',{cx:40,cy:40,r:34,fill:'none',stroke:'#1e3a5f',strokeWidth:6}),
+      React.createElement('circle',{cx:40,cy:40,r:34,fill:'none',stroke:'#4a9eff',strokeWidth:3,strokeDasharray:'40 174',strokeLinecap:'round'}),
+      React.createElement('circle',{cx:40,cy:40,r:22,fill:'none',stroke:'#2d5986',strokeWidth:4}),
+      React.createElement('circle',{cx:40,cy:40,r:22,fill:'none',stroke:'#78C043',strokeWidth:2.5,strokeDasharray:'25 113',strokeLinecap:'round',style:{animationDelay:'-1s'}}),
+      React.createElement('circle',{cx:40,cy:40,r:6,fill:'#4a9eff',opacity:.8})
+    ),
+    React.createElement('div',{style:{color:'#e2e8f0',fontSize:18,fontWeight:700,fontFamily:'Inter,sans-serif',letterSpacing:'.04em'}},'GreenLab'),
+    React.createElement('div',{style:{color:'#64748b',fontSize:12,fontFamily:'Inter,sans-serif'}},'Loading labs…')
   );
 
   return React.createElement('div', {className:'lab-screen'},
@@ -5478,12 +5487,15 @@ function GenotypeRegistry({ genotypes, plants, onSave, onDelete, notify }) {
                 React.createElement('div', { style:{flex:'2 1 180px'} },
                     React.createElement('label', { className:'fl', style:{fontSize:10} }, 'Full Name'),
                     React.createElement('input', { className:'fi', placeholder:'e.g. pFIL>>CKX3 or pAt2g14140::GFP-NahG',
-                        value:fm.name, onChange:function(e){patch('name',e.target.value);} })
+                        value:fm.name, onChange:function(e){patch('name',e.target.value);},
+                        onKeyDown:function(e){ if(e.key==='Enter' && fm.name.trim()) submit(); },
+                        autoFocus:true })
                 ),
                 React.createElement('div', { style:{flex:'1 1 100px'} },
                     React.createElement('label', { className:'fl', style:{fontSize:10} }, 'Shortcut / Alias'),
                     React.createElement('input', { className:'fi', placeholder:'e.g. ckx',
-                        value:fm.shortcut, onChange:function(e){patch('shortcut',e.target.value.toLowerCase());} })
+                        value:fm.shortcut, onChange:function(e){patch('shortcut',e.target.value.toLowerCase());},
+                        onKeyDown:function(e){ if(e.key==='Enter' && fm.name.trim()) submit(); } })
                 )
             ),
             React.createElement('div', { style:{marginBottom:10} },
@@ -6494,6 +6506,7 @@ useEffect(() => {
                         var seeded = seedIfEmpty({ greenhouses:[], tables:[], plants:[],
                             experiments:[], users:[], structs:[], stock:[], orders:[], genotypes:[], locked:true });
                         saveData(seeded, activeLab.id);
+                        dataLoadedRef.current = true;
                         remoteUpdateRef.current = true;
                         setData(seeded);
                         if (seeded.greenhouses.length > 0) setGhId(seeded.greenhouses[0].id);
@@ -6544,7 +6557,7 @@ useEffect(() => {
                                         : remote; // nothing local — use server as-is
                                 var merged = loadImages(mergeRemoteData(remote, bestLocal));
                                 // Load any stock images missing from Supabase data (IDB fallback)
-                                setTimeout(function(){ loadStockImagesFromIDB(merged.stock, setData); }, 0);
+                                setTimeout(function(){ loadStockImagesFromIDB(merged.stock, setData, function(){ remoteUpdateRef.current = true; }); }, 0);
                                 return merged;
                             });
                             if (remote.greenhouses && remote.greenhouses.length > 0) {
@@ -6562,6 +6575,7 @@ useEffect(() => {
                         }).catch(function() {
                             // IDB failed — apply server data directly, no merge
                             dbgWarn('[State] IDB read failed — applying server data directly');
+                            dataLoadedRef.current = true;
                             remoteUpdateRef.current = true;
                             setData(loadImages(remote));
                             if (remote.greenhouses && remote.greenhouses.length > 0) {
@@ -6577,6 +6591,7 @@ useEffect(() => {
                     setSyncStatus('error');
                     var local = loadLabData(activeLab.id);
                     if (local && local.greenhouses && local.greenhouses.length > 0) {
+                        dataLoadedRef.current = true;
                         remoteUpdateRef.current = true;
                         setData(loadImages(local));
                         setGhId(local.greenhouses[0].id);
@@ -6592,11 +6607,14 @@ useEffect(() => {
         window._glForcePush = function() {
             dbgLog('[ForcePush] Manual push triggered — flushing to Supabase...');
             if (writeTimerRef.current) { clearTimeout(writeTimerRef.current); writeTimerRef.current = null; }
-            forceWriteRef.current = true;
+            remoteUpdateRef.current = false;
+            forceWriteRef.current = false;
+            lastLocalWriteRef.current = Date.now();
             var sd2 = dataRef.current, sl2 = activeLab, su2 = user; // always use latest data
             if (!sl2) { dbgErr('[ForcePush] No active lab — cannot push'); return; }
+            setSyncStatus('saving');
             saveData(sd2, sl2.id,
-                function(mode) { dbgLog('[ForcePush] ✅ Done — mode:' + mode); setSyncStatus(mode === 'remote' ? 'synced' : 'saved'); if(mode==='remote'){setLastServerSync(new Date());} },
+                function(mode) { dbgLog('[ForcePush] ✅ Done — mode:' + mode); setSyncStatus(mode === 'remote' ? 'synced' : 'saved'); setLastSaved(new Date()); if(mode==='remote'){setLastServerSync(new Date());} },
                 function(e)    { dbgErr('[ForcePush] ❌ Failed: ' + e.message); setSyncStatus('error'); }
             );
         };
@@ -6646,10 +6664,10 @@ useEffect(() => {
         var _rtSubscribed = false;
 
         function applyRemotePayload(remote) {
-            // Task 1: tight dirty guard — only block if actively writing right now
+            // Block if we have pending writes OR wrote recently (guards against our own Realtime echo)
             var hasPendingWrites = _syncQueue.length > 0 || _syncRunning || writeTimerRef.current !== null;
             var msSinceWrite = Date.now() - lastLocalWriteRef.current;
-            if (hasPendingWrites || forceWriteRef.current || msSinceWrite < 2000) {
+            if (hasPendingWrites || forceWriteRef.current || msSinceWrite < 8000) {
                 dbgLog('[Realtime] Skipped — dirty (Q=' + _syncQueue.length + ' running=' + _syncRunning + ' timer=' + !!writeTimerRef.current + ' msSince=' + msSinceWrite + ')');
                 return;
             }
@@ -6687,14 +6705,14 @@ useEffect(() => {
                     setSyncStatus(function(cur) { return (cur === 'pending' || cur === 'saving') ? cur : 'synced'; });
                 });
                 // Load IDB stock images after flushSync completes
-                if (_mergedStock) setTimeout(function(){ loadStockImagesFromIDB(_mergedStock, setData); }, 0);
+                if (_mergedStock) setTimeout(function(){ loadStockImagesFromIDB(_mergedStock, setData, function(){ remoteUpdateRef.current = true; }); }, 0);
             } catch(fsErr) {
                 // flushSync can throw if called during render — fall back to normal batched update
                 dbgWarn('[Realtime] flushSync skipped: ' + fsErr.message);
                 remoteUpdateRef.current = true;
                 setSyncCount(function(n){ return n + 1; });
                 setLastFetchTime(new Date());
-                setData(function(localData) { var m=loadImages(mergeRemoteData(remote,localData)); setTimeout(function(){loadStockImagesFromIDB(m.stock,setData);},0); return m; });
+                setData(function(localData) { var m=loadImages(mergeRemoteData(remote,localData)); setTimeout(function(){loadStockImagesFromIDB(m.stock,setData,function(){ remoteUpdateRef.current = true; });},0); return m; });
                 setSyncStatus(function(cur) { return (cur === 'pending' || cur === 'saving') ? cur : 'synced'; });
             }
         }
@@ -6887,24 +6905,32 @@ useEffect(() => {
     useEffect(() => {
         if (!activeLab) return;
         if (!dataLoadedRef.current) return;
-        if (remoteUpdateRef.current && !forceWriteRef.current) { remoteUpdateRef.current = false; return; }
+        // remoteUpdateRef is set TRUE by any setData that comes from the server (fetch, realtime, ACK cleanup).
+        // If this is a remote-only update and we have nothing locally pending, skip the write.
+        // Reset atomically so we never miss a user edit that arrived in the same batch.
+        var wasRemote = remoteUpdateRef.current;
         remoteUpdateRef.current = false;
         forceWriteRef.current = false;
+        // Skip writing if this change came purely from server (no pending local timer means
+        // no user change was queued before this remote setData fired).
+        if (wasRemote && writeTimerRef.current === null) return;
         lastLocalWriteRef.current = Date.now();
         setSyncStatus('pending');
         if (writeTimerRef.current) clearTimeout(writeTimerRef.current);
-        var sl = activeLab, su = user; // capture lab+user; data read from ref in timer
+        var sl = activeLab, su = user;
         writeTimerRef.current = setTimeout(function() {
             writeTimerRef.current = null;
-            var sd = dataRef.current; // always latest data, not stale closure
+            var sd = dataRef.current; // always latest data
             saveData(sd, sl ? sl.id : null,
                 function(mode) {
                     setSyncStatus(mode === 'remote' ? 'synced' : 'saved');
                     setLastSaved(new Date());
                     if (mode === 'remote') { setLastServerSync(new Date()); }
                     if (su) setLastBy(su.name);
-                    // Server ACK: clear _localOnly and _syncFailed flags — data is now confirmed
+                    // ACK cleanup: clear _localOnly/_syncFailed flags.
+                    // Mark as remote so this setData doesn't trigger another write.
                     if (mode === 'remote') {
+                        remoteUpdateRef.current = true;
                         setData(function(d) {
                             var cleared = Object.assign({}, d);
                             MERGE_ARRAYS.forEach(function(key) {
@@ -6935,7 +6961,7 @@ useEffect(() => {
                 clearTimeout(writeTimerRef.current);
                 writeTimerRef.current = null;
                 // Synchronous IDB save as best-effort (async write may not complete)
-                var snap = Object.assign({}, data, { _lww_ts: Date.now(), _appVersion: APP_VERSION });
+                var snap = Object.assign({}, dataRef.current, { _lww_ts: Date.now(), _appVersion: APP_VERSION });
                 try { saveLabData(activeLab && activeLab.id, snap); } catch(e2){}
                 idbSave(activeLab && activeLab.id, snap).catch(function(){});
                 idbPut('queue', 'pending_' + (activeLab && activeLab.id), { data: snap, ts: Date.now() });
@@ -7498,9 +7524,16 @@ useEffect(() => {
     if (!activeLab)
         return React.createElement(LabSelectScreen, { onSelectLab: selectLab });
     if (activeLab && !data.users.length)
-        return React.createElement('div', {style:{position:'fixed',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'#163026',gap:16}},
-            React.createElement('div',{style:{fontSize:40}},'🍅'),
-            React.createElement('div',{style:{color:'rgba(255,255,255,.7)',fontSize:14,fontFamily:'Inter,sans-serif'}},'Loading lab data...')
+        return React.createElement('div', {style:{position:'fixed',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'#0d1b2a',gap:20}},
+            React.createElement('svg',{width:90,height:90,viewBox:'0 0 80 80',style:{animation:'spin 3s linear infinite'}},
+                React.createElement('circle',{cx:40,cy:40,r:34,fill:'none',stroke:'#1e3a5f',strokeWidth:6}),
+                React.createElement('circle',{cx:40,cy:40,r:34,fill:'none',stroke:'#4a9eff',strokeWidth:3,strokeDasharray:'40 174',strokeLinecap:'round'}),
+                React.createElement('circle',{cx:40,cy:40,r:22,fill:'none',stroke:'#2d5986',strokeWidth:4}),
+                React.createElement('circle',{cx:40,cy:40,r:22,fill:'none',stroke:'#78C043',strokeWidth:2.5,strokeDasharray:'25 113',strokeLinecap:'round'}),
+                React.createElement('circle',{cx:40,cy:40,r:6,fill:'#4a9eff',opacity:.8})
+            ),
+            React.createElement('div',{style:{color:'#e2e8f0',fontSize:18,fontWeight:700,fontFamily:'Inter,sans-serif',letterSpacing:'.04em'}},activeLab.name||'GreenLab'),
+            React.createElement('div',{style:{color:'#64748b',fontSize:12,fontFamily:'Inter,sans-serif'}},'Loading lab data…')
         );
     if (!user)
         return React.createElement(LoginScreen, { users: data.users, onLogin: u => { setUser(u); if (!data.users.find(x => x.id === u.id))
