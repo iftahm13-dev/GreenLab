@@ -56,6 +56,34 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 /* ═══════════════════════════════════
    SIDEBAR — light, clean, reference-style
 ═══════════════════════════════════ */
+/* ── Sunlight / high-contrast mode ── */
+body.sunlight{background:#fff;color:#000;font-size:16px}
+body.sunlight .pop,body.sunlight .mo,body.sunlight .bc-modal{background:#fff;color:#000}
+body.sunlight .tbl{border:3px solid #000;box-shadow:none}
+body.sunlight .thd{background:#fff;border-bottom:3px solid #000}
+body.sunlight .thnm{font-size:15px;font-weight:800;color:#000}
+body.sunlight .plbl{font-size:14px!important;font-weight:900;color:#000!important;background:#fff!important}
+body.sunlight .pgrid{background:#e8e8e8}
+body.sunlight .pcw.pot-sel{outline:4px solid #000;box-shadow:0 0 0 7px rgba(0,0,0,.25)}
+body.sunlight .bulk-panel{background:#000;color:#fff}
+body.sunlight .fi,.sunlight input,.sunlight select,.sunlight textarea{font-size:15px;border:2px solid #000;background:#fff;color:#000}
+body.sunlight .btn{font-size:13px;font-weight:700;border:2px solid currentColor}
+body.sunlight .btnp{background:#000;color:#fff;border-color:#000}
+body.sunlight .sb{background:#fff;border-right:3px solid #000}
+body.sunlight .nav-btn{font-size:13px;font-weight:700}
+body.sunlight .ppb{font-size:14px}
+body.sunlight .fl{font-size:13px;font-weight:800}
+body.sunlight label{font-weight:800}
+body.sunlight .meas-row{border-bottom:2px solid #000}
+body.sunlight .stk-item{border:2px solid #000}
+body.sunlight .tab-btn{font-size:13px;font-weight:700;border:2px solid #000}
+body.sunlight .tab-btn.on{background:#000;color:#fff}
+body.sunlight .toolbar{border-bottom:2px solid #000;background:#f0f0f0}
+/* sunlight toggle button */
+.sunlight-btn{padding:4px 10px;border-radius:20px;border:1.5px solid var(--bo);background:transparent;cursor:pointer;font-size:11px;font-weight:600;color:var(--i3);font-family:inherit;transition:all .15s}
+.sunlight-btn.on{background:#fbbf24;border-color:#f59e0b;color:#78350f}
+body.sunlight .sunlight-btn.on{background:#000;color:#fff;border-color:#000}
+
 .hdr{display:none}
 .app{display:flex;flex:1;min-height:0;overflow:hidden;height:100vh}
 .sb{
@@ -612,6 +640,24 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 .online-av img{width:100%;height:100%;object-fit:cover}
 .online-dot{position:absolute;bottom:-1px;right:-1px;width:8px;height:8px;border-radius:50%;background:#22c55e;border:1.5px solid #fff}
 .notif{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 20px;border-radius:24px;font-size:12px;font-weight:500;box-shadow:var(--shg);z-index:2000;animation:fi .18s ease;display:flex;align-items:center;gap:8px;white-space:nowrap;pointer-events:none}
+/* Task flag badge on pots */
+.task-badge{position:absolute;top:-4px;left:-4px;width:14px;height:14px;border-radius:50%;background:#f59e0b;border:2px solid #fff;z-index:25;display:flex;align-items:center;justify-content:center;font-size:7px;color:#fff;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+/* Tasks panel */
+.tasks-panel{position:fixed;right:0;top:0;bottom:0;width:min(340px,100vw);background:#fff;border-left:1px solid var(--bo);z-index:500;display:flex;flex-direction:column;box-shadow:-4px 0 20px rgba(0,0,0,.08)}
+.tasks-panel-hdr{padding:16px 18px 12px;border-bottom:1px solid var(--bo);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.tasks-panel-hdr h3{flex:1;margin:0;font-size:14px;font-weight:700}
+.tasks-list{flex:1;overflow-y:auto;padding:10px}
+.task-item{background:#fff;border:1.5px solid var(--bo);border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;flex-direction:column;gap:4px}
+.task-item.done{opacity:.5;border-style:dashed}
+.task-item-title{font-size:13px;font-weight:600;color:var(--i1)}
+.task-item-meta{font-size:11px;color:var(--i4);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.task-due-warn{color:#dc2626;font-weight:700}
+.tasks-add-btn{position:sticky;bottom:0;padding:12px;border-top:1px solid var(--bo);background:#fff;flex-shrink:0}
+/* RCBD modal */
+.rcbd-groups{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.rcbd-group-row{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;border:1.5px solid var(--bo);background:var(--bg)}
+.rcbd-color-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.rcbd-result{margin-top:10px;padding:10px;background:var(--ll);border-radius:8px;border:1px solid var(--ld);font-size:11px;color:var(--fo2);line-height:1.7}
 /* Barcode / QR export modal */
 .bc-modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3000;display:flex;align-items:center;justify-content:center}
 .bc-modal{background:#fff;border-radius:16px;width:min(780px,96vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25)}
@@ -1143,6 +1189,7 @@ body{font-family:'Poppins','Inter',sans-serif;background:#F9FAFB;color:#333333;f
 <body>
 <div id="root"></div>
 <script>
+
 /* ═══════════════════════════════════════════════
    SUPABASE BACKEND — real-time, no polling needed
    Project: https://oifuoyyisezudweeqwcr.supabase.co
@@ -1452,7 +1499,7 @@ function loadLabData(labId) { try {
     if (r)
         return JSON.parse(r);
 }
-catch (_a) { } return { greenhouses: [], tables: [], plants: [], experiments: [], users: [], structs: [], stock: [], orders: [], schedules: [], messages: [], measures: [], notes: [], genotypes: [], locked: true }; }
+catch (_a) { } return { greenhouses: [], tables: [], plants: [], experiments: [], users: [], structs: [], stock: [], orders: [], schedules: [], messages: [], measures: [], notes: [], genotypes: [], tasks: [], locked: true }; }
 function saveLabData(labId, d) { try {
     // Strip large images to prevent localStorage quota overflow
     var slim = Object.assign({}, d, {
@@ -1731,7 +1778,7 @@ function PotSVG({ sid = 'round', sz = 40, sc = null, hi = false, iu = null, colo
 
 }
 /* PotCell: always shows label below pot icon. Never shifts on delete. */
-function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onPotSel, onDel, expInitials, expColor, onExpHover, onExpLeave, expBg }) {
+function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onPotSel, onDel, expInitials, expColor, onExpHover, onExpLeave, expBg, hasTask }) {
     const filled = !!((plant === null || plant === void 0 ? void 0 : plant.genotype) || (plant === null || plant === void 0 ? void 0 : plant.treatment));
     var _sts = (plant && plant.statuses && plant.statuses.length > 0) ? plant.statuses : (plant && plant.status && plant.status !== 'empty' ? [plant.status] : []);
     const sc = _sts.length > 0 ? _sts[0] : null; // primary status for PotSVG color
@@ -1761,6 +1808,7 @@ function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onP
         teMode && React.createElement("button", { className: "pdel", onClick: e => { e.stopPropagation(); onDel(plant.id); } }, "x"),
         hasPests && React.createElement("div", { className: "pot-alert-badge pest-badge", style:{right: hasSick ? 16 : 2} }, "🐛"),
         hasSick  && React.createElement("div", { className: "pot-alert-badge sick-badge", style:{right:2} }, "⚠"),
+        hasTask  && React.createElement("div", { className: "task-badge" }, "!"),
         plant.image && React.createElement("div", { style: { position: 'absolute', top: 1, right: 1, width: 6, height: 6, borderRadius: '50%', background: var_amber, border: '1px solid #fff' } }),
         expInitials && React.createElement("div", { style: {
             position: 'absolute', top: 2, left: 2,
@@ -1821,7 +1869,7 @@ function ExpOverlay({ tables, plants, exps, users }) {
     return null; // Experiment shown via initials badge on each pot + hover tooltip
 }
 /* Table block */
-function TableBlock({ table, plants, locked, isSel, activePotId, selMode, selPots, editTblId, onSel, onDrag, onPotClick, onPotSel, onDel, onToggleEdit, exps, users, onExpTip, colorByExp, syncFailed, onSyncRetry, onCopy }) {
+function TableBlock({ table, plants, locked, isSel, activePotId, selMode, selPots, editTblId, onSel, onDrag, onPotClick, onPotSel, onDel, onToggleEdit, exps, users, onExpTip, colorByExp, syncFailed, onSyncRetry, onCopy, tasks }) {
     const ref = useRef(), dr = useRef(null);
     const wx = table.x_position * WS, wy = table.y_position * WS, ww = table.width * WS, wh = table.length * WS;
     const GAP = 5, avW = ww - 10, avH = wh - HDR - 10;
@@ -1884,7 +1932,7 @@ function TableBlock({ table, plants, locked, isSel, activePotId, selMode, selPot
         React.createElement("div", { className: "pgrid", style: { gridTemplateColumns: `repeat(${table.cols},${ppx}px)`, gridTemplateRows: `repeat(${table.rows},${ppx + LBH}px)`, gap: GAP + 'px', justifyContent: 'center', alignContent: 'center' } }, Array.from({ length: table.rows }, (_, row) => Array.from({ length: table.cols }, (_, col) => {
             const p = plants.find(x => x.row === row && x.col === col);
             return (React.createElement(PotCell, { key: `${row}-${col}`, plant: p, ppx: ppx, isActive: p && p.id === activePotId, isSel: p && selPots.includes(p.id), selMode: selMode, teMode: te,
-                            onPotClick: (e, pl) => { onPotClick(e, table.id, row, col, pl); }, onPotSel: onPotSel, onDel: onDel,
+                            onPotClick: (e, pl) => { onPotClick(e, table.id, row, col, pl); }, onPotSel: onPotSel, onDel: onDel, hasTask: p && (tasks||[]).some(function(t){return !t.done && (t.pot_ids||[]).includes(p.id);}),
                             expInitials: (() => { var eids=p?getExpIds(p):[]; if(!eids.length) return null; var exp=(exps||[]).find(ex=>eids.includes(ex.id)); if(!exp) return null; var extra=eids.length>1?'+'+(eids.length-1):''; return (exp.owner_name?exp.owner_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase():exp.name.slice(0,2).toUpperCase())+extra; })(),
                             expColor: (() => { if (!p || !getExpIds(p).length) return null; var _eids=getExpIds(p); const exp=(exps||[]).find(ex=>_eids.includes(ex.id)); if (!exp) return null; return EC[exp.color_index%8]; })(),
                             onExpHover: onExpTip ? (clientX, clientY) => {
@@ -1976,7 +2024,7 @@ function loadData(labId) {
             return JSON.parse(r);
     }
     catch (_a) { }
-    return { greenhouses: [], tables: [], plants: [], experiments: [], users: [], structs: [], stock: [], orders: [], schedules: [], messages: [], measures: [], notes: [], genotypes: [], locked: true };
+    return { greenhouses: [], tables: [], plants: [], experiments: [], users: [], structs: [], stock: [], orders: [], schedules: [], messages: [], measures: [], notes: [], genotypes: [], tasks: [], locked: true };
 }
 /* ── Photo subcollection helpers ──────────────────────────────
    User photos stored at: labs/{labId}/users/{userId}/private/photo
@@ -2136,7 +2184,7 @@ function saveData(d, labId, onOK, onFail) {
 }
 function seedIfEmpty(d) {
     if (d.greenhouses.length > 0)
-        return Object.assign(Object.assign({ structs: [], stock: [], schedules: [], orders: [], messages: [], measures: [], notes: [], genotypes: [] }, d), { users: d.users.map(u => (Object.assign({ position: '', photo: null }, u))), greenhouses: d.greenhouses.map(g => (Object.assign({ notes: '' }, g))) });
+        return Object.assign(Object.assign({ structs: [], stock: [], schedules: [], orders: [], messages: [], measures: [], notes: [], genotypes: [], tasks: [] }, d), { users: d.users.map(u => (Object.assign({ position: '', photo: null }, u))), greenhouses: d.greenhouses.map(g => (Object.assign({ notes: '' }, g))) });
     const g1 = uid(), g2 = uid(), t1 = uid(), t2 = uid(), t3 = uid(), e1 = uid(), e2 = uid();
     const GN = ['Col-0', 'Col-0', 'wrky33', 'wrky33', 'npr1-1', 'sid2'], TR = ['Control', '+SA', '+JA', 'Mock', 'Control', '+SA'], ST = ['healthy', 'healthy', 'healthy', 'wilting', 'healthy', 'dead'];
     const plants = [];
@@ -3381,21 +3429,20 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
                     React.createElement("button", { className: "btn btns bxs", style: { fontSize: 10 }, onClick: function() { setShowQR(function(v){ return !v; }); } }, showQR ? 'Hide QR' : '\uD83D\uDCF1 Create QR Code'),
                     showQR && React.createElement("button", { className: "btn btns bxs", style: { fontSize: 10 }, onClick: function() {
                         var _expIds = getExpIds(plant); var exp = { name: _expIds.map(function(id){ return ((exps||[]).find(function(e){return e.id===id;})||{}).name||''; }).filter(Boolean).join(', ') };
-                        var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Label</title>'
-                        +'<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>'
-                        +'<style>body{margin:16px;font-family:Inter,sans-serif;text-align:center}#qr{display:inline-block;margin:0 auto 8px}.lbl{font-size:13px;font-weight:700;margin-bottom:2px}.sub{font-size:10px;color:#666;line-height:1.6}.code{font-size:8px;color:#bbb;font-family:monospace;margin-top:4px}@media print{body{margin:4px}}</style></head><body>'
-                        +'<div id="qr"></div>'
-                        +'<div class="lbl">'+( plant.genotype||'Empty pot')+'</div>'
-                        +'<div class="sub">'+ghNm+' \u203A '+tblNm+' \u00B7 R'+(plant.row+1)+'C'+(plant.col+1)
-                        +(plant.treatment?'<br>\uD83D\uDC89 '+plant.treatment:'')
-                        +(plant.planting_date?'<br>\uD83D\uDCC5 '+plant.planting_date:'')
-                        +(exp&&exp.name?'<br>\uD83E\uDDEA '+exp.name:'')
-                        +'</div><div class="code">'+plant.id+'</div>'
-                        +'<script>new QRCode(document.getElementById("qr"),{text:"'+plant.id+'",width:140,height:140,correctLevel:QRCode.CorrectLevel.M});setTimeout(function(){window.print();},600);<\/script>'
-                        +'</body></html>';
+                        var _expIds = getExpIds(plant); var exp = { name: _expIds.map(function(id){ return ((exps||[]).find(function(e){return e.id===id;})||{}).name||''; }).filter(Boolean).join(', ') };
                         var win=window.open('','_blank','width=320,height=380');
                         if (!win) return;
-                        win.document.write(html); win.document.close(); win.focus();
+                        var d=win.document;
+                        d.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Label</title>');
+                        d.write('<'+ 'script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><'+'/script>');
+                        d.write('<style>body{margin:16px;font-family:Inter,sans-serif;text-align:center}#qr{display:inline-block;margin:0 auto 8px}.lbl{font-size:13px;font-weight:700;margin-bottom:2px}.sub{font-size:10px;color:#666;line-height:1.6}.code{font-size:8px;color:#bbb;font-family:monospace;margin-top:4px}@media print{body{margin:4px}}</style></head><body>');
+                        d.write('<div id="qr"></div>');
+                        d.write('<div class="lbl">'+(plant.genotype||'Empty pot')+'</div>');
+                        d.write('<div class="sub">'+ghNm+' \u203A '+tblNm+' \u00B7 R'+(plant.row+1)+'C'+(plant.col+1)+(plant.treatment?'<br>\uD83D\uDC89 '+plant.treatment:'')+(plant.planting_date?'<br>\uD83D\uDCC5 '+plant.planting_date:'')+(exp&&exp.name?'<br>\uD83E\uDDEA '+exp.name:'')+'</div>');
+                        d.write('<div class="code">'+plant.id+'</div>');
+                        d.write('<'+ 'script>new QRCode(document.getElementById("qr"),{text:"'+plant.id+'",width:140,height:140,correctLevel:QRCode.CorrectLevel.M});setTimeout(function(){window.print();},600);<'+'/script>');
+                        d.write('</body></html>');
+                        d.close(); win.focus();
                     } }, "\uD83D\uDDA8 Print"),
                     React.createElement("button", { className: "btn btns bxs", style: { fontSize: 10 }, onClick: function() {
                         var sessList = measures || [];
@@ -4904,7 +4951,7 @@ function resolveGenotype(genotypes, typed) {
 // ── Local-First Merge ─────────────────────────────────────────────────────
 // Merges server state with local state, preserving local-only objects
 // (those not yet confirmed by the server) so polls never ghost-delete them.
-var MERGE_ARRAYS = ['tables','plants','notes','orders','messages','schedules','structs','genotypes','measures'];
+var MERGE_ARRAYS = ['tables','plants','notes','orders','messages','schedules','structs','genotypes','measures','tasks'];
 
 function mergeRemoteData(remote, localData) {
     if (!localData) return remote;
@@ -5910,7 +5957,7 @@ function PlantScanner({ plants, measures, tables, greenhouses, experiments, onSa
 
 // ── Plant Data Viewer ─────────────────────────────────────────────────────
 function PlantDataViewer({ pots, tables, greenhouses, experiments, measures, onClose }) {
-    var [tab, setTab] = React.useState('summary'); // 'summary' | 'measures' | 'timeline'
+    var [tab, setTab] = React.useState('summary'); // 'summary' | 'measures' | 'timeline' | 'photos'
 
     var [selIds, setSelIds] = React.useState(pots.map(function(p){return p.id;}));
 
@@ -5978,13 +6025,13 @@ function PlantDataViewer({ pots, tables, greenhouses, experiments, measures, onC
                     React.createElement('button', { className:'btn btns bsm', onClick:onClose }, '✕ Close'))),
             // Sub-tabs
             React.createElement('div', { style:{display:'flex',gap:0,borderBottom:'1px solid var(--bo)',flexShrink:0} },
-                ['summary','measures','timeline'].map(function(t) {
+                ['summary','measures','timeline','photos'].map(function(t) {
                     return React.createElement('button', { key:t, onClick:function(){setTab(t);},
                         style:{padding:'8px 18px',fontSize:12,fontWeight:tab===t?700:500,
                                borderBottom:tab===t?'2px solid var(--acc)':'2px solid transparent',
                                background:'none',border:'none',borderBottom:tab===t?'2px solid #78C043':'2px solid transparent',
                                cursor:'pointer',color:tab===t?'var(--acc)':'var(--i3)',fontFamily:'inherit'} },
-                        t==='summary'?'Summary':t==='measures'?'Measurements':'Timeline');
+                        t==='summary'?'Summary':t==='measures'?'Measurements':t==='photos'?'Photos':'Timeline');
                 })),
             // Body
             React.createElement('div', { className:'bc-modal-body', style:{padding:0} },
@@ -6052,7 +6099,218 @@ function PlantDataViewer({ pots, tables, greenhouses, experiments, measures, onC
                                 ev.by && React.createElement('div', {style:{fontSize:10,color:'var(--i5)',flexShrink:0}}, ev.by));
                         });
                     }).sort(function(a,b){ return 0; }) // already reversed per plant
+                ),
+                // PHOTOS TAB
+                tab==='photos' && React.createElement('div', { style:{padding:14} },
+                    (function() {
+                        var allPhotos = selected.flatMap(function(p) {
+                            return ((p.photos && p.photos.length > 0) ? p.photos : (p.image ? [{id:'img0',data:p.image,date:''}] : []))
+                                .map(function(ph){ return Object.assign({},ph,{_plantId:p.id,_geno:p.genotype||'—',_loc:'R'+(p.row+1)+'C'+(p.col+1)}); });
+                        }).sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+                        if (!allPhotos.length) return React.createElement('div', {style:{textAlign:'center',padding:40,color:'var(--i4)',fontSize:13}}, 'No photos recorded yet. Upload photos from individual pot popups.');
+                        return React.createElement('div', {style:{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:10}},
+                            allPhotos.map(function(ph,i) {
+                                return React.createElement('div', {key:ph.id||i, style:{borderRadius:10,overflow:'hidden',border:'1.5px solid var(--bo)',background:'#fff'}},
+                                    React.createElement('img', {src:ph.data, alt:ph._geno, style:{width:'100%',height:110,objectFit:'cover',display:'block'}}),
+                                    React.createElement('div', {style:{padding:'5px 8px'}},
+                                        React.createElement('div', {style:{fontWeight:700,fontSize:11,color:'var(--fo2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}, ph._geno),
+                                        React.createElement('div', {style:{fontSize:10,color:'var(--i4)'}}, ph._loc + (ph.date?' · '+ph.date:''))));
+                            }));
+                    })()
                 ))));
+}
+
+// ── RCBD Randomizer ───────────────────────────────────────────────────────
+var RCBD_COLORS = ['#78C043','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
+function RCBDModal({ selPots, plants, users, experiments, forceWriteRef, setData, nowFn, notify, onClose }) {
+    var [groups, setGroups] = React.useState([
+        { label: 'Control', color: RCBD_COLORS[0] },
+        { label: 'Treatment A', color: RCBD_COLORS[1] }
+    ]);
+    var [blocks, setBlocks] = React.useState(1);
+    var [field, setField] = React.useState('treatment'); // 'treatment' | 'group'
+    var [assignee, setAssignee] = React.useState('');
+    var [result, setResult] = React.useState(null);
+
+    function shuffle(arr) {
+        var a = arr.slice();
+        for (var i = a.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+        }
+        return a;
+    }
+
+    function randomize() {
+        if (groups.length < 2) { notify('Need at least 2 groups'); return; }
+        var ids = selPots.slice();
+        var blockSize = Math.ceil(ids.length / Math.max(1, blocks));
+        var assignment = {};
+        // Assign within each block
+        for (var b = 0; b < blocks; b++) {
+            var blockIds = ids.slice(b * blockSize, (b + 1) * blockSize);
+            var shuffled = shuffle(blockIds);
+            shuffled.forEach(function(id, i) {
+                assignment[id] = groups[i % groups.length].label;
+            });
+        }
+        setResult(assignment);
+    }
+
+    function apply() {
+        if (!result) return;
+        forceWriteRef.current = true;
+        setData(function(d) {
+            return Object.assign({}, d, { plants: d.plants.map(function(p) {
+                if (!result[p.id]) return p;
+                var upd = Object.assign({}, p, { updated_at: nowFn() });
+                if (field === 'treatment') upd.treatment = result[p.id];
+                else upd.group = result[p.id];
+                return upd;
+            })});
+        });
+        notify(selPots.length + ' pots randomized → ' + groups.map(function(g){return g.label;}).join(', '));
+        onClose();
+    }
+
+    var groupCounts = result ? groups.map(function(g) {
+        return { label: g.label, color: g.color, count: Object.values(result).filter(function(v){return v===g.label;}).length };
+    }) : null;
+
+    return React.createElement('div', { className: 'mov', onClick: function(e){ if(e.target===e.currentTarget) onClose(); } },
+        React.createElement('div', { className: 'mo' },
+            React.createElement('div', { className: 'motit' }, '\uD83C\uDFB2 RCBD Randomizer — ' + selPots.length + ' pots'),
+            React.createElement('div', { style:{fontSize:12,color:'var(--i4)',marginBottom:12} }, 'Randomly assigns selected pots to treatment groups using block randomization.'),
+
+            // Groups editor
+            React.createElement('div', { className:'mof' },
+                React.createElement('label', { className:'mol' }, 'Groups'),
+                React.createElement('div', { className:'rcbd-groups' },
+                    groups.map(function(g, i) {
+                        return React.createElement('div', { key:i, className:'rcbd-group-row' },
+                            React.createElement('div', { className:'rcbd-color-dot', style:{background:RCBD_COLORS[i%RCBD_COLORS.length]} }),
+                            React.createElement('input', { className:'fi', style:{flex:1}, value:g.label,
+                                onChange:function(e){ var v=e.target.value; setGroups(function(gs){ return gs.map(function(x,j){return j===i?Object.assign({},x,{label:v}):x;}); }); } }),
+                            groups.length > 2 && React.createElement('button', { style:{background:'none',border:'none',color:'var(--to)',cursor:'pointer',fontSize:16}, onClick:function(){ setGroups(function(gs){return gs.filter(function(_,j){return j!==i;});}); } }, '×'));
+                    }),
+                    groups.length < 6 && React.createElement('button', { className:'btn btns bsm', style:{alignSelf:'flex-start',marginTop:4},
+                        onClick:function(){ setGroups(function(gs){ return gs.concat([{label:'Treatment '+String.fromCharCode(64+gs.length),color:RCBD_COLORS[gs.length%RCBD_COLORS.length]}]); }); } }, '+ Add group'))),
+
+            // Blocks + field
+            React.createElement('div', { className:'morow' },
+                React.createElement('div', { className:'mof' },
+                    React.createElement('label', { className:'mol' }, 'Blocks (spatial replicates)'),
+                    React.createElement('input', { className:'moi', type:'number', min:1, max:10, value:blocks, onChange:function(e){setBlocks(Math.max(1,+e.target.value||1));} })),
+                React.createElement('div', { className:'mof' },
+                    React.createElement('label', { className:'mol' }, 'Write to field'),
+                    React.createElement('select', { className:'mosel', value:field, onChange:function(e){setField(e.target.value);} },
+                        React.createElement('option', {value:'treatment'}, 'Treatment'),
+                        React.createElement('option', {value:'group'}, 'Group (custom)')))),
+
+            // Randomize button
+            React.createElement('button', { className:'btn btnp', style:{marginTop:6}, onClick:randomize }, '\uD83C\uDFB2 Randomize'),
+
+            // Result preview
+            result && React.createElement('div', { className:'rcbd-result' },
+                React.createElement('div', { style:{fontWeight:700,marginBottom:4} }, 'Assignment preview:'),
+                groupCounts.map(function(g) {
+                    return React.createElement('div', {key:g.label, style:{display:'flex',alignItems:'center',gap:6}},
+                        React.createElement('div', {style:{width:10,height:10,borderRadius:'50%',background:g.color,flexShrink:0}}),
+                        React.createElement('span', {style:{fontWeight:600}}, g.label + ':'),
+                        React.createElement('span', null, g.count + ' pot' + (g.count!==1?'s':'')));
+                }),
+                React.createElement('div', {style:{marginTop:4,fontSize:10,color:'var(--i4)'}}, 'Click Apply to write to plants. Click Randomize again for a new draw.')),
+
+            React.createElement('div', { className:'moacts' },
+                React.createElement('button', { className:'btn btns', onClick:onClose }, 'Cancel'),
+                result && React.createElement('button', { className:'btn btnp', onClick:apply }, 'Apply Assignment'))));
+}
+
+// ── Tasks panel ───────────────────────────────────────────────────────────
+function TasksPanel({ tasks, plants, tables, greenhouses, users, currentUser, onAdd, onToggle, onDel, selPots, selMode, onClose }) {
+    var [showAdd, setShowAdd] = React.useState(false);
+    var [fm, setFm] = React.useState({ title:'', note:'', assignee:'', due_date:'', pot_ids:[], table_ids:[] });
+    var set = function(k,v){ setFm(function(f){return Object.assign({},f,{[k]:v});}); };
+
+    function daysUntil(d) { if(!d) return null; return Math.floor((new Date(d)-Date.now())/86400000); }
+
+    function doAdd() {
+        if (!fm.title.trim()) return;
+        var task = Object.assign({}, fm, {
+            id: Math.random().toString(36).slice(2,9),
+            title: fm.title.trim(),
+            created_by: currentUser ? currentUser.name : '',
+            created_at: new Date().toISOString(),
+            done: false,
+            pot_ids: selMode && selPots.length > 0 ? selPots : fm.pot_ids
+        });
+        onAdd(task);
+        setFm({ title:'', note:'', assignee:'', due_date:'', pot_ids:[], table_ids:[] });
+        setShowAdd(false);
+    }
+
+    var activeTasks = (tasks||[]).filter(function(t){return !t.done;}).sort(function(a,b){return (a.due_date||'9')<(b.due_date||'9')?-1:1;});
+    var doneTasks   = (tasks||[]).filter(function(t){return t.done;});
+
+    function taskPlantNames(task) {
+        if (!task.pot_ids || !task.pot_ids.length) return '';
+        return task.pot_ids.slice(0,3).map(function(id){
+            var p=plants.find(function(x){return x.id===id;});
+            return p?(p.genotype||('R'+(p.row+1)+'C'+(p.col+1))):'?';
+        }).join(', ')+(task.pot_ids.length>3?' +'+( task.pot_ids.length-3):'');
+    }
+
+    return React.createElement('div', { className:'tasks-panel' },
+        React.createElement('div', { className:'tasks-panel-hdr' },
+            React.createElement('h3', null, '\u2705 Tasks'),
+            React.createElement('span', {style:{fontSize:12,color:'var(--i4)',fontWeight:400}}, activeTasks.length+' open'),
+            React.createElement('button', {className:'btn btns bsm', onClick:onClose}, '\u2715')),
+
+        React.createElement('div', { className:'tasks-list' },
+            activeTasks.length === 0 && !showAdd && React.createElement('div', {style:{textAlign:'center',padding:32,color:'var(--i4)',fontSize:13}}, '\u2705 All done!'),
+            activeTasks.map(function(task) {
+                var days = daysUntil(task.due_date);
+                var overdue = days !== null && days < 0;
+                var urgent  = days !== null && days <= 2 && days >= 0;
+                return React.createElement('div', {key:task.id, className:'task-item'},
+                    React.createElement('div', {style:{display:'flex',alignItems:'flex-start',gap:8}},
+                        React.createElement('input', {type:'checkbox', style:{marginTop:3,flexShrink:0,accentColor:'var(--acc)',width:16,height:16}, checked:false, onChange:function(){ onToggle(task.id); }}),
+                        React.createElement('div', {style:{flex:1,minWidth:0}},
+                            React.createElement('div', {className:'task-item-title'}, task.title),
+                            task.note && React.createElement('div', {style:{fontSize:11,color:'var(--i4)',marginTop:2}}, task.note)),
+                    React.createElement('button', {style:{background:'none',border:'none',color:'var(--i5)',cursor:'pointer',fontSize:14,padding:'0 2px',lineHeight:1,alignSelf:'flex-start'}, onClick:function(){ onDel(task.id); }}, '×')),
+                    React.createElement('div', {className:'task-item-meta'},
+                        task.assignee && React.createElement('span', null, '\uD83D\uDC64 '+task.assignee),
+                        task.due_date && React.createElement('span', {className: overdue?'task-due-warn':urgent?'task-due-warn':''}, '\uD83D\uDCC5 '+(overdue?'Overdue!':days===0?'Today':'in '+days+'d')+' ('+task.due_date+')'),
+                        task.pot_ids && task.pot_ids.length > 0 && React.createElement('span', null, '\uD83C\uDF31 '+taskPlantNames(task))));
+            }),
+            doneTasks.length > 0 && React.createElement('div', {style:{marginTop:12}},
+                React.createElement('div', {style:{fontSize:10,fontWeight:700,color:'var(--i5)',letterSpacing:'.07em',textTransform:'uppercase',marginBottom:6}}, 'Completed ('+doneTasks.length+')'),
+                doneTasks.map(function(task) {
+                    return React.createElement('div', {key:task.id, className:'task-item done'},
+                        React.createElement('div', {style:{display:'flex',gap:8,alignItems:'center'}},
+                            React.createElement('input', {type:'checkbox', style:{accentColor:'var(--acc)',width:16,height:16}, checked:true, onChange:function(){ onToggle(task.id); }}),
+                            React.createElement('div', {className:'task-item-title', style:{textDecoration:'line-through'}}, task.title),
+                            React.createElement('button', {style:{background:'none',border:'none',color:'var(--i5)',cursor:'pointer',fontSize:14,padding:'0 2px',marginLeft:'auto'}, onClick:function(){ onDel(task.id); }}, '×')));
+                }))),
+
+        React.createElement('div', { className:'tasks-add-btn' },
+            !showAdd
+                ? React.createElement('button', {className:'btn btnp', style:{width:'100%'}, onClick:function(){
+                    setFm(function(f){ return Object.assign({},f,{pot_ids: selMode&&selPots.length>0?selPots:[]}); });
+                    setShowAdd(true);
+                  }}, '+ New Task'+(selMode&&selPots.length>0?' ('+selPots.length+' pots)':''))
+                : React.createElement('div', {style:{display:'flex',flexDirection:'column',gap:6}},
+                    React.createElement('input', {className:'fi', placeholder:'Task title…', value:fm.title, onChange:function(e){set('title',e.target.value);}, autoFocus:true}),
+                    React.createElement('textarea', {className:'fi', rows:2, placeholder:'Notes (optional)…', value:fm.note, onChange:function(e){set('note',e.target.value);}, style:{resize:'vertical'}}),
+                    React.createElement('select', {className:'fi', value:fm.assignee, onChange:function(e){set('assignee',e.target.value);}},
+                        React.createElement('option', {value:''}, '\u2014 Assign to \u2014'),
+                        (users||[]).map(function(u){ return React.createElement('option',{key:u.id,value:u.name},u.name); })),
+                    React.createElement('input', {className:'fi', type:'date', value:fm.due_date, onChange:function(e){set('due_date',e.target.value);}}),
+                    fm.pot_ids && fm.pot_ids.length > 0 && React.createElement('div', {style:{fontSize:11,color:'var(--fo3)'}}, '\uD83C\uDF31 Linked to '+fm.pot_ids.length+' pot(s)'),
+                    React.createElement('div', {style:{display:'flex',gap:6}},
+                        React.createElement('button', {className:'btn btns', style:{flex:1}, onClick:function(){setShowAdd(false);}}, 'Cancel'),
+                        React.createElement('button', {className:'btn btnp', style:{flex:1}, onClick:doAdd}, 'Add Task')))));
 }
 
 function BulkGenoField({ selPots, genotypes, plants, forceWriteRef, setData, nowFn, notify }) {
@@ -6097,7 +6355,7 @@ function App() {
         } catch(e) {}
         return null;
     });
-    const [data, setData] = useState({ greenhouses:[], tables:[], plants:[], experiments:[], users:[], structs:[], stock:[], orders:[], schedules:[], messages:[], measures:[], notes:[], locked:true });
+    const [data, setData] = useState({ greenhouses:[], tables:[], plants:[], experiments:[], users:[], structs:[], stock:[], orders:[], schedules:[], messages:[], measures:[], notes:[], tasks:[], locked:true });
     const [user, setUser] = useState(null);
     const [tab, setTab] = useState('layout');
     const [ghId, setGhId] = useState(null);
@@ -6131,6 +6389,9 @@ function App() {
     const [showBarcodes, setShowBarcodes] = useState(false);
     const [showDataViewer, setShowDataViewer] = useState(false);
     const [showScanner, setShowScanner] = useState(false);
+    const [showRCBD, setShowRCBD] = useState(false);
+    const [showTasks, setShowTasks] = useState(false);
+    const [sunlight, setSunlight] = useState(() => { try { return localStorage.getItem('gl_sunlight') === '1'; } catch(e) { return false; } });
     const [showAMem, setShowAMem] = useState(false);
     const [ghFm, setGhFm] = useState({ name: '', width: 600, length: 400 });
     const [tFm, setTFm] = useState({ name: '', width: 230, length: 125, rows: 3, cols: 6 });
@@ -7217,6 +7478,15 @@ useEffect(() => {
     const removeStockItem = id => setData(d => (Object.assign(Object.assign({}, d), { stock: (d.stock || []).filter(s => s.id !== id) })));
     const qtyStockItem = (id, delta) => setData(d => (Object.assign(Object.assign({}, d), { stock: (d.stock || []).map(s => s.id === id ? Object.assign(Object.assign({}, s), { quantity: Math.max(0, s.quantity + delta) }) : s) })));
     const inUseStockItem = (id, delta) => setData(d => (Object.assign(Object.assign({}, d), { stock: (d.stock || []).map(s => s.id === id ? Object.assign(Object.assign({}, s), { in_use: Math.max(0, (s.in_use||0) + delta) }) : s) })));
+    // Task handlers
+    const addTask    = t => { forceWriteRef.current = true; setData(d => ({...d, tasks:[...(d.tasks||[]),t]})); };
+    const toggleTask = id => { forceWriteRef.current = true; setData(d => ({...d, tasks:(d.tasks||[]).map(t=>t.id===id?{...t,done:!t.done}:t)})); };
+    const delTask    = id => { forceWriteRef.current = true; setData(d => ({...d, tasks:(d.tasks||[]).filter(t=>t.id!==id)})); };
+    // Sunlight mode effect
+    React.useEffect(function() {
+        if (sunlight) { document.body.classList.add('sunlight'); try { localStorage.setItem('gl_sunlight','1'); } catch(e){} }
+        else { document.body.classList.remove('sunlight'); try { localStorage.setItem('gl_sunlight','0'); } catch(e){} }
+    }, [sunlight]);
     const togLock = () => { if (!locked) {
         if (_isMob) sessionStorage.removeItem('gl_sess_unlocked');
         setData(d => (Object.assign(Object.assign({}, d), { locked: true })));
@@ -7669,7 +7939,9 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
                         React.createElement("button", { className: `selbtn${tblSelMode ? ' on' : ''}`, onClick: () => { setTblSelMode(m => { if (m) setSelTbls(new Set()); return !m; }); } }, tblSelMode ? `${selTbls.size} tables ✕` : 'Select tables'),
                         React.createElement("button", { className: `selbtn${colorByExp ? ' on' : ''}`, onClick: () => setColorByExp(c => !c), title: "Color pots by experiment" }, colorByExp ? 'Exp colors on' : 'Color by exp'),
                         aGh && React.createElement("button", { className: 'selbtn', title: 'Export all pots in this greenhouse as CSV / print QR labels', onClick: () => { setSelPots(aPlants.filter(function(p){ return p.genotype; }).map(function(p){ return p.id; })); setShowBarcodes(true); } }, '\uD83D\uDCF1 Export GH'),
-                        React.createElement("button", { className: 'selbtn', title: 'Scan a plant QR code to open its data sheet', onClick: () => setShowScanner(true) }, '\uD83D\uDCF7 Scan QR')),
+                        React.createElement("button", { className: 'selbtn', title: 'Scan a plant QR code to open its data sheet', onClick: () => setShowScanner(true) }, '\uD83D\uDCF7 Scan QR'),
+                        React.createElement("button", { className: 'selbtn', title: 'Task list', onClick: () => setShowTasks(s => !s) }, '\u2705 Tasks' + ((data.tasks||[]).filter(function(t){return !t.done;}).length > 0 ? ' \u00B7 ' + (data.tasks||[]).filter(function(t){return !t.done;}).length : '')),
+                        React.createElement("button", { className: 'sunlight-btn' + (sunlight ? ' on' : ''), title: sunlight ? 'Exit sunlight mode' : 'Sunlight mode (high contrast)', onClick: () => setSunlight(function(s){return !s;}) }, sunlight ? '\u2600\uFE0F On' : '\u2600\uFE0F')),
                     aGh && tab === 'layout' && React.createElement("div", { className: "tmeta" },
                         aGh.name,
                         " \u00B7 ",
@@ -7703,6 +7975,7 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
                         notify(selPots.length + ' pots → ' + v);
                     }}),
                     React.createElement("button", { className: "btn btnp bsm", onClick: () => { var _a; setAssExpFm({ mode: 'existing', newName: '', newOwner: (user === null || user === void 0 ? void 0 : user.name) || '', newDesc: '', newUntilDate: '', existId: ((_a = data.experiments[0]) === null || _a === void 0 ? void 0 : _a.id) || '' }); setShowAssExp(true); } }, "Assign exp."),
+                    React.createElement("button", { className: "btn btns bsm", onClick: () => setShowRCBD(true) }, "\uD83C\uDFB2 Randomize"),
                     React.createElement("button", { className: "btn btns bsm", onClick: () => setShowBarcodes(true) }, "\uD83D\uDCF1 QR Labels"),
                     React.createElement("button", { className: "btn btns bsm", onClick: () => setShowDataViewer(true) }, "📊 View Data"),
                     React.createElement("button", { style:{background:'rgba(255,255,255,.12)',color:'#fff',border:'none',borderRadius:6,padding:'3px 10px',cursor:'pointer',fontSize:11}, onClick: () => { setSelPots([]); setSelMode(false); } }, "✕ Done")),
@@ -7741,7 +8014,7 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
                                 React.createElement("div", { className: "rlabel" }, aGh.name),
                                 aStructs.map(s => React.createElement(StructObj, { key: s.id, obj: s, locked: locked, onDrag: hStrDrag, onDel: delStruct, onSwitch: hStrSwitch })),
                                 React.createElement(ExpOverlay, { tables: aTbls, plants: aPlants, exps: data.experiments, users: data.users }),
-                                aTbls.map(t => React.createElement(TableBlock, { key: t.id, table: t, plants: aPlants.filter(p => p.table_id === t.id), locked: locked, isSel: selTbl === t.id || selTbls.has(t.id), activePotId: actPot, selMode: selMode, selPots: selPots, editTblId: editTbl, tblSelMode: tblSelMode, syncFailed: !!t._syncFailed, onCopy: function(id){ copyTable(id); }, onSyncRetry: function() { forceWriteRef.current = true; setData(function(d){ return Object.assign({}, d); }); }, onSel: (id, multi) => { if (multi || tblSelMode) { setSelTbls(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; }); setSelTbl(id); } else { setSelTbl(id); setSelTbls(new Set([id])); setPopup(null); } }, onDrag: hDrag, onPotClick: hPotClick, onPotSel: togSel, exps: data.experiments, users: data.users, onExpTip: setExpTip, colorByExp: colorByExp, onDel: delPot, onToggleEdit: id => setEditTbl(editTbl === id ? null : id) })))) : React.createElement("div", { className: "empty-st", style: { position: 'absolute', inset: 0, display: 'flex' } },
+                                aTbls.map(t => React.createElement(TableBlock, { key: t.id, table: t, plants: aPlants.filter(p => p.table_id === t.id), locked: locked, isSel: selTbl === t.id || selTbls.has(t.id), activePotId: actPot, selMode: selMode, selPots: selPots, editTblId: editTbl, tblSelMode: tblSelMode, syncFailed: !!t._syncFailed, onCopy: function(id){ copyTable(id); }, onSyncRetry: function() { forceWriteRef.current = true; setData(function(d){ return Object.assign({}, d); }); }, onSel: (id, multi) => { if (multi || tblSelMode) { setSelTbls(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; }); setSelTbl(id); } else { setSelTbl(id); setSelTbls(new Set([id])); setPopup(null); } }, onDrag: hDrag, onPotClick: hPotClick, onPotSel: togSel, exps: data.experiments, users: data.users, onExpTip: setExpTip, colorByExp: colorByExp, onDel: delPot, onToggleEdit: id => setEditTbl(editTbl === id ? null : id), tasks: data.tasks || [] })))) : React.createElement("div", { className: "empty-st", style: { position: 'absolute', inset: 0, display: 'flex' } },
                             React.createElement("div", { style: { fontSize: 48, opacity: .3 } }, "\uD83C\uDF45"),
                             React.createElement("div", { style: { fontFamily: 'Inter', fontSize: 17, color: 'var(--i2)' } }, "No greenhouse selected"),
                             React.createElement("button", { className: "btn btnp", onClick: () => { setData(d => (Object.assign(Object.assign({}, d), { locked: false }))); setGhFm({ name: '', width: 600, length: 400 }); setShowAGH(true); } }, "Create greenhouse")),
@@ -8004,6 +8277,8 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
         showBarcodes && React.createElement(BarcodeExportModal, { pots: data.plants.filter(function(p){ return selPots.includes(p.id); }), tables: data.tables, greenhouses: data.greenhouses, measures: data.measures || [], experiments: data.experiments, onClose: () => setShowBarcodes(false) }),
         showDataViewer && React.createElement(PlantDataViewer, { pots: data.plants.filter(function(p){ return selPots.includes(p.id); }), tables: data.tables, greenhouses: data.greenhouses, experiments: data.experiments, measures: data.measures || [], onClose: () => setShowDataViewer(false) }),
         showScanner && React.createElement(PlantScanner, { plants: data.plants, measures: data.measures || [], tables: data.tables, greenhouses: data.greenhouses, experiments: data.experiments, onSave: saveMeasures, currentUser: user, onSavePlant: savePlant, allPlants: data.plants, users: data.users, genotypes: data.genotypes || [], onSaveGenoDesc: function(name, desc){ forceWriteRef.current=true; setData(function(d){ return upsertGenotypeDesc(d, name, desc); }); }, onClose: () => setShowScanner(false) }),
+        showRCBD && React.createElement(RCBDModal, { selPots: selPots, plants: data.plants, users: data.users, experiments: data.experiments, forceWriteRef: forceWriteRef, setData: setData, nowFn: now, notify: notify, onClose: () => setShowRCBD(false) }),
+        showTasks && React.createElement(TasksPanel, { tasks: data.tasks || [], plants: data.plants, tables: data.tables, greenhouses: data.greenhouses, users: data.users, currentUser: user, onAdd: addTask, onToggle: toggleTask, onDel: delTask, selPots: selPots, selMode: selMode, onClose: () => setShowTasks(false) }),
         notif && React.createElement("div", { className: "notif" },
             React.createElement("div", { className: "ndot" }),
             notif)));
@@ -8028,6 +8303,7 @@ if (window._fbReady) {
     mountApp();
   }, 4000);
 }
+
 
 </script>
 </body>
