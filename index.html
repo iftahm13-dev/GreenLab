@@ -62,7 +62,7 @@ body.sunlight .pop,body.sunlight .mo,body.sunlight .bc-modal{background:#fff;col
 body.sunlight .tbl{border:3px solid #000;box-shadow:none}
 body.sunlight .thd{background:#fff;border-bottom:3px solid #000}
 body.sunlight .thnm{font-size:15px;font-weight:800;color:#000}
-body.sunlight .plbl{font-size:14px!important;font-weight:900;color:#000!important;background:#fff!important}
+body.sunlight .plbl{font-size:13px!important;font-weight:900;color:#000!important;background:#fff!important}
 body.sunlight .pgrid{background:#e8e8e8}
 body.sunlight .pcw.pot-sel{outline:4px solid #000;box-shadow:0 0 0 7px rgba(0,0,0,.25)}
 body.sunlight .bulk-panel{background:#000;color:#fff}
@@ -351,7 +351,7 @@ body.sunlight .sunlight-btn.on{background:#000;color:#fff;border-color:#000}
 .pcw.pot-sel .psvg{transform:scale(1.06)}
 .pcw.pot-sel .plbl{background:rgba(196,230,168,.8);color:#2d6a1f}
 .psvg{transition:transform .1s;display:block}
-.plbl{display:flex;align-items:center;justify-content:center;font-weight:700;color:#0a0a0a;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;user-select:none;background:rgba(255,255,255,.98);border-radius:5px;padding:0 4px;box-shadow:0 1px 4px rgba(0,0,0,.15);flex-shrink:0;letter-spacing:-0.02em;line-height:1}
+.plbl{display:flex;align-items:center;justify-content:center;font-weight:700;color:#0a0a0a;text-align:center;overflow:hidden;user-select:none;background:rgba(255,255,255,.98);border-radius:5px;padding:1px 4px;box-shadow:0 1px 4px rgba(0,0,0,.15);flex-shrink:0;letter-spacing:-0.02em;line-height:1;position:relative;z-index:5}
 .pslot{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:default}
 .pslot.addmode{cursor:pointer}
 .pdel{display:none;position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--to);color:#fff;border:2px solid #fff;font-size:10px;cursor:pointer;align-items:center;justify-content:center;z-index:30;font-weight:700;line-height:1}
@@ -1463,7 +1463,7 @@ console.log('[GreenLab] Supabase mode — project: oifuoyyisezudweeqwcr');
 console.log('[GreenLab] Real-time: Supabase Postgres changes subscription (instant sync, no polling).');
 
 const { useState, useEffect, useRef, useCallback, useMemo, useLayoutEffect } = React;
-const WS = 3, HDR = 26, MINP = 44, LBH = 20, MINZ = .15, MAXZ = 4;
+const WS = 3, HDR = 26, MINP = 44, LBH = 30, MINZ = .15, MAXZ = 4;
 const LABS_KEY = 'gl_labs_v1'; // stores array of {id,name,dataKey,created_at}
 const DEL_PW_KEY = 'gl_delpw'; // stores hashed delete password per lab
 const DEFAULT_DEL_PW = 'greenlab2025'; // default password — user can change later
@@ -1786,9 +1786,34 @@ function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onP
     const hasSick  = _sts.includes('sick');
     const hasPests = _sts.includes('pests');
     const lbl = (plant === null || plant === void 0 ? void 0 : plant.genotype) || '';
-    const fs = clamp(Math.round(ppx * .24), 9, 14);
-    const maxC = Math.max(4, Math.floor(ppx / 3.2));
-    const disp = lbl.length > maxC ? lbl.slice(0, maxC - 1) + '…' : lbl;
+    const fs = clamp(Math.round(ppx * .20), 7, 11);
+    // Split label into two lines — search outward from midpoint for a natural delimiter
+    const SPLIT_DELIMS = ['>>', '::', '×', '=', '-', '_', ' '];
+    var line1 = lbl, line2 = '';
+    if (lbl.length > 6) {
+        const mid = Math.ceil(lbl.length / 2);
+        let splitAt = -1;
+        outer: for (let radius = 0; radius <= mid; radius++) {
+            for (const dlm of SPLIT_DELIMS) {
+                const lp = mid - radius;
+                if (lp >= 0 && lbl.slice(lp, lp + dlm.length) === dlm) { splitAt = lp + dlm.length; break outer; }
+                const rp = mid + radius;
+                if (rp < lbl.length && lbl.slice(rp, rp + dlm.length) === dlm) { splitAt = rp + dlm.length; break outer; }
+            }
+        }
+        if (splitAt > 0 && splitAt < lbl.length) {
+            line1 = lbl.slice(0, splitAt);
+            line2 = lbl.slice(splitAt);
+        } else if (lbl.length > 10) {
+            line1 = lbl.slice(0, Math.ceil(lbl.length / 2));
+            line2 = lbl.slice(Math.ceil(lbl.length / 2));
+        }
+    }
+    const maxChars = Math.max(8, Math.floor((ppx + 10) / (fs * 0.58)));
+    if (line1.length > maxChars) line1 = line1.slice(0, maxChars - 1) + '…';
+    if (line2.length > maxChars) line2 = line2.slice(0, maxChars - 1) + '…';
+    const twoLine = line2.length > 0;
+    const disp = lbl;
     const svgSz = Math.round(ppx * .70);
     if (!plant || !filled) {
         return (React.createElement("div", { className: 'pslot' + (teMode ? ' addmode' : '') + (selMode ? ' addmode' : '') + (isSel ? ' pot-sel' : ''), style: { width: ppx, height: ppx + LBH }, onClick: e => { e.stopPropagation(); if (selMode && plant && onPotSel) { onPotSel(plant.id); return; } if (teMode && plant) onPotClick(e, plant); }, title: "Empty slot" },
@@ -1805,7 +1830,9 @@ function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onP
         onMouseLeave: expInitials && onExpLeave ? () => onExpLeave() : undefined },
         React.createElement("div", { style: { pointerEvents: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' } },
             React.createElement(PotSVG, { sid: plant.pot_style || 'conic', sz: svgSz, sc: sc, hi: !!plant.image, iu: plant.image, colorId: plant.pot_color || 'bsugar' }),
-            React.createElement("span", { className: "plbl", style: { fontSize: fs, width: ppx + 4, marginTop: 1, height: LBH - 1 } }, disp || '')),
+            React.createElement("div", { className: "plbl", style: { fontSize: fs, width: ppx + 8, marginTop: 1, minHeight: LBH - 2 } },
+                React.createElement("span", { style: { display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' } }, line1),
+                twoLine && React.createElement("span", { style: { display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%', opacity: .9 } }, line2))),
         teMode && React.createElement("button", { className: "pdel", onClick: e => { e.stopPropagation(); onDel(plant.id); } }, "x"),
         hasPests && React.createElement("div", { className: "pot-alert-badge pest-badge", style:{right: hasSick ? 16 : 2} }, "🐛"),
         hasSick  && React.createElement("div", { className: "pot-alert-badge sick-badge", style:{right:2} }, "⚠"),
