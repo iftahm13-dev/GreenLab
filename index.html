@@ -351,7 +351,12 @@ body.sunlight .sunlight-btn.on{background:#000;color:#fff;border-color:#000}
 .pcw.pot-sel .psvg{transform:scale(1.06)}
 .pcw.pot-sel .plbl{background:rgba(196,230,168,.8);color:#2d6a1f}
 .psvg{transition:transform .1s;display:block}
-.plbl{display:flex;align-items:center;justify-content:center;font-weight:700;color:#0a0a0a;text-align:center;overflow:hidden;user-select:none;background:rgba(255,255,255,.98);border-radius:5px;padding:1px 4px;box-shadow:0 1px 4px rgba(0,0,0,.15);flex-shrink:0;letter-spacing:-0.02em;line-height:1;position:relative;z-index:5}
+.plbl{display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;color:#0a0a0a;text-align:center;overflow:hidden;user-select:none;background:rgba(255,255,255,.82);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);border-radius:6px;padding:2px 5px;box-shadow:0 1px 4px rgba(0,0,0,.18);flex-shrink:0;letter-spacing:-0.02em;line-height:1.25;position:relative;z-index:5}
+.plbl.italic-lbl{font-style:italic;font-weight:800;color:#1a1a6e;letter-spacing:0.01em}
+.pot-tooltip{position:fixed;z-index:3000;background:#1e293b;color:#f1f5f9;padding:8px 12px;border-radius:10px;font-size:11px;font-family:Inter,sans-serif;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.35);max-width:220px;line-height:1.5}
+.pot-tooltip .pt-name{font-weight:700;font-size:12px;color:#fff;word-break:break-all}
+.pot-tooltip .pt-date{color:#94a3b8;font-size:10px;margin-top:2px}
+.pot-tooltip .pt-italic{font-style:italic;color:#818cf8;font-size:10px;margin-top:1px}
 .pslot{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:default}
 .pslot.addmode{cursor:pointer}
 .pdel{display:none;position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--to);color:#fff;border:2px solid #fff;font-size:10px;cursor:pointer;align-items:center;justify-content:center;z-index:30;font-weight:700;line-height:1}
@@ -697,12 +702,30 @@ body.sunlight .sunlight-btn.on{background:#000;color:#fff;border-color:#000}
 
 /* ── Horizontal tab bar ── */
 .tab-bar{
-  flex-shrink:0;display:flex;align-items:center;gap:6px;
-  padding:6px 18px;background:#F9FAFB;
+  flex-shrink:0;display:flex;align-items:center;gap:0;
+  padding:0;background:#F9FAFB;
   border-bottom:1px solid #EBEBEB;
   position:relative;z-index:50;
+  overflow:hidden;
+}
+.tab-bar-scroll{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 8px;
+  flex:1;min-width:0;
   overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;
 }
+.tab-bar-scroll::-webkit-scrollbar{display:none}
+.tab-scroll-btn{
+  flex-shrink:0;width:26px;height:100%;min-height:44px;
+  display:flex;align-items:center;justify-content:center;
+  background:#F9FAFB;border:none;cursor:pointer;
+  color:#6B7280;font-size:14px;padding:0;
+  transition:color .15s,background .15s;
+  position:relative;z-index:2;
+}
+.tab-scroll-btn:hover{background:#F0F0F0;color:#333}
+.tab-scroll-btn.left{border-right:1px solid #EBEBEB;box-shadow:4px 0 8px rgba(0,0,0,.06)}
+.tab-scroll-btn.right{border-left:1px solid #EBEBEB;box-shadow:-4px 0 8px rgba(0,0,0,.06)}
 
 .tab-btn{
   display:inline-flex;align-items:center;gap:4px;
@@ -738,7 +761,8 @@ body.sunlight .sunlight-btn.on{background:#000;color:#fff;border-color:#000}
   .sb-overlay{display:block;position:fixed;inset:0;z-index:299;background:rgba(0,0,0,.35);backdrop-filter:blur(2px)}
   .app{height:100%;min-height:0}
   .main{width:100%;min-width:0}
-  .tab-bar{padding:4px 8px}
+  .tab-bar{padding:0}
+  .tab-bar-scroll{padding:4px 6px}
 
   .tab-bar::-webkit-scrollbar{display:none}
   .tab-btn{padding:0 10px;font-size:12px;height:34px;flex-shrink:0}
@@ -1779,41 +1803,45 @@ function PotSVG({ sid = 'round', sz = 40, sc = null, hi = false, iu = null, colo
 
 }
 /* PotCell: always shows label below pot icon. Never shifts on delete. */
-function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onPotSel, onDel, expInitials, expColor, onExpHover, onExpLeave, expBg, hasTask }) {
+function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onPotSel, onDel, expInitials, expColor, onExpHover, onExpLeave, expBg, hasTask, genotypes }) {
     const filled = !!((plant === null || plant === void 0 ? void 0 : plant.genotype) || (plant === null || plant === void 0 ? void 0 : plant.treatment));
     var _sts = (plant && plant.statuses && plant.statuses.length > 0) ? plant.statuses : (plant && plant.status && plant.status !== 'empty' ? [plant.status] : []);
     const sc = _sts.length > 0 ? _sts[0] : null; // primary status for PotSVG color
     const hasSick  = _sts.includes('sick');
     const hasPests = _sts.includes('pests');
     const lbl = (plant === null || plant === void 0 ? void 0 : plant.genotype) || '';
-    const fs = clamp(Math.round(ppx * .20), 7, 11);
-    // Split label into two lines — search outward from midpoint for a natural delimiter
-    const SPLIT_DELIMS = ['>>', '::', '×', '=', '-', '_', ' '];
+    var genoRec    = lbl ? (genotypes || []).find(function(g){ return g.name === lbl; }) : null;
+    var genoItalic = genoRec && genoRec.italic ? true : false;
+    var [tip, setTip] = React.useState(null);
+    var longPressRef = React.useRef(null);
+    var fs = clamp(Math.round(ppx * .20), 7, 11);
+    const SPLIT_DELIMS2 = ['>>', '::', '\u00d7', '=', '-', '_', ' '];
     var line1 = lbl, line2 = '';
     if (lbl.length > 6) {
-        const mid = Math.ceil(lbl.length / 2);
-        let splitAt = -1;
-        outer: for (let radius = 0; radius <= mid; radius++) {
-            for (const dlm of SPLIT_DELIMS) {
-                const lp = mid - radius;
-                if (lp >= 0 && lbl.slice(lp, lp + dlm.length) === dlm) { splitAt = lp + dlm.length; break outer; }
-                const rp = mid + radius;
-                if (rp < lbl.length && lbl.slice(rp, rp + dlm.length) === dlm) { splitAt = rp + dlm.length; break outer; }
+        const mid2 = Math.ceil(lbl.length / 2);
+        let splitAt2 = -1;
+        outer2: for (let radius2 = 0; radius2 <= mid2; radius2++) {
+            for (const dlm2 of SPLIT_DELIMS2) {
+                const lp2 = mid2 - radius2;
+                if (lp2 >= 0 && lbl.slice(lp2, lp2 + dlm2.length) === dlm2) { splitAt2 = lp2 + dlm2.length; break outer2; }
+                const rp2 = mid2 + radius2;
+                if (rp2 < lbl.length && lbl.slice(rp2, rp2 + dlm2.length) === dlm2) { splitAt2 = rp2 + dlm2.length; break outer2; }
             }
         }
-        if (splitAt > 0 && splitAt < lbl.length) {
-            line1 = lbl.slice(0, splitAt);
-            line2 = lbl.slice(splitAt);
+        if (splitAt2 > 0 && splitAt2 < lbl.length) {
+            line1 = lbl.slice(0, splitAt2); line2 = lbl.slice(splitAt2);
         } else if (lbl.length > 10) {
             line1 = lbl.slice(0, Math.ceil(lbl.length / 2));
             line2 = lbl.slice(Math.ceil(lbl.length / 2));
         }
     }
-    const maxChars = Math.max(8, Math.floor((ppx + 10) / (fs * 0.58)));
-    if (line1.length > maxChars) line1 = line1.slice(0, maxChars - 1) + '…';
-    if (line2.length > maxChars) line2 = line2.slice(0, maxChars - 1) + '…';
+    const maxChars = Math.max(6, Math.floor((ppx + 10) / (fs * 0.58)));
+    if (line1.length > maxChars) line1 = line1.slice(0, maxChars - 1) + '\u2026';
+    if (line2.length > maxChars) line2 = line2.slice(0, maxChars - 1) + '\u2026';
     const twoLine = line2.length > 0;
-    const disp = lbl;
+    function showTip(e) { if (!lbl) return; setTip({ x: e.clientX, y: e.clientY }); }
+    function hideTip() { setTip(null); if (longPressRef.current) { clearTimeout(longPressRef.current); longPressRef.current = null; } }
+    function startLongPress(e) { if (!lbl) return; var t = e.touches[0]; longPressRef.current = setTimeout(function(){ setTip({ x: t.clientX, y: t.clientY }); }, 500); }
     const svgSz = Math.round(ppx * .70);
     if (!plant || !filled) {
         return (React.createElement("div", { className: 'pslot' + (teMode ? ' addmode' : '') + (selMode ? ' addmode' : '') + (isSel ? ' pot-sel' : ''), style: { width: ppx, height: ppx + LBH }, onClick: e => { e.stopPropagation(); if (selMode && plant && onPotSel) { onPotSel(plant.id); return; } if (teMode && plant) onPotClick(e, plant); }, title: "Empty slot" },
@@ -1824,30 +1852,37 @@ function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onP
                     fontSize: fs - 1, color: isSel ? '#78C043' : '#c0ccc4', fontFamily: 'Inter,sans-serif', userSelect: 'none', fontWeight: isSel ? 700 : 400 } }, selMode ? (isSel ? '✓' : '+') : (teMode ? '+' : ''))));
     }
     const alertCls = hasPests ? ' alert-pest' : hasSick ? ' alert-sick' : '';
-    return (React.createElement("div", { className: 'pcw' + (isActive ? ' active' : '') + (isSel ? ' pot-sel' : '') + (selMode ? ' sel-mode' : '') + (teMode ? ' temode' : '') + alertCls, style: { width: ppx, height: ppx + LBH, position: 'relative', background: expBg || undefined, borderRadius: expBg ? 6 : undefined }, title: lbl + (plant.treatment ? ' | ' + plant.treatment : '') + (sc === 'sick' ? ' ⚠ SICK' : sc === 'pests' ? ' 🐛 PESTS' : ''), onClick: e => { e.stopPropagation(); if (selMode && onPotSel) { onPotSel(plant.id); return; } if (!teMode) onPotClick(e, plant); },
-        onMouseEnter: expInitials && onExpHover ? e => onExpHover(e.clientX, e.clientY) : undefined,
-        onMouseMove:  expInitials && onExpHover ? e => onExpHover(e.clientX, e.clientY) : undefined,
-        onMouseLeave: expInitials && onExpLeave ? () => onExpLeave() : undefined },
-        React.createElement("div", { style: { pointerEvents: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' } },
-            React.createElement(PotSVG, { sid: plant.pot_style || 'conic', sz: svgSz, sc: sc, hi: !!plant.image, iu: plant.image, colorId: plant.pot_color || 'bsugar' }),
-            React.createElement("div", { className: "plbl", style: { fontSize: fs, width: ppx + 8, marginTop: 1, minHeight: LBH - 2 } },
-                React.createElement("span", { style: { display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' } }, line1),
-                twoLine && React.createElement("span", { style: { display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%', opacity: .9 } }, line2))),
-        teMode && React.createElement("button", { className: "pdel", onClick: e => { e.stopPropagation(); onDel(plant.id); } }, "x"),
-        hasPests && React.createElement("div", { className: "pot-alert-badge pest-badge", style:{right: hasSick ? 16 : 2} }, "🐛"),
-        hasSick  && React.createElement("div", { className: "pot-alert-badge sick-badge", style:{right:2} }, "⚠"),
-        hasTask  && React.createElement("div", { className: "task-badge" }, "!"),
-        plant.image && React.createElement("div", { style: { position: 'absolute', top: 1, right: 1, width: 6, height: 6, borderRadius: '50%', background: var_amber, border: '1px solid #fff' } }),
-        expInitials && React.createElement("div", { style: {
-            position: 'absolute', top: 2, left: 2,
-            width: 14, height: 14, borderRadius: '50%',
-            background: expColor || '#6b7280',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 7, fontWeight: 700, color: '#fff',
-            fontFamily: 'Inter,sans-serif', lineHeight: 1,
-            boxShadow: '0 1px 3px rgba(0,0,0,.3)', zIndex: 20,
-            pointerEvents: 'none', userSelect: 'none'
-        } }, expInitials)));
+    return (React.createElement(React.Fragment, null,
+        tip && ReactDOM.createPortal(
+            React.createElement('div', { className: 'pot-tooltip', style: { left: Math.min(tip.x + 12, window.innerWidth - 230), top: tip.y + 16 } },
+                React.createElement('div', { className: 'pt-name' }, lbl),
+                genoItalic && React.createElement('div', { className: 'pt-italic' }, 'Marked italic'),
+                plant.planting_date && React.createElement('div', { className: 'pt-date' }, '\uD83D\uDCC5 Planted: ' + plant.planting_date),
+                plant.treatment && React.createElement('div', { className: 'pt-date' }, '\uD83E\uDDEA ' + plant.treatment)
+            ), document.body),
+        React.createElement("div", { className: 'pcw' + (isActive ? ' active' : '') + (isSel ? ' pot-sel' : '') + (selMode ? ' sel-mode' : '') + (teMode ? ' temode' : '') + alertCls,
+            style: { width: ppx, height: ppx + LBH, position: 'relative', background: expBg || undefined, borderRadius: expBg ? 6 : undefined },
+            onClick: e => { e.stopPropagation(); if (selMode && onPotSel) { onPotSel(plant.id); return; } if (!teMode) onPotClick(e, plant); },
+            onMouseEnter: e => { if (expInitials && onExpHover) onExpHover(e.clientX, e.clientY); showTip(e); },
+            onMouseMove:  e => { if (expInitials && onExpHover) onExpHover(e.clientX, e.clientY); if (tip) setTip({ x: e.clientX, y: e.clientY }); },
+            onMouseLeave: () => { if (expInitials && onExpLeave) onExpLeave(); hideTip(); },
+            onTouchStart: startLongPress, onTouchEnd: hideTip },
+            React.createElement("div", { style: { pointerEvents: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' } },
+                React.createElement(PotSVG, { sid: plant.pot_style || 'conic', sz: svgSz, sc: sc, hi: !!plant.image, iu: plant.image, colorId: plant.pot_color || 'bsugar' }),
+                React.createElement("div", { className: 'plbl' + (genoItalic ? ' italic-lbl' : ''), style: { fontSize: fs, width: ppx + 8, marginTop: 1, minHeight: LBH - 2 } },
+                    React.createElement("span", { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' } }, line1),
+                    twoLine && React.createElement("span", { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' } }, line2))),
+            teMode && React.createElement("button", { className: "pdel", onClick: e => { e.stopPropagation(); onDel(plant.id); } }, "x"),
+            hasPests && React.createElement("div", { className: "pot-alert-badge pest-badge", style:{right: hasSick ? 16 : 2} }, "\uD83D\uDC1B"),
+            hasSick  && React.createElement("div", { className: "pot-alert-badge sick-badge", style:{right:2} }, "\u26A0"),
+            hasTask  && React.createElement("div", { className: "task-badge" }, "!"),
+            plant.image && React.createElement("div", { style: { position: 'absolute', top: 1, right: 1, width: 6, height: 6, borderRadius: '50%', background: var_amber, border: '1px solid #fff' } }),
+            expInitials && React.createElement("div", { style: {
+                position: 'absolute', top: 2, left: 2, width: 14, height: 14, borderRadius: '50%',
+                background: expColor || '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 7, fontWeight: 700, color: '#fff', fontFamily: 'Inter,sans-serif', lineHeight: 1,
+                boxShadow: '0 1px 3px rgba(0,0,0,.3)', zIndex: 20, pointerEvents: 'none', userSelect: 'none'
+            } }, expInitials))));
 
 }
 const var_amber = '#d97706';
@@ -1897,7 +1932,7 @@ function ExpOverlay({ tables, plants, exps, users }) {
     return null; // Experiment shown via initials badge on each pot + hover tooltip
 }
 /* Table block */
-function TableBlock({ table, plants, locked, isSel, activePotId, selMode, selPots, editTblId, onSel, onDrag, onPotClick, onPotSel, onDel, onToggleEdit, exps, users, onExpTip, colorByExp, syncFailed, onSyncRetry, onCopy, tasks }) {
+function TableBlock({ table, plants, locked, isSel, activePotId, selMode, selPots, editTblId, onSel, onDrag, onPotClick, onPotSel, onDel, onToggleEdit, exps, users, onExpTip, colorByExp, syncFailed, onSyncRetry, onCopy, tasks, genotypes }) {
     const ref = useRef(), dr = useRef(null);
     const wx = table.x_position * WS, wy = table.y_position * WS, ww = table.width * WS, wh = table.length * WS;
     const GAP = 5, avW = ww - 10, avH = wh - HDR - 10;
@@ -1971,7 +2006,8 @@ function TableBlock({ table, plants, locked, isSel, activePotId, selMode, selPot
                                 onExpTip({ x: clientX, y: clientY, exp, owner });
                             } : null,
                             onExpLeave: onExpTip ? () => onExpTip(null) : null,
-                            expBg: colorByExp && p && p.experiment_id ? ((() => { const _ex=(exps||[]).find(ex=>ex.id===p.experiment_id); return _ex ? EC[_ex.color_index%8]+'22' : null; })()) : null
+                            expBg: colorByExp && p && p.experiment_id ? ((() => { const _ex=(exps||[]).find(ex=>ex.id===p.experiment_id); return _ex ? EC[_ex.color_index%8]+'22' : null; })()) : null,
+                            genotypes: genotypes || []
                         }));
         })))));
 }
@@ -4958,7 +4994,7 @@ function upsertGenotypeRecord(data, rec) {
     // Strip undefined id so it doesn't overwrite the generated uid()
     var recClean = Object.assign({}, rec);
     if (!recClean.id) delete recClean.id;
-    var entry = Object.assign({ id: uid(), shortcut: '', description: '' }, recClean, { updated_at: new Date().toISOString() });
+    recClean.italic = !!recClean.italic; var entry = Object.assign({ id: uid(), shortcut: '', description: '', color: '', italic: false }, recClean, { updated_at: new Date().toISOString() });
     var updated = idx >= 0
         ? existing.map(function(g, i){ return i === idx ? entry : g; })
         : existing.concat([entry]);
@@ -5466,7 +5502,7 @@ function GenotypeRegistry({ genotypes, plants, onSave, onDelete, notify }) {
 
     function submit() {
         if (!fm.name.trim()) return;
-        onSave({ id: editId || undefined, name: fm.name.trim(), shortcut: fm.shortcut.trim().toLowerCase(), description: fm.description.trim() });
+        onSave({ id: editId || undefined, name: fm.name.trim(), shortcut: fm.shortcut.trim().toLowerCase(), description: fm.description.trim(), color: fm.color || '', italic: !!fm.italic });
         if (notify) notify(editId ? 'Genotype updated' : 'Genotype added');
         setShowForm(false); setEditId(null);
     }
@@ -5531,6 +5567,11 @@ function GenotypeRegistry({ genotypes, plants, onSave, onDelete, notify }) {
                     value:fm.description, onChange:function(e){patch('description',e.target.value);},
                     style:{resize:'none'} })
             ),
+            React.createElement('label', { style:{display:'flex',alignItems:'center',gap:8,cursor:'pointer',userSelect:'none',marginBottom:10} },
+                React.createElement('input', { type:'checkbox', checked:!!fm.italic, onChange:function(e){patch('italic',e.target.checked);},
+                    style:{width:16,height:16,accentColor:'#4a9eff',cursor:'pointer'} }),
+                React.createElement('span', { style:{fontSize:12,fontWeight:700,fontStyle:'italic',color:'#1a1a6e'} }, 'Mark as italic')
+            ),
             React.createElement('div', { style:{display:'flex',gap:8} },
                 React.createElement('button', { className:'btn btnp bsm', onClick:submit, disabled:!fm.name.trim() },
                     editId ? 'Save Changes' : 'Add to Registry'),
@@ -5563,7 +5604,8 @@ function GenotypeRegistry({ genotypes, plants, onSave, onDelete, notify }) {
                             return React.createElement('tr', { key:g.id||g.name,
                                 style:{borderBottom:'1px solid var(--bo)',background:isEditing?'var(--ll)':'transparent'} },
                                 React.createElement('td', { style:{padding:'8px 10px',fontWeight:600,color:'var(--i1)',
-                                    fontFamily:'Inter,monospace',wordBreak:'break-all',maxWidth:200} }, g.name),
+                                    fontFamily:'Inter,monospace',wordBreak:'break-all',maxWidth:200,fontStyle:g.italic?'italic':'normal'} },
+                                    g.name),
                                 React.createElement('td', { style:{padding:'8px 10px'} },
                                     g.shortcut
                                         ? React.createElement('span', { style:{background:'#e0f2fe',color:'#0369a1',borderRadius:5,
@@ -7850,6 +7892,8 @@ useEffect(() => {
                 ),
                 React.createElement("div", { className: "tab-bar" },
                     React.createElement("button", { className: "mob-menu-btn", onClick: () => setMenuOpen(m => !m), "aria-label": "Menu" }, "\u2630"),
+                    React.createElement("button", { className:"tab-scroll-btn left", "aria-label":"Scroll left", onClick:function(){ var el=document.querySelector('.tab-bar-scroll'); if(el) el.scrollBy({left:-160,behavior:'smooth'}); } }, "\u2039"),
+                    React.createElement("div", { className:"tab-bar-scroll", id:"tab-bar-scroll" },
                     React.createElement("button", { key: 'layout', className: `tab-btn${tab === 'layout' ? ' on' : ''}`, onClick: () => { setTab('layout'); setMenuOpen(false); if ('layout' !== 'layout') { setTblSelMode(false); setSelTbls(new Set()); } } },
                         React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='layout' ? 'rgba(255,255,255,.22)' : '#78C0431A', color: tab==='layout' ? '#fff' : '#78C043', marginRight:1 } },
                             React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\"/></svg>' } })
@@ -7923,8 +7967,11 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
                             ),
                             "Experiments"
                         ),
-                    React.createElement("div", { style:{flex:1} }),
-                    React.createElement("div", { className: "tab-bar-r" },
+                        React.createElement('div', { style:{width:1,height:24,background:'#e2e8f0',flexShrink:0,alignSelf:'center',marginLeft:2} }),
+                        React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, queueLen: _syncQueue.length, rtLive: rtLive, lastServerSync: lastServerSync, onForceSave: function(){ if(window._glForcePush) window._glForcePush(); } }),
+                    ), // end tab-bar-scroll
+                    React.createElement("button", { className:"tab-scroll-btn right", "aria-label":"Scroll right", onClick:function(){ var el=document.querySelector('.tab-bar-scroll'); if(el) el.scrollBy({left:160,behavior:'smooth'}); } }, "\u203a"),
+                    React.createElement("div", { className: "tab-bar-r", style:{flexShrink:0,paddingRight:8} },
                         onlineUsers.length > 0 && React.createElement("div", { className: "online-bar", title: onlineUsers.map(u=>u.name).join(', ') + ' online' },
                             React.createElement("span", { className: "online-bar-lbl" }, "● Online"),
                             onlineUsers.slice(0,5).map(u => React.createElement("div", { key: u.name, className: "online-av", style: { background: u.color }, title: u.name },
@@ -7933,7 +7980,6 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
                             ))
                         ),
                         React.createElement("span", { className: "hbadge" }, totPlants, " plants"),
-                        React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, queueLen: _syncQueue.length, rtLive: rtLive, lastServerSync: lastServerSync, onForceSave: function(){ if(window._glForcePush) window._glForcePush(); } }),
                         React.createElement("button", { className: `lkbtn${!locked ? ' edit' : ''}`, onClick: togLock }, locked ? 'Locked' : 'Edit mode')
                     )),
                 alerts.length > 0 && React.createElement("div", { className: "alerts-bar" },
@@ -8074,7 +8120,7 @@ React.createElement("button", { key: 'experiments', className: `tab-btn${tab ===
                                 React.createElement("div", { className: "rlabel" }, aGh.name),
                                 aStructs.map(s => React.createElement(StructObj, { key: s.id, obj: s, locked: locked, onDrag: hStrDrag, onDel: delStruct, onSwitch: hStrSwitch })),
                                 React.createElement(ExpOverlay, { tables: aTbls, plants: aPlants, exps: data.experiments, users: data.users }),
-                                aTbls.map(t => React.createElement(TableBlock, { key: t.id, table: t, plants: aPlants.filter(p => p.table_id === t.id), locked: locked, isSel: selTbl === t.id || selTbls.has(t.id), activePotId: actPot, selMode: selMode, selPots: selPots, editTblId: editTbl, tblSelMode: tblSelMode, syncFailed: !!t._syncFailed, onCopy: function(id){ copyTable(id); }, onSyncRetry: function() { forceWriteRef.current = true; setData(function(d){ return Object.assign({}, d); }); }, onSel: (id, multi) => { if (multi || tblSelMode) { setSelTbls(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; }); setSelTbl(id); } else { setSelTbl(id); setSelTbls(new Set([id])); setPopup(null); } }, onDrag: hDrag, onPotClick: hPotClick, onPotSel: togSel, exps: data.experiments, users: data.users, onExpTip: setExpTip, colorByExp: colorByExp, onDel: delPot, onToggleEdit: id => setEditTbl(editTbl === id ? null : id), tasks: data.tasks || [] })))) : React.createElement("div", { className: "empty-st", style: { position: 'absolute', inset: 0, display: 'flex' } },
+                                aTbls.map(t => React.createElement(TableBlock, { key: t.id, table: t, plants: aPlants.filter(p => p.table_id === t.id), locked: locked, isSel: selTbl === t.id || selTbls.has(t.id), activePotId: actPot, selMode: selMode, selPots: selPots, editTblId: editTbl, tblSelMode: tblSelMode, syncFailed: !!t._syncFailed, onCopy: function(id){ copyTable(id); }, onSyncRetry: function() { forceWriteRef.current = true; setData(function(d){ return Object.assign({}, d); }); }, onSel: (id, multi) => { if (multi || tblSelMode) { setSelTbls(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; }); setSelTbl(id); } else { setSelTbl(id); setSelTbls(new Set([id])); setPopup(null); } }, onDrag: hDrag, onPotClick: hPotClick, onPotSel: togSel, exps: data.experiments, users: data.users, onExpTip: setExpTip, colorByExp: colorByExp, onDel: delPot, onToggleEdit: id => setEditTbl(editTbl === id ? null : id), tasks: data.tasks || [], genotypes: data.genotypes || [] })))) : React.createElement("div", { className: "empty-st", style: { position: 'absolute', inset: 0, display: 'flex' } },
                             React.createElement("div", { style: { fontSize: 48, opacity: .3 } }, "\uD83C\uDF45"),
                             React.createElement("div", { style: { fontFamily: 'Inter', fontSize: 17, color: 'var(--i2)' } }, "No greenhouse selected"),
                             React.createElement("button", { className: "btn btnp", onClick: () => { setData(d => (Object.assign(Object.assign({}, d), { locked: false }))); setGhFm({ name: '', width: 600, length: 400 }); setShowAGH(true); } }, "Create greenhouse")),
