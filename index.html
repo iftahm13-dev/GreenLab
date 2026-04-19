@@ -351,7 +351,7 @@ body.sunlight .sunlight-btn.on{background:#000;color:#fff;border-color:#000}
 .pcw.pot-sel .psvg{transform:scale(1.06)}
 .pcw.pot-sel .plbl{background:rgba(196,230,168,.8);color:#2d6a1f}
 .psvg{transition:transform .1s;display:block}
-.plbl{display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;color:#111;text-align:center;overflow:hidden;user-select:none;background:#fff;border-radius:5px;padding:2px 3px;box-shadow:0 1px 3px rgba(0,0,0,.22);flex-shrink:0;letter-spacing:0;line-height:1.18;position:relative;z-index:5;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.plbl{display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;color:#0d0d0d;text-align:center;overflow:visible;user-select:none;background:#fff;border-radius:5px;padding:2px 4px;box-shadow:0 2px 5px rgba(0,0,0,.28);flex-shrink:0;letter-spacing:-.01em;line-height:1.15;position:relative;z-index:5;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 .plbl.italic-lbl{font-style:italic;font-weight:900;color:#111;letter-spacing:0}
 .pot-tooltip{position:fixed;z-index:3000;background:#1e293b;color:#f1f5f9;padding:8px 12px;border-radius:10px;font-size:11px;font-family:Inter,sans-serif;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.35);max-width:220px;line-height:1.5}
 .pot-tooltip .pt-name{font-weight:700;font-size:12px;color:#fff;word-break:break-all}
@@ -737,6 +737,19 @@ body.sunlight .sunlight-btn.on{background:#000;color:#fff;border-color:#000}
   font-family:'Poppins',sans-serif;flex-shrink:0;
 }
 .tab-btn:hover{background:#F3F4F6;border-color:#D1D5DB;color:#333333}
+@keyframes thdIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.tab-hover-wrap{position:relative;display:inline-flex;flex-shrink:0}
+.thd-portal{
+  position:fixed;z-index:99999;
+  background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;
+  box-shadow:0 8px 28px rgba(0,0,0,.13);padding:5px 0;min-width:180px;
+  font-family:'Poppins',sans-serif;
+  animation:thdIn .18s cubic-bezier(.22,.68,0,1.2) both;
+}
+.thd-item{display:block;padding:9px 18px;font-size:12.5px;font-weight:500;color:#1e293b;cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:background .1s;letter-spacing:0;line-height:1}
+.thd-item:hover{background:#f1f5f9;color:#0f172a}
+.thd-sep{height:1px;background:#e9eef3;margin:4px 0}
+.thd-header{padding:7px 18px 3px;font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.07em;text-transform:uppercase}
 .tab-btn.on{background:#78C043;border-color:#78C043;color:#fff;font-weight:600;box-shadow:0 2px 8px rgba(120,192,67,.3)}
 .tab-bar-r{margin-left:auto;display:flex;align-items:center;gap:8px}
 
@@ -1487,7 +1500,7 @@ console.log('[GreenLab] Supabase mode — project: oifuoyyisezudweeqwcr');
 console.log('[GreenLab] Real-time: Supabase Postgres changes subscription (instant sync, no polling).');
 
 const { useState, useEffect, useRef, useCallback, useMemo, useLayoutEffect } = React;
-const WS = 3, HDR = 26, MINP = 44, LBH = 30, MINZ = .15, MAXZ = 4;
+const WS = 3, HDR = 26, MINP = 44, LBH = 42, MINZ = .15, MAXZ = 4;
 const LABS_KEY = 'gl_labs_v1'; // stores array of {id,name,dataKey,created_at}
 const DEL_PW_KEY = 'gl_delpw'; // stores hashed delete password per lab
 const DEFAULT_DEL_PW = 'greenlab2025'; // default password — user can change later
@@ -1812,12 +1825,11 @@ function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onP
     const lbl = (plant === null || plant === void 0 ? void 0 : plant.genotype) || '';
     var genoRec    = lbl ? (genotypes || []).find(function(g){ return g.name === lbl; }) : null;
     var genoItalic = genoRec && genoRec.italic ? true : false;
-    var [tip, setTip] = React.useState(null);
     var longPressRef = React.useRef(null);
-    var fs = clamp(Math.round(ppx * .23), 10, 14);
+    var fs = clamp(Math.round(ppx * .21), 10, 13);
     const SPLIT_DELIMS2 = ['>>', '::', '\u00d7', '=', '-', '_', ' '];
     var line1 = lbl, line2 = '';
-    if (lbl.length > 6) {
+    if (lbl.length > 4) {
         const mid2 = Math.ceil(lbl.length / 2);
         let splitAt2 = -1;
         outer2: for (let radius2 = 0; radius2 <= mid2; radius2++) {
@@ -1835,13 +1847,9 @@ function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onP
             line2 = lbl.slice(Math.ceil(lbl.length / 2));
         }
     }
-    const maxChars = Math.max(6, Math.floor(ppx / (fs * 0.54)));
-    if (line1.length > maxChars) line1 = line1.slice(0, maxChars - 1) + '\u2026';
-    if (line2.length > maxChars) line2 = line2.slice(0, maxChars - 1) + '\u2026';
+    // No truncation — all names wrap to 2 lines identically
     const twoLine = line2.length > 0;
-    function showTip(e) { if (!lbl) return; setTip({ x: e.clientX, y: e.clientY }); }
-    function hideTip() { setTip(null); if (longPressRef.current) { clearTimeout(longPressRef.current); longPressRef.current = null; } }
-    function startLongPress(e) { if (!lbl) return; var t = e.touches[0]; longPressRef.current = setTimeout(function(){ setTip({ x: t.clientX, y: t.clientY }); }, 500); }
+    function hideTip() { if (longPressRef.current) { clearTimeout(longPressRef.current); longPressRef.current = null; } }
     const svgSz = Math.round(ppx * .70);
     if (!plant || !filled) {
         return (React.createElement("div", { className: 'pslot' + (teMode ? ' addmode' : '') + (selMode ? ' addmode' : '') + (isSel ? ' pot-sel' : ''), style: { width: ppx, height: ppx + LBH }, onClick: e => { e.stopPropagation(); if (selMode && plant && onPotSel) { onPotSel(plant.id); return; } if (teMode && plant) onPotClick(e, plant); }, title: "Empty slot" },
@@ -1853,25 +1861,19 @@ function PotCell({ plant, ppx, isActive, isSel, selMode, teMode, onPotClick, onP
     }
     const alertCls = hasPests ? ' alert-pest' : hasSick ? ' alert-sick' : '';
     return (React.createElement(React.Fragment, null,
-        tip && ReactDOM.createPortal(
-            React.createElement('div', { className: 'pot-tooltip', style: { left: Math.min(tip.x + 12, window.innerWidth - 230), top: tip.y + 16 } },
-                React.createElement('div', { className: 'pt-name' }, lbl),
-                genoItalic && React.createElement('div', { className: 'pt-italic' }, 'Marked italic'),
-                plant.planting_date && React.createElement('div', { className: 'pt-date' }, '\uD83D\uDCC5 Planted: ' + plant.planting_date),
-                plant.treatment && React.createElement('div', { className: 'pt-date' }, '\uD83E\uDDEA ' + plant.treatment)
-            ), document.body),
+
         React.createElement("div", { className: 'pcw' + (isActive ? ' active' : '') + (isSel ? ' pot-sel' : '') + (selMode ? ' sel-mode' : '') + (teMode ? ' temode' : '') + alertCls,
             style: { width: ppx, height: ppx + LBH, position: 'relative', background: expBg || undefined, borderRadius: expBg ? 6 : undefined },
             onClick: e => { e.stopPropagation(); if (selMode && onPotSel) { onPotSel(plant.id); return; } if (!teMode) onPotClick(e, plant); },
-            onMouseEnter: e => { if (expInitials && onExpHover) onExpHover(e.clientX, e.clientY); showTip(e); },
-            onMouseMove:  e => { if (expInitials && onExpHover) onExpHover(e.clientX, e.clientY); if (tip) setTip({ x: e.clientX, y: e.clientY }); },
-            onMouseLeave: () => { if (expInitials && onExpLeave) onExpLeave(); hideTip(); },
-            onTouchStart: startLongPress, onTouchEnd: hideTip },
+            onMouseEnter: e => { if (expInitials && onExpHover) onExpHover(e.clientX, e.clientY); },
+            onMouseMove:  e => { if (expInitials && onExpHover) onExpHover(e.clientX, e.clientY); },
+            onMouseLeave: () => { if (expInitials && onExpLeave) onExpLeave(); },
+            onTouchStart: null, onTouchEnd: null },
             React.createElement("div", { style: { pointerEvents: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' } },
                 React.createElement(PotSVG, { sid: plant.pot_style || 'conic', sz: svgSz, sc: sc, hi: !!plant.image, iu: plant.image, colorId: plant.pot_color || 'bsugar' }),
-                React.createElement("div", { className: 'plbl' + (genoItalic ? ' italic-lbl' : ''), style: { fontSize: fs, width: ppx, marginTop: 1, minHeight: LBH - 2 } },
-                    React.createElement("span", { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', display: 'block' } }, line1),
-                    twoLine && React.createElement("span", { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', display: 'block' } }, line2))),
+                React.createElement("div", { className: 'plbl' + (genoItalic ? ' italic-lbl' : ''), style: { fontSize: fs, width: ppx, marginTop: 1, minHeight: LBH - 4, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center" } },
+                    React.createElement("span", { style: { width: '100%', display: 'block', wordBreak: 'break-all', whiteSpace: 'normal', lineHeight: 1.1 } }, line1),
+                    twoLine && React.createElement("span", { style: { width: '100%', display: 'block', wordBreak: 'break-all', whiteSpace: 'normal', lineHeight: 1.1 } }, line2))),
             teMode && React.createElement("button", { className: "pdel", onClick: e => { e.stopPropagation(); onDel(plant.id); } }, "x"),
             hasPests && React.createElement("div", { className: "pot-alert-badge pest-badge", style:{right: hasSick ? 16 : 2} }, "\uD83D\uDC1B"),
             hasSick  && React.createElement("div", { className: "pot-alert-badge sick-badge", style:{right:2} }, "\u26A0"),
@@ -3142,7 +3144,11 @@ function PotPopup({ plant, tblNm, ghNm, rect, exps, onSave, onClose, allPlants, 
     const PESTS = ['Tuta absoluta', 'Bemisia tabaci', 'Whitefly', 'Aphids', 'Spider mites', 'Thrips', 'Fungus gnats', 'Mealybugs', 'Scale insects', 'Leaf miners'];
     const ref = useRef(), fref = useRef(), gref = useRef();
     const set = (k, v) => setF(p => (Object.assign(Object.assign({}, p), { [k]: v })));
-    // Auto-focus removed: caused dropdown to open immediately on mobile, looking like a reset
+    // Auto-focus genotype field on open (desktop + mobile)
+    React.useEffect(function(){
+        var t = setTimeout(function(){ if (gref.current) { gref.current.focus(); } }, 80);
+        return function(){ clearTimeout(t); };
+    }, []);
     const pos = useMemo(() => { const vw = window.innerWidth, vh = window.innerHeight, pw = 316, ph = Math.min(Math.round(vh * 0.9), 560); if (!rect)
         return { top: Math.max(8, (vh - ph) / 2), left: Math.max(8, (vw - pw) / 2) }; let l = rect.right + 12, t = rect.top; if (l + pw > vw - 8)
         l = rect.left - pw - 12; if (l < 8)
@@ -4762,6 +4768,65 @@ function DashView({ greenhouses, tables, structs, plants, experiments }) {
    2. Replace loadData() with onSnapshot listener
    3. The syncStatus state machine below stays the same
 ════════════════════════════════════════════════ */
+/* ── Tab hover dropdown component ─────────────────────────── */
+function TabWithDropdown({ tabKey, label, icon, isOn, color, onClick, items, setTab, setMenuOpen, setTblSelMode, setSelTbls }) {
+    var [pos, setPos] = React.useState(null);
+    var wrapRef = React.useRef();
+    var hideTimer = React.useRef();
+
+    function showDrop() {
+        clearTimeout(hideTimer.current);
+        if (!wrapRef.current) return;
+        var r = wrapRef.current.getBoundingClientRect();
+        setPos({ top: r.bottom + 2, left: r.left });
+    }
+    function hideDrop() {
+        hideTimer.current = setTimeout(function(){ setPos(null); }, 120);
+    }
+    function keepDrop() { clearTimeout(hideTimer.current); }
+
+    function go(t) {
+        setPos(null);
+        setTab(t);
+        setMenuOpen(false);
+        if (t !== 'layout') { setTblSelMode(false); setSelTbls(new Set()); }
+    }
+
+    var dropdown = pos ? ReactDOM.createPortal(
+        React.createElement('div', {
+            className: 'thd-portal',
+            style: { position:'fixed', top: pos.top, left: pos.left },
+            onMouseEnter: keepDrop,
+            onMouseLeave: hideDrop
+        },
+            React.createElement('div', { className: 'thd-header' }, label),
+            React.createElement('div', { className: 'thd-sep' }),
+            items.map(function(item, i) {
+                return React.createElement('button', {
+                    key: i,
+                    className: 'thd-item',
+                    onClick: function(e){ e.stopPropagation(); item.action ? item.action() : go(item.tab || tabKey); setPos(null); }
+                },
+                    item.label
+                );
+            })
+        ), document.body
+    ) : null;
+
+    return React.createElement(React.Fragment, null,
+        React.createElement('div', { ref: wrapRef, style:{display:'inline-flex',flexShrink:0,position:'relative'}, onMouseEnter: showDrop, onMouseLeave: hideDrop },
+            React.createElement('button', {
+                className: 'tab-btn' + (isOn ? ' on' : ''),
+                onClick: onClick
+            },
+                React.createElement('span', { style:{ width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: isOn ? 'rgba(255,255,255,.22)' : color+'1A', color: isOn ? '#fff' : color, marginRight:1 } }, icon),
+                label
+            )
+        ),
+        dropdown
+    );
+}
+
 function SyncStatusChip({ status, lastSaved, lastBy, onClick, uploadProgress, queueLen, rtLive, lastServerSync, onForceSave }) {
     var [tick, setTick] = React.useState(0);
     // Re-render every 10s so "X ago" stays fresh
@@ -5766,7 +5831,7 @@ function GenotypeAutocomplete({ value, onChange, suggestions, genotypes, inputRe
             className: 'fi big',
             value: value,
             onChange: function(e){ onChange(e.target.value); setOpen(true); },
-            onFocus: function(){ setOpen(true); },
+            onFocus: function(){ /* dropdown opens only on typing */ },
             onBlur: function() {
                 setTimeout(function() {
                     if (pickingRef.current || !value) return;
@@ -7777,17 +7842,17 @@ useEffect(() => {
                         React.createElement("div", { className: "pg", style: { borderTop: '1px solid var(--bo)', paddingTop: 11 } },
                             React.createElement("div", { className: "pgt" }, aGh.name),
                             React.createElement("div", { className: "sc" },
-                                React.createElement("div", { className: "scard" },
-                                    React.createElement("div", { className: "sv" }, aTbls.length),
+                                React.createElement("div", { className: "scard", style: { borderColor: '#4a7078', background: '#eaf1f3' } },
+                                    React.createElement("div", { className: "sv", style: { color: '#4a7078' } }, aTbls.length),
                                     React.createElement("div", { className: "sk" }, "Tables")),
-                                React.createElement("div", { className: "scard" },
-                                    React.createElement("div", { className: "sv" }, stats.total),
+                                React.createElement("div", { className: "scard", style: { borderColor: '#7a9060', background: '#eef1ea' } },
+                                    React.createElement("div", { className: "sv", style: { color: '#7a9060' } }, stats.total),
                                     React.createElement("div", { className: "sk" }, "Plants")),
-                                React.createElement("div", { className: "scard", style: { borderColor: '#a3d4b0', background: '#edf7f1' } },
-                                    React.createElement("div", { className: "sv", style: { color: 'var(--lf)' } }, stats.h),
+                                React.createElement("div", { className: "scard", style: { borderColor: '#b8c8a8', background: '#f0f4eb' } },
+                                    React.createElement("div", { className: "sv", style: { color: '#7a9060' } }, stats.h),
                                     React.createElement("div", { className: "sk" }, "Healthy")),
-                                React.createElement("div", { className: "scard", style: { borderColor: '#f5d88a', background: '#fef9e7' } },
-                                    React.createElement("div", { className: "sv", style: { color: 'var(--am)' } }, stats.w),
+                                React.createElement("div", { className: "scard", style: { borderColor: '#d0d0b8', background: '#f6f6ed' } },
+                                    React.createElement("div", { className: "sv", style: { color: '#6b6b4a' } }, stats.w),
                                     React.createElement("div", { className: "sk" }, "Wilting")),
                                 stats.pests > 0 && React.createElement("div", { className: "scard", style: { borderColor: '#fed7aa', background: '#fff7ed', gridColumn: '1/-1' } },
                                     React.createElement("div", { className: "sv", style: { color: '#ea580c' } }, "🐛 "+stats.pests),
@@ -7894,81 +7959,95 @@ useEffect(() => {
                     React.createElement("button", { className: "mob-menu-btn", onClick: () => setMenuOpen(m => !m), "aria-label": "Menu" }, "\u2630"),
                     React.createElement("button", { className:"tab-scroll-btn left", "aria-label":"Scroll left", onClick:function(){ var el=document.querySelector('.tab-bar-scroll'); if(el) el.scrollBy({left:-160,behavior:'smooth'}); } }, "\u2039"),
                     React.createElement("div", { className:"tab-bar-scroll", id:"tab-bar-scroll" },
-                    React.createElement("button", { key: 'layout', className: `tab-btn${tab === 'layout' ? ' on' : ''}`, onClick: () => { setTab('layout'); setMenuOpen(false); if ('layout' !== 'layout') { setTblSelMode(false); setSelTbls(new Set()); } } },
-                        React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='layout' ? 'rgba(255,255,255,.22)' : '#78C0431A', color: tab==='layout' ? '#fff' : '#78C043', marginRight:1 } },
-                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\"/></svg>' } })
+                    React.createElement(TabWithDropdown, { key:'layout', tabKey:'layout', label:'Layout', isOn:tab==='layout', color:'#78C043',
+                        onClick:()=>{ setTab('layout'); setMenuOpen(false); setTblSelMode(false); setSelTbls(new Set()); },
+                        icon: React.createElement('span', { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\"/></svg>' } }),
+                        items:[ { icon:'🌿', label:'View greenhouse layout', tab:'layout' },
+                            { icon:'✏️', label:'Edit tables', tab:'layout' },
+                            { icon:'🔍', label:'Go to Plants', tab:'search' } ],
+                        setTab, setMenuOpen, setTblSelMode, setSelTbls }),
+                    React.createElement(TabWithDropdown, { key:'search', tabKey:'search', label:'Plants', isOn:tab==='search', color:'#78C043',
+                        onClick:()=>{ setTab('search'); setMenuOpen(false); setTblSelMode(false); setSelTbls(new Set()); },
+                        icon: React.createElement('span', { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><line x1=\"21\" y1=\"21\" x2=\"16.65\" y2=\"16.65\"/></svg>' } }),
+                        items:[ { icon:'🔍', label:'Search plants', tab:'search' },
+                            { icon:'🧬', label:'Filter by genotype', tab:'search' },
+                            { icon:'📋', label:'Export plant list', tab:'search' } ],
+                        setTab, setMenuOpen, setTblSelMode, setSelTbls }),
+                    React.createElement(TabWithDropdown, { key:'schedule', tabKey:'schedule', label:'Schedule', isOn:tab==='schedule', color:'#FFB74D',
+                        onClick:()=>{ setTab('schedule'); setMenuOpen(false); setTblSelMode(false); setSelTbls(new Set()); },
+                        icon: React.createElement('span', { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"18\" rx=\"2\"/><line x1=\"16\" y1=\"2\" x2=\"16\" y2=\"6\"/><line x1=\"8\" y1=\"2\" x2=\"8\" y2=\"6\"/><line x1=\"3\" y1=\"10\" x2=\"21\" y2=\"10\"/></svg>' } }),
+                        items:[ { icon:'📅', label:'View upcoming tasks', tab:'schedule' },
+                            { icon:'💊', label:'Spray schedule', tab:'schedule' },
+                            { icon:'⏰', label:'Add new task', tab:'schedule' } ],
+                        setTab, setMenuOpen, setTblSelMode, setSelTbls }),
+                    React.createElement(TabWithDropdown, { key:'team', tabKey:'team', label:'Team', isOn:tab==='team', color:'#64B5F6',
+                        onClick:()=>{ setTab('team'); setMenuOpen(false); setTblSelMode(false); setSelTbls(new Set()); },
+                        icon: React.createElement('span', { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M23 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/></svg>' } }),
+                        items:[ { icon:'👤', label:'View team members', tab:'team' },
+                            { icon:'➕', label:'Add team member', tab:'team' },
+                            { icon:'📊', label:'Activity log', tab:'team' } ],
+                        setTab, setMenuOpen, setTblSelMode, setSelTbls }),
+                    React.createElement(TabWithDropdown, { key:'stock', tabKey:'stock', label:'Stock', isOn:tab==='stock', color:'#FF8A65',
+                        onClick:()=>{ setTab('stock'); setMenuOpen(false); setTblSelMode(false); setSelTbls(new Set()); },
+                        icon: React.createElement('span', { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z\"/></svg>' } }),
+                        items:[ { icon:'📦', label:'View stock items', tab:'stock' },
+                            { icon:'➕', label:'Add stock item', tab:'stock' },
+                            { icon:'⚠️', label:'Low stock alerts', tab:'stock' } ],
+                        setTab, setMenuOpen, setTblSelMode, setSelTbls }),
+                    React.createElement(TabWithDropdown, { key:'orders', tabKey:'orders', label:'Orders', isOn:tab==='orders', color:'#BA68C8',
+                        onClick:()=>{ setTab('orders'); setMenuOpen(false); setTblSelMode(false); setSelTbls(new Set()); },
+                        icon: React.createElement('span', { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"9\" cy=\"21\" r=\"1\"/><circle cx=\"20\" cy=\"21\" r=\"1\"/><path d=\"M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6\"/></svg>' } }),
+                        items:[ { icon:'🛒', label:'View orders', tab:'orders' },
+                            { icon:'📝', label:'New order request', tab:'orders' },
+                            { icon:'✅', label:'Pending approvals', tab:'orders' } ],
+                        setTab, setMenuOpen, setTblSelMode, setSelTbls }),
+                    React.createElement(TabWithDropdown, { key:'measures', tabKey:'measures', label:'Measures', isOn:tab==='measures', color:'#10B981',
+                        onClick:()=>{ setTab('measures'); setMenuOpen(false); setTblSelMode(false); setSelTbls(new Set()); },
+                        icon: React.createElement('span', { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18\"/></svg>' } }),
+                        items:[ { icon:'📊', label:'View sessions', tab:'measures' },
+                            { icon:'➕', label:'New session', tab:'measures' },
+                            { icon:'📤', label:'Export data', tab:'measures' } ],
+                        setTab, setMenuOpen, setTblSelMode, setSelTbls }),
+                    React.createElement(TabWithDropdown, { key:'messages', tabKey:'messages', label:'Messages', isOn:tab==='messages', color:'#F59E0B',
+                        onClick:()=>{ setTab('messages'); setMenuOpen(false); setLastMsgRead(r=>({...r,[activeLab?.id]:new Date().toISOString()})); },
+                        icon: React.createElement(React.Fragment, null,
+                          React.createElement('span', { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\"/></svg>' } }),
+                          (() => { const lastRead = lastMsgRead[activeLab?.id]; const unread = (data.messages||[]).filter(m=>!lastRead||m.created_at>lastRead).length; return unread>0 && React.createElement('span',{style:{position:'absolute',top:-5,right:-5,background:'#ef4444',color:'#fff',borderRadius:'50%',width:14,height:14,fontSize:8,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',border:'1.5px solid #fff'}},unread>9?'9+':unread); })()
                         ),
-                        "Layout"
-                    ),
-                    React.createElement("button", { key: 'search', className: `tab-btn${tab === 'search' ? ' on' : ''}`, onClick: () => { setTab('search'); setMenuOpen(false); if ('search' !== 'layout') { setTblSelMode(false); setSelTbls(new Set()); } } },
-                        React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='search' ? 'rgba(255,255,255,.22)' : '#78C0431A', color: tab==='search' ? '#fff' : '#78C043', marginRight:1 } },
-                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><line x1=\"21\" y1=\"21\" x2=\"16.65\" y2=\"16.65\"/></svg>' } })
-                        ),
-                        "Plants"
-                    ),
-                    React.createElement("button", { key: 'schedule', className: `tab-btn${tab === 'schedule' ? ' on' : ''}`, onClick: () => { setTab('schedule'); setMenuOpen(false); if ('schedule' !== 'layout') { setTblSelMode(false); setSelTbls(new Set()); } } },
-                        React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='schedule' ? 'rgba(255,255,255,.22)' : '#FFB74D1A', color: tab==='schedule' ? '#fff' : '#FFB74D', marginRight:1 } },
-                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"18\" rx=\"2\"/><line x1=\"16\" y1=\"2\" x2=\"16\" y2=\"6\"/><line x1=\"8\" y1=\"2\" x2=\"8\" y2=\"6\"/><line x1=\"3\" y1=\"10\" x2=\"21\" y2=\"10\"/></svg>' } })
-                        ),
-                        "Schedule"
-                    ),
-                    React.createElement("button", { key: 'team', className: `tab-btn${tab === 'team' ? ' on' : ''}`, onClick: () => { setTab('team'); setMenuOpen(false); if ('team' !== 'layout') { setTblSelMode(false); setSelTbls(new Set()); } } },
-                        React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='team' ? 'rgba(255,255,255,.22)' : '#64B5F61A', color: tab==='team' ? '#fff' : '#64B5F6', marginRight:1 } },
-                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M23 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/></svg>' } })
-                        ),
-                        "Team"
-                    ),
-                    React.createElement("button", { key: 'stock', className: `tab-btn${tab === 'stock' ? ' on' : ''}`, onClick: () => { setTab('stock'); setMenuOpen(false); if ('stock' !== 'layout') { setTblSelMode(false); setSelTbls(new Set()); } } },
-                        React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='stock' ? 'rgba(255,255,255,.22)' : '#FF8A651A', color: tab==='stock' ? '#fff' : '#FF8A65', marginRight:1 } },
-                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z\"/></svg>' } })
-                        ),
-                        "Stock"
-                    ),
-                    React.createElement("button", { key: 'orders', className: `tab-btn${tab === 'orders' ? ' on' : ''}`, onClick: () => { setTab('orders'); setMenuOpen(false); if ('orders' !== 'layout') { setTblSelMode(false); setSelTbls(new Set()); } } },
-                        React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='orders' ? 'rgba(255,255,255,.22)' : '#BA68C81A', color: tab==='orders' ? '#fff' : '#BA68C8', marginRight:1 } },
-                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"9\" cy=\"21\" r=\"1\"/><circle cx=\"20\" cy=\"21\" r=\"1\"/><path d=\"M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6\"/></svg>' } })
-                        ),
-                        "Orders"
-                    ),
-                    React.createElement("button", { key: 'measures', className: `tab-btn${tab === 'measures' ? ' on' : ''}`, onClick: () => { setTab('measures'); setMenuOpen(false); } },
-                        React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='measures' ? 'rgba(255,255,255,.22)' : '#10B9811A', color: tab==='measures' ? '#fff' : '#10B981', marginRight:1 } },
-                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18\"/></svg>' } })
-                        ),
-                        "Measures"
-                    ),
-                    React.createElement("button", { key: 'messages', className: `tab-btn${tab === 'messages' ? ' on' : ''}`, onClick: () => { setTab('messages'); setMenuOpen(false); setLastMsgRead(r=>({...r,[activeLab?.id]:new Date().toISOString()})); } },
-                        React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='messages' ? 'rgba(255,255,255,.22)' : '#F59E0B1A', color: tab==='messages' ? '#fff' : '#F59E0B', marginRight:1, position:'relative' } },
-                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\"/></svg>' } }),
-                            (() => { const lastRead = lastMsgRead[activeLab?.id]; const unread = (data.messages||[]).filter(m=>!lastRead||m.created_at>lastRead).length; return unread>0 && React.createElement("span",{style:{position:'absolute',top:-5,right:-5,background:'#ef4444',color:'#fff',borderRadius:'50%',width:14,height:14,fontSize:8,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',border:'1.5px solid #fff'}},unread>9?'9+':unread); })()
-                        ),
-                        "Messages"
-                    ),
-                    React.createElement("button", { key: 'dash', className: `tab-btn${tab === 'dash' ? ' on' : ''}`, onClick: () => { setTab('dash'); setMenuOpen(false); if ('dash' !== 'layout') { setTblSelMode(false); setSelTbls(new Set()); } } },
-                        React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='dash' ? 'rgba(255,255,255,.22)' : '#4DB6AC1A', color: tab==='dash' ? '#fff' : '#4DB6AC', marginRight:1 } },
-                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"18\" y1=\"20\" x2=\"18\" y2=\"10\"/><line x1=\"12\" y1=\"20\" x2=\"12\" y2=\"4\"/><line x1=\"6\" y1=\"20\" x2=\"6\" y2=\"14\"/></svg>' } })
-                        ),
-                        "Dashboard"
-                    ),
-                    React.createElement("button", { key: 'registry', className: `tab-btn${tab === 'registry' ? ' on' : ''}`, onClick: () => { setTab('registry'); setMenuOpen(false); setTblSelMode(false); setSelTbls(new Set()); } },
-                        React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='registry' ? 'rgba(255,255,255,.22)' : '#78C0431A', color: tab==='registry' ? '#fff' : '#78C043', marginRight:1 } },
-                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><ellipse cx=\"12\" cy=\"5\" rx=\"9\" ry=\"3\"/><path d=\"M21 12c0 1.66-4 3-9 3s-9-1.34-9-3\"/><path d=\"M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5\"/></svg>' } })
-                        ),
-                        "Registry"
-                    ),
-                    React.createElement("button", { key: 'notes', className: `tab-btn${tab === 'notes' ? ' on' : ''}`, onClick: () => { setTab('notes'); setMenuOpen(false); } },
-                        React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='notes' ? 'rgba(255,255,255,.22)' : '#F472B61A', color: tab==='notes' ? '#fff' : '#F472B6', marginRight:1 } },
-                            React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/></svg>' } })
-                        ),
-                        "Notes"
-                    ),
-React.createElement("button", { key: 'experiments', className: `tab-btn${tab === 'experiments' ? ' on' : ''}`, onClick: () => { setTab('experiments'); setMenuOpen(false); setTblSelMode(false); setSelTbls(new Set()); } },
-                            React.createElement("span", { style: { width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: tab==='experiments' ? 'rgba(255,255,255,.22)' : '#3b82f61A', color: tab==='experiments' ? '#fff' : '#3b82f6', marginRight:1 } },
-                                React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18\"/></svg>' } })
-                            ),
-                            "Experiments"
-                        ),
-                        React.createElement('div', { style:{width:1,height:24,background:'#e2e8f0',flexShrink:0,alignSelf:'center',marginLeft:2} }),
-                        React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, queueLen: _syncQueue.length, rtLive: rtLive, lastServerSync: lastServerSync, onForceSave: function(){ if(window._glForcePush) window._glForcePush(); } }),
+                        items:[
+                          { icon:'💬', label:'View messages', tab:'messages' },
+                          { icon:'✍️', label:'Write message', tab:'messages' },
+                        ],
+                        setTab, setMenuOpen, setTblSelMode, setSelTbls }),
+                    React.createElement(TabWithDropdown, { key:'dash', tabKey:'dash', label:'Dashboard', isOn:tab==='dash', color:'#4DB6AC',
+                        onClick:()=>{ setTab('dash'); setMenuOpen(false); setTblSelMode(false); setSelTbls(new Set()); },
+                        icon: React.createElement('span', { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"18\" y1=\"20\" x2=\"18\" y2=\"10\"/><line x1=\"12\" y1=\"20\" x2=\"12\" y2=\"4\"/><line x1=\"6\" y1=\"20\" x2=\"6\" y2=\"14\"/></svg>' } }),
+                        items:[ { icon:'📈', label:'Overview stats', tab:'dash' },
+                            { icon:'🌡️', label:'Plant status summary', tab:'dash' },
+                            { icon:'🧪', label:'Experiments overview', tab:'dash' } ],
+                        setTab, setMenuOpen, setTblSelMode, setSelTbls }),
+                    React.createElement(TabWithDropdown, { key:'registry', tabKey:'registry', label:'Registry', isOn:tab==='registry', color:'#78C043',
+                        onClick:()=>{ setTab('registry'); setMenuOpen(false); setTblSelMode(false); setSelTbls(new Set()); },
+                        icon: React.createElement('span', { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><ellipse cx=\"12\" cy=\"5\" rx=\"9\" ry=\"3\"/><path d=\"M21 12c0 1.66-4 3-9 3s-9-1.34-9-3\"/><path d=\"M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5\"/></svg>' } }),
+                        items:[ { icon:'🧬', label:'Browse genotypes', tab:'registry' },
+                            { icon:'➕', label:'Add genotype', tab:'registry' },
+                            { icon:'🔗', label:'Manage shortcuts', tab:'registry' } ],
+                        setTab, setMenuOpen, setTblSelMode, setSelTbls }),
+                    React.createElement(TabWithDropdown, { key:'notes', tabKey:'notes', label:'Notes', isOn:tab==='notes', color:'#F472B6',
+                        onClick:()=>{ setTab('notes'); setMenuOpen(false); setTblSelMode(false); setSelTbls(new Set()); },
+                        icon: React.createElement('span', { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/></svg>' } }),
+                        items:[ { icon:'📝', label:'View lab notes', tab:'notes' },
+                            { icon:'✏️', label:'Write new note', tab:'notes' } ],
+                        setTab, setMenuOpen, setTblSelMode, setSelTbls }),
+                    React.createElement(TabWithDropdown, { key:'experiments', tabKey:'experiments', label:'Experiments', isOn:tab==='experiments', color:'#3b82f6',
+                        onClick:()=>{ setTab('experiments'); setMenuOpen(false); setTblSelMode(false); setSelTbls(new Set()); },
+                        icon: React.createElement('span', { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18\"/></svg>' } }),
+                        items:[ { icon:'🧪', label:'View experiments', tab:'experiments' },
+                            { icon:'➕', label:'New experiment', tab:'experiments' },
+                            { icon:'🌱', label:'Assign pots', tab:'experiments' } ],
+                        setTab, setMenuOpen, setTblSelMode, setSelTbls }),
+                    React.createElement('div', { style:{width:1,height:24,background:'#e2e8f0',flexShrink:0,alignSelf:'center',marginLeft:2} }),
+                    React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, queueLen: _syncQueue.length, rtLive: rtLive, lastServerSync: lastServerSync, onForceSave: function(){ if(window._glForcePush) window._glForcePush(); } })
                     ), // end tab-bar-scroll
                     React.createElement("button", { className:"tab-scroll-btn right", "aria-label":"Scroll right", onClick:function(){ var el=document.querySelector('.tab-bar-scroll'); if(el) el.scrollBy({left:160,behavior:'smooth'}); } }, "\u203a"),
                     React.createElement("div", { className: "tab-bar-r", style:{flexShrink:0,paddingRight:8} },
