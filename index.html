@@ -752,6 +752,8 @@ body.sunlight .sunlight-btn.on{background:#000;color:#fff;border-color:#000}
 .thd-header{padding:7px 18px 3px;font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.07em;text-transform:uppercase}
 .tab-btn.on{background:#78C043;border-color:#78C043;color:#fff;font-weight:600;box-shadow:0 2px 8px rgba(120,192,67,.3)}
 .tab-bar-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+.backup-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:50px;border:1.5px solid #b8c8a8;background:#f0f4eb;color:#4a7060;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;font-family:'Poppins',sans-serif;white-space:nowrap}
+.backup-btn:hover{background:#78C043;border-color:#78C043;color:#fff}
 
 /* ── Hamburger button ── */
 .mob-menu-btn{
@@ -7654,6 +7656,32 @@ useEffect(() => {
         notify('Layout locked');
         return;
     } setShowUL(true); };
+    // ── Backup / export all lab data as JSON ──────────────────────────────
+    function doBackup() {
+        try {
+            var exportData = Object.assign({}, data, {
+                _backup_date: new Date().toISOString(),
+                _lab_id: activeLab ? activeLab.id : 'unknown',
+                _lab_name: activeLab ? activeLab.name : 'unknown',
+                _app_version: APP_VERSION
+            });
+            var json = JSON.stringify(exportData, null, 2);
+            var blob = new Blob([json], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            var d = new Date();
+            var dateStr = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+            a.href = url;
+            a.download = 'greenlab-backup-' + dateStr + '.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            notify('✅ Backup downloaded — keep this file safe!');
+        } catch(err) {
+            notify('❌ Backup failed: ' + err.message);
+        }
+    }
     const totPlants = useMemo(() => data.plants.filter(p => p.genotype).length, [data]);
     if (!activeLab)
         return React.createElement(LabSelectScreen, { onSelectLab: selectLab });
@@ -8058,6 +8086,7 @@ useEffect(() => {
                                 React.createElement("div", { className: "online-dot" })
                             ))
                         ),
+                        React.createElement("button", { className: "backup-btn", title: "Download a full backup of all your lab data", onClick: doBackup }, "💾 Backup"),
                         React.createElement("span", { className: "hbadge" }, totPlants, " plants"),
                         React.createElement("button", { className: `lkbtn${!locked ? ' edit' : ''}`, onClick: togLock }, locked ? 'Locked' : 'Edit mode')
                     )),
