@@ -754,6 +754,7 @@ body.sunlight .sunlight-btn.on{background:#000;color:#fff;border-color:#000}
 .thd-header{padding:7px 18px 3px;font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.07em;text-transform:uppercase}
 .tab-btn.on{background:#78C043;border-color:#78C043;color:#fff;font-weight:600;box-shadow:0 2px 8px rgba(120,192,67,.3)}
 .tab-bar-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+.tab-action-bar{display:flex;align-items:center;gap:8px;padding:5px 16px;background:#fff;border-bottom:1px solid #f0f0f0;flex-wrap:wrap}
 .backup-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:50px;border:1.5px solid #b8c8a8;background:#f0f4eb;color:#4a7060;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;font-family:'Poppins',sans-serif;white-space:nowrap}
 .backup-btn:hover{background:#78C043;border-color:#78C043;color:#fff}
 
@@ -4525,7 +4526,7 @@ function SpaceDonut({ used, total, size = 170 }) {
         )
     );
 }
-function ScheduleView({ tables, users, schedules, onAdd, onDel, currentUser }) {
+function ScheduleView({ tables, greenhouses, users, schedules, onAdd, onDel, currentUser }) {
     const [showForm, setShowForm] = React.useState(false);
     const EMPTY_FM = { table_ids:[], user_name:'', start_date:'', end_date:'', note:'' };
     const [fm, setFm] = React.useState(EMPTY_FM);
@@ -4598,18 +4599,56 @@ function ScheduleView({ tables, users, schedules, onAdd, onDel, currentUser }) {
                 )
             ),
             React.createElement('div', null,
-                React.createElement('label', { style:{fontSize:10,fontWeight:600,color:'var(--i3)',display:'block',marginBottom:6} }, 'Tables (select one or more)'),
-                React.createElement('div', { style:{display:'flex',flexWrap:'wrap',gap:6} },
-                    tables.map(t => React.createElement('div', { key:t.id,
-                        onClick:()=>toggleTable(t.id),
-                        style:{
-                            padding:'6px 14px', borderRadius:50, fontSize:12, cursor:'pointer', fontWeight:500,
-                            background: fm.table_ids.includes(t.id) ? '#78C043' : '#fff',
-                            color: fm.table_ids.includes(t.id) ? '#fff' : '#4B5563',
-                            border: '1.5px solid ' + (fm.table_ids.includes(t.id) ? '#78C043' : '#E5E7EB'),
-                            userSelect:'none'
-                        }
-                    }, t.name))
+                React.createElement('label', { style:{fontSize:10,fontWeight:600,color:'var(--i3)',display:'block',marginBottom:8} }, 'Tables — click to select (grouped by greenhouse)'),
+                React.createElement('div', { style:{display:'flex',flexWrap:'wrap',gap:12} },
+                    (greenhouses||[]).map(function(gh) {
+                        var ghTables = tables.filter(function(t){ return t.greenhouse_id === gh.id; });
+                        if (!ghTables.length) return null;
+                        // compute bounding box for this greenhouse's tables
+                        var ghW = gh.width || 600, ghL = gh.length || 400;
+                        var SCALE = 160 / Math.max(ghW, ghL); // fit in ~160px
+                        var mapW = Math.round(ghW * SCALE);
+                        var mapH = Math.round(ghL * SCALE);
+                        return React.createElement('div', { key: gh.id, style:{display:'flex',flexDirection:'column',gap:5} },
+                            React.createElement('div', { style:{fontSize:11,fontWeight:700,color:'var(--i2)',letterSpacing:'.03em'} }, gh.name),
+                            React.createElement('div', { style:{
+                                position:'relative', width:mapW, height:mapH,
+                                background:'#f0fbe8', border:'1.5px solid #c3e6a8', borderRadius:6,
+                                flexShrink:0, overflow:'hidden'
+                            }},
+                                ghTables.map(function(t) {
+                                    var tx = Math.round((t.x_position||0) * SCALE);
+                                    var ty = Math.round((t.y_position||0) * SCALE);
+                                    var tw = Math.max(18, Math.round((t.width||100) * SCALE));
+                                    var th = Math.max(10, Math.round((t.length||60) * SCALE));
+                                    var sel = fm.table_ids.includes(t.id);
+                                    return React.createElement('div', {
+                                        key: t.id,
+                                        onClick: function(){ toggleTable(t.id); },
+                                        title: t.name,
+                                        style:{
+                                            position:'absolute', left:tx, top:ty, width:tw, height:th,
+                                            background: sel ? '#78C043' : '#fff',
+                                            border: '1.5px solid ' + (sel ? '#5a9e2f' : '#9ecb6e'),
+                                            borderRadius:3, cursor:'pointer', display:'flex',
+                                            alignItems:'center', justifyContent:'center',
+                                            boxSizing:'border-box', overflow:'hidden',
+                                            boxShadow: sel ? '0 0 0 2px #78C04366' : 'none',
+                                            transition:'background .12s,box-shadow .12s'
+                                        }
+                                    },
+                                        React.createElement('span', { style:{
+                                            fontSize: Math.max(7, Math.min(11, tw/t.name.length*1.1)),
+                                            fontWeight:700, color: sel ? '#fff' : '#4a7c28',
+                                            whiteSpace:'nowrap', overflow:'hidden',
+                                            textOverflow:'ellipsis', padding:'0 2px',
+                                            pointerEvents:'none', userSelect:'none'
+                                        }}, t.name)
+                                    );
+                                })
+                            )
+                        );
+                    })
                 )
             ),
             React.createElement('div', { style:{display:'flex',gap:6} },
@@ -8151,23 +8190,24 @@ useEffect(() => {
                             { icon:'➕', label:'New experiment', tab:'experiments' },
                             { icon:'🌱', label:'Assign pots', tab:'experiments' } ],
                         setTab, setMenuOpen, setTblSelMode, setSelTbls }),
-                    React.createElement('div', { style:{width:1,height:24,background:'#e2e8f0',flexShrink:0,alignSelf:'center',marginLeft:2} }),
-                    React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, queueLen: _syncQueue.length, rtLive: rtLive, lastServerSync: lastServerSync, onForceSave: function(){ if(window._glForcePush) window._glForcePush(); } })
                     ), // end tab-bar-scroll
-                    React.createElement("button", { className:"tab-scroll-btn right", "aria-label":"Scroll right", onClick:function(){ var el=document.querySelector('.tab-bar-scroll'); if(el) el.scrollBy({left:160,behavior:'smooth'}); } }, "\u203a"),
-                    React.createElement("div", { className: "tab-bar-r", style:{flexShrink:0,paddingRight:8} },
-                        onlineUsers.length > 0 && React.createElement("div", { className: "online-bar", title: onlineUsers.map(u=>u.name).join(', ') + ' online' },
-                            React.createElement("span", { className: "online-bar-lbl" }, "● Online"),
-                            onlineUsers.slice(0,5).map(u => React.createElement("div", { key: u.name, className: "online-av", style: { background: u.color }, title: u.name },
-                                u.photo ? React.createElement("img", { src: u.photo, alt: u.name }) : u.name.charAt(0),
-                                React.createElement("div", { className: "online-dot" })
-                            ))
-                        ),
-                        React.createElement("button", { className: "backup-btn", title: "Download a full backup of all your lab data", onClick: doBackup }, React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' } }), "Backup"),
-                        React.createElement("button", { className: "backup-btn", title: "Restore from a local auto-snapshot", onClick: restoreFromSnapshot, style:{borderColor:'#fcd34d',color:'#92400e',background:'#fffbeb'} }, React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>' } }), "Restore"),
-                        React.createElement("span", { className: "hbadge" }, totPlants, " plants"),
-                        React.createElement("button", { className: `lkbtn${!locked ? ' edit' : ''}`, onClick: togLock }, locked ? 'Locked' : 'Edit mode')
-                    )),
+                    React.createElement("button", { className:"tab-scroll-btn right", "aria-label":"Scroll right", onClick:function(){ var el=document.querySelector('.tab-bar-scroll'); if(el) el.scrollBy({left:160,behavior:'smooth'}); } }, "\u203a")
+                ),
+                React.createElement("div", { className: "tab-action-bar" },
+                    React.createElement(SyncStatusChip, { status: syncStatus, lastSaved: lastSaved, lastBy: lastBy, queueLen: _syncQueue.length, rtLive: rtLive, lastServerSync: lastServerSync, onForceSave: function(){ if(window._glForcePush) window._glForcePush(); } }),
+                    React.createElement("div", { style:{width:1,height:20,background:'#e2e8f0',flexShrink:0,alignSelf:'center'} }),
+                    onlineUsers.length > 0 && React.createElement("div", { className: "online-bar", title: onlineUsers.map(u=>u.name).join(', ') + ' online' },
+                        React.createElement("span", { className: "online-bar-lbl" }, "● Online"),
+                        onlineUsers.slice(0,5).map(u => React.createElement("div", { key: u.name, className: "online-av", style: { background: u.color }, title: u.name },
+                            u.photo ? React.createElement("img", { src: u.photo, alt: u.name }) : u.name.charAt(0),
+                            React.createElement("div", { className: "online-dot" })
+                        ))
+                    ),
+                    React.createElement("button", { className: "backup-btn", title: "Download a full backup of all your lab data", onClick: doBackup }, React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' } }), "Backup"),
+                    React.createElement("button", { className: "backup-btn", title: "Restore from a local auto-snapshot", onClick: restoreFromSnapshot, style:{borderColor:'#fcd34d',color:'#92400e',background:'#fffbeb'} }, React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>' } }), "Restore"),
+                    React.createElement("span", { className: "hbadge" }, totPlants, " plants"),
+                    React.createElement("button", { className: `lkbtn${!locked ? ' edit' : ''}`, onClick: togLock }, locked ? 'Locked' : 'Edit mode')
+                ),
                 alerts.length > 0 && React.createElement("div", { className: "alerts-bar" },
                     alerts.map(function(a, i) {
                         return React.createElement("span", { key: i, className: "alert-chip " + a.type }, a.text);
@@ -8339,7 +8379,7 @@ useEffect(() => {
                 tab === 'messages' && React.createElement(MessagesView, { messages:data.messages||[], onAdd:addMessage, onEdit:editMessage, onDel:delMessage, currentUser:user, users:data.users }),
                 tab === 'notes' && React.createElement(NotesView, { notes:data.notes||[], onAdd:addNote, onEdit:editNote, onDel:delNote, currentUser:user, users:data.users, labId: activeLab?.id }),
                 tab === 'orders' && React.createElement(OrdersView, { orders: data.orders||[], users: data.users, curUser: user, exps: data.experiments||[], onAdd: addOrder, onUpd: updOrder, onDel: delOrder, syncStatus: syncStatus }),
-                tab === 'schedule' && React.createElement(ScheduleView, { tables: data.tables, users: data.users, schedules: data.schedules||[], onAdd: addSchedule, onDel: delSchedule, currentUser: user ? user.name : '' }),
+                tab === 'schedule' && React.createElement(ScheduleView, { tables: data.tables, greenhouses: data.greenhouses, users: data.users, schedules: data.schedules||[], onAdd: addSchedule, onDel: delSchedule, currentUser: user ? user.name : '' }),
                 tab === 'timeline' && React.createElement(ExperimentTimelineView, { experiments: data.experiments || [], onSaveMilestone: saveMilestone, onDeleteMilestone: deleteMilestone, currentUser: user }),
                 tab === 'experiments' && React.createElement(ExperimentsTab, { experiments: data.experiments||[], plants: data.plants||[], orders: data.orders||[], user: user, onAdd: ()=>{ setEFm({name:'',owner_name:(user&&user.name)||'',description:'',until_date:'',planned_genotypes:[]}); setShowAExp(true); }, onEdit: startEditExp, onDelete: deleteExp, onAssign: (expId)=>{ var _a; setAssExpFm({mode:'existing',newName:'',newOwner:(user&&user.name)||'',newDesc:'',newUntilDate:'',existId:expId||((_a=data.experiments[0])&&_a.id)||''}); setShowAssExp(true); } }),
                 tab === 'registry' && React.createElement(GenotypeRegistry, { genotypes: data.genotypes || [], plants: data.plants || [], onSave: saveGenotype, onDelete: deleteGenotype, notify: notify }),
