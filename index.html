@@ -512,10 +512,12 @@ body.sunlight .sunlight-btn.on{background:#000;color:#fff;border-color:#000}
 .stk{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
 .stk-head{flex-shrink:0;padding:20px 24px;border-bottom:1px solid var(--bo);display:flex;align-items:center;justify-content:space-between;background:#fff;flex-wrap:wrap;gap:8px}
 .stk-tit{font-size:20px;color:var(--i1);font-weight:700}
-.stk-list{flex:1;min-height:0;overflow-y:auto;padding:18px 24px;display:flex;flex-direction:column;gap:10px}
-.stk-item{background:#fff;border:1px solid #F0F0F0;border-radius:24px;padding:16px 20px;display:flex;align-items:flex-start;gap:14px;box-shadow:var(--sh-card);transition:all .15s;min-width:0;overflow:hidden}
-.stk-item:hover{border-color:#c3e6a8;box-shadow:0 8px 20px rgba(120,192,67,.12);transform:translateY(-2px)}
-.stk-img{width:88px;height:88px;border-radius:var(--r2);object-fit:cover;flex-shrink:0;border:1.5px solid var(--bo);cursor:pointer;display:flex;align-items:center;justify-content:center;background:var(--cr2);font-size:32px;overflow:hidden}
+.stk-list{flex:1;min-height:0;overflow-y:auto;padding:18px 24px}
+.stk-cat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
+.stk-item{background:#fff;border:1px solid #F0F0F0;border-radius:16px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:6px;box-shadow:var(--sh-card);transition:all .15s;min-width:0;overflow:hidden;cursor:grab}
+.stk-item:active{cursor:grabbing}
+.stk-item:hover{border-color:#c3e6a8;box-shadow:0 6px 16px rgba(120,192,67,.12);transform:translateY(-1px)}
+.stk-img{width:100%;aspect-ratio:1/1;border-radius:12px;flex-shrink:0;border:1.5px solid var(--bo);cursor:pointer;display:flex;align-items:center;justify-content:center;background:var(--cr2);font-size:36px;overflow:hidden}
 .stk-img img{width:100%;height:100%;object-fit:cover}
 .stk-nm{font-size:13px;font-weight:600;color:var(--i1);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .stk-cat{font-size:10px;color:var(--i4);flex-shrink:0;margin-top:2px}
@@ -816,10 +818,12 @@ body.sunlight .sunlight-btn.on{background:#000;color:#fff;border-color:#000}
   .mcard{padding:14px}
   .mav{width:48px;height:48px}
   .mnm{font-size:15px}
-  .stk-head,.stk-list{padding:14px}
-  .stk-item{padding:12px}
-  .stk-qbtn{width:32px;height:32px;font-size:16px}
-  .stk-qval{font-size:15px}
+  .stk-head,.stk-list{padding:12px}
+  .stk-cat-grid{grid-template-columns:repeat(2,1fr)!important;gap:8px}
+  .stk-img{font-size:28px}
+  .stk-item{padding:8px}
+  .stk-qbtn{width:26px;height:26px;font-size:14px}
+  .stk-qval{font-size:13px}
   .dash-head{padding:14px}
   .dash-body{padding:14px;gap:14px}
   .widget-card{padding:16px;min-width:0;width:100%}
@@ -1044,7 +1048,7 @@ body.sunlight .sunlight-btn.on{background:#000;color:#fff;border-color:#000}
     flex-shrink:0;height:52px;position:sticky;top:0;z-index:100;
   }
   .mob-top-logo{display:flex;align-items:center;gap:8px}
-  .mob-top-logo-dot{width:28px;height:28px;background:#78C043;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px}
+  .mob-top-logo-dot{width:28px;height:28px;background:transparent;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
   .mob-top-labname{font-size:14px;font-weight:700;color:#333;font-family:'Poppins',sans-serif}
   .mob-top-r{display:flex;align-items:center;gap:8px}
 }
@@ -1103,7 +1107,7 @@ body.sunlight .sunlight-btn.on{background:#000;color:#fff;border-color:#000}
   .ac-item{ padding:13px 16px; font-size:14px; }
 }
 
-.stk-drag-over{ border-color:#78C043!important; box-shadow:0 0 0 2px rgba(120,192,67,.3)!important; }
+.stk-drag-over{ border-color:#78C043!important; box-shadow:0 0 0 3px rgba(120,192,67,.4)!important; background:#f0fdf4!important; }
 .stk-item{ cursor:default; }
 
 
@@ -1333,6 +1337,8 @@ function sbWrite(labId, data) {
                 throw new Error(code + ': ' + msg);
             }
             dbgLog('[Write] Supabase OK — ' + sizeKB + 'KB written (lab:' + labId + ')');
+            // Auto-snapshot after every successful cloud write
+            try { var snapKey='gl_snap_'+labId; var snaps=[]; try{snaps=JSON.parse(localStorage.getItem(snapKey)||'[]');}catch(e){} snaps.unshift({ts:new Date().toISOString(),data:data}); snaps=snaps.slice(0,3); localStorage.setItem(snapKey,JSON.stringify(snaps)); } catch(e){}
             return res;
         });
 }
@@ -2921,7 +2927,7 @@ function StockView({ stock, onAdd, onEdit, onRemove, onQty, onInUse, lastSaved }
         const filtered = sq ? sorted.filter(s => (s.name||'').toLowerCase().includes(sq) || (s.category||'').toLowerCase().includes(sq) || (s.notes||'').toLowerCase().includes(sq)) : sorted;
         const cats = [...new Set(filtered.map(s=>s.category||'Other'))];
         return cats.map(cat => ({ cat, items: filtered.filter(s=>(s.category||'Other')===cat) }));
-    }, [stock]);
+    }, [stock, stkSearch]);
     const [dragId, setDragId] = useState(null);
     const [dragOver, setDragOver] = useState(null);
     const onDragStart = (id) => setDragId(id);
@@ -2950,6 +2956,7 @@ function StockView({ stock, onAdd, onEdit, onRemove, onQty, onInUse, lastSaved }
                     React.createElement("span", null, cat),
                     React.createElement("span", {style:{background:'var(--cr2)',borderRadius:20,padding:'1px 8px',fontSize:10,color:'var(--i3)',fontWeight:600}}, items.length)
                 ),
+                React.createElement("div", { className: "stk-cat-grid" },
                 items.map(item => React.createElement("div", { key: item.id, className: "stk-item" + (dragOver===item.id?' stk-drag-over':''),
                     draggable: true,
                     onDragStart: () => onDragStart(item.id),
@@ -2958,30 +2965,29 @@ function StockView({ stock, onAdd, onEdit, onRemove, onQty, onInUse, lastSaved }
                     onDragEnd: () => { setDragId(null); setDragOver(null); },
                     style: { opacity: dragId===item.id ? 0.5 : 1 }
                 },
-                    React.createElement("div", { style:{cursor:'grab',color:'var(--i5)',fontSize:16,flexShrink:0,padding:'0 4px',display:'flex',alignItems:'center'} }, "⠿"),
-                    React.createElement("div", { className: "stk-img", onClick: () => { setEditId(item.id); setFm({ name: item.name, category: item.category, quantity: item.quantity, notes: item.notes || '', image: item.image || null }); } }, item.image ? React.createElement("img", { src: item.image, alt: item.name }) : '📦'),
-                    React.createElement("div", { style: { flex: 1, minWidth: 0 } },
-                        React.createElement("div", { style:{fontSize:14,fontWeight:600,color:'var(--i1)',wordBreak:'break-word',lineHeight:1.3} }, item.name),
-                        item.notes && React.createElement("div", { style:{fontSize:11,color:'var(--i4)',marginTop:2} }, item.notes)),
-                    React.createElement("div", { className: "stk-qty", style:{flexShrink:0} },
+                    React.createElement("div", { className: "stk-img",
+                        onClick: () => { setEditId(item.id); setFm({ name: item.name, category: item.category, quantity: item.quantity, notes: item.notes || '', image: item.image || null }); }
+                    }, item.image ? React.createElement("img", { src: item.image, alt: item.name }) : '📦'),
+                    React.createElement("div", { style:{fontSize:11,fontWeight:700,color:'var(--i1)',textAlign:'center',lineHeight:1.3,wordBreak:'break-word',width:'100%'} }, item.name),
+                    React.createElement("div", { className: "stk-qty", style:{width:'100%'} },
                         React.createElement("div", { style:{textAlign:'center',marginBottom:4} },
                             React.createElement("div", { style:{fontSize:9,color:'var(--i4)',fontWeight:600,letterSpacing:'.05em',textTransform:'uppercase'} }, 'Total'),
-                            React.createElement("div", { style:{display:'flex',alignItems:'center',gap:2} },
+                            React.createElement("div", { style:{display:'flex',alignItems:'center',gap:2,justifyContent:'center'} },
                                 React.createElement("button", { className: "stk-qbtn", onClick: () => onQty(item.id, -1) }, "-"),
                                 React.createElement("span", { className: "stk-qval" }, item.quantity),
                                 React.createElement("button", { className: "stk-qbtn", onClick: () => onQty(item.id, 1) }, "+"))),
                         React.createElement("div", { style:{textAlign:'center',borderTop:'1px solid var(--bo)',paddingTop:4} },
                             React.createElement("div", { style:{fontSize:9,color:'var(--am)',fontWeight:600,letterSpacing:'.05em',textTransform:'uppercase'} }, 'In Use'),
-                            React.createElement("div", { style:{display:'flex',alignItems:'center',gap:2} },
+                            React.createElement("div", { style:{display:'flex',alignItems:'center',gap:2,justifyContent:'center'} },
                                 React.createElement("button", { className: "stk-qbtn", style:{color:'var(--am)'}, onClick: () => onInUse(item.id, -1) }, "-"),
-                                React.createElement("span", { className: "stk-qval", style:{color: (item.in_use||0) > 0 ? 'var(--am)' : 'var(--i5)'} }, item.in_use||0),
+                                React.createElement("span", { className: "stk-qval", style:{color:(item.in_use||0)>0?'var(--am)':'var(--i5)'} }, item.in_use||0),
                                 React.createElement("button", { className: "stk-qbtn", style:{color:'var(--am)'}, onClick: () => onInUse(item.id, 1) }, "+")),
-                            (item.quantity - (item.in_use||0)) >= 0 && React.createElement("div", { style:{fontSize:9,color:'var(--fo3)',marginTop:2} },
-                                (item.quantity - (item.in_use||0)) + ' avail.'))),
-                    React.createElement("div", {style:{display:'flex',flexDirection:'column',gap:4,flexShrink:0}},
-                        React.createElement("button", { className: "medbtn", onClick: () => { setEditId(item.id); setFm({ name: item.name, category: item.category, quantity: item.quantity, notes: item.notes || '', image: item.image || null }); } }, "Edit"),
-                        React.createElement("button", { className: "stk-del", onClick: () => onRemove(item.id) }, "Del"))
-                ))
+                            (item.quantity-(item.in_use||0)) >= 0 && React.createElement("div", { style:{fontSize:9,color:'var(--fo3)',marginTop:2} },
+                                (item.quantity-(item.in_use||0)) + ' avail.'))),
+                    React.createElement("div", { style:{display:'flex',gap:4,width:'100%'} },
+                        React.createElement("button", { className: "medbtn", style:{flex:1,fontSize:10,padding:'4px 0'}, onClick: () => { setEditId(item.id); setFm({ name: item.name, category: item.category, quantity: item.quantity, notes: item.notes || '', image: item.image || null }); } }, "Edit"),
+                        React.createElement("button", { className: "stk-del", style:{flex:1,fontSize:10,padding:'4px 0'}, onClick: () => onRemove(item.id) }, "Del"))
+                ))),
             ))),
         lastSaved && React.createElement('div', { style:{flexShrink:0,padding:'5px 20px',borderTop:'1px solid var(--bo)',background:'#fafafa',fontSize:10,color:'var(--i5)',textAlign:'right',fontFamily:'Inter,sans-serif'} },
             '✓ Last synced: ' + ago(lastSaved.toISOString())
@@ -4143,6 +4149,8 @@ function LabSelectScreen({onSelectLab}){
   const [settingsId, setSettingsId] = React.useState(null);
   const [pwFm, setPwFm] = React.useState({cur:'',nw:'',nw2:''});
   const [pwMsg, setPwMsg] = React.useState('');
+  const [deleteLabMsg, setDeleteLabMsg] = React.useState('');
+  const [deleteLabPw, setDeleteLabPw] = React.useState('');
   const photoRef = React.useRef();
 
   // ── Password gate ───────────────────────────────────────────────
@@ -4212,6 +4220,20 @@ function LabSelectScreen({onSelectLab}){
   const saveLabs2 = function(updatedLabs) {
     setLabs(updatedLabs);
     saveLabs(updatedLabs); // localStorage only for lab list
+  };
+
+  const deleteLab = function(labId) {
+    const lab = labs.find(function(l){return l.id===labId;}); if (!lab) return;
+    const stored = (function(){ try { return JSON.parse(localStorage.getItem('gl_delpw')||'{}'); } catch(e){ return {}; } })();
+    if (stored[labId] && hashPw(deleteLabPw) !== stored[labId]) {
+      setDeleteLabMsg('error:Incorrect password.'); return;
+    }
+    const updated = labs.filter(function(l){return l.id!==labId;});
+    saveLabs2(updated);
+    try { const pw = JSON.parse(localStorage.getItem('gl_delpw')||'{}'); delete pw[labId]; localStorage.setItem('gl_delpw', JSON.stringify(pw)); } catch(e){}
+    try { localStorage.removeItem('gl_data_' + labId); } catch(e){}
+    try { var req = indexedDB.open('greenlab_v1',1); req.onsuccess=function(e){ try { e.target.result.transaction(['data'],'readwrite').objectStore('data').delete(labId); } catch(_){} }; } catch(_){}
+    setSettingsId(null); setDeleteLabMsg(''); setDeleteLabPw('');
   };
 
   const addLab = function() {
@@ -4296,8 +4318,14 @@ function LabSelectScreen({onSelectLab}){
               pwMsg && React.createElement('div',{className:pwMsg.startsWith('ok:')?'pw-ok':'pw-err',style:{marginBottom:6}},pwMsg.slice(3)),
               React.createElement('div',{style:{display:'flex',gap:6}},
                 React.createElement('button',{className:'btn btnp bsm',onClick:changePassword},'Change password'),
-                React.createElement('button',{className:'btn btns bsm',onClick:function(){setSettingsId(null);setPwMsg('');setPwFm({cur:'',nw:'',nw2:''});}},'Done')
+                React.createElement('button',{className:'btn btns bsm',onClick:function(){setSettingsId(null);setPwMsg('');setPwFm({cur:'',nw:'',nw2:''});setDeleteLabMsg('');setDeleteLabPw('');}},'Done')
               )
+            ),
+            React.createElement('div',{style:{borderTop:'1px solid #fee2e2',marginTop:14,paddingTop:14}},
+              React.createElement('div',{style:{fontSize:10,fontWeight:700,color:'#dc2626',textTransform:'uppercase',marginBottom:6}},'⚠ Danger Zone'),
+              React.createElement('div',{style:{fontSize:11,color:'#6b7280',marginBottom:8}},'Permanently delete this lab and all its data.'),
+              (function(){ const stored=(function(){try{return JSON.parse(localStorage.getItem('gl_delpw')||'{}');}catch(e){return {};}})(); return stored[settingsId] ? React.createElement('div',null, React.createElement('input',{className:'moi',type:'password',placeholder:'Lab password to confirm…',value:deleteLabPw,style:{marginBottom:5,display:'block',width:'100%',borderColor:'#fca5a5'},onChange:function(e){setDeleteLabPw(e.target.value);setDeleteLabMsg('');}}) , deleteLabMsg && React.createElement('div',{className:deleteLabMsg.startsWith('ok:')?'pw-ok':'pw-err',style:{marginBottom:6}},deleteLabMsg.slice(3)) ) : null; })(),
+              React.createElement('button',{className:'btn btnd bsm',style:{background:'#dc2626',borderColor:'#dc2626',color:'#fff',width:'100%',marginTop:4},onClick:function(){ const nm=(labs.find(function(l){return l.id===settingsId;})||{}).name||'this lab'; if(window.confirm('Delete "'+nm+'"? All data will be permanently lost.')){ deleteLab(settingsId); } }},'🗑 Delete this lab')
             )
           ),
           React.createElement('div', {className:'lab-item', style:{marginBottom:0}, onClick:function(){ handleLabClick(lab); }},
@@ -4807,7 +4835,8 @@ function TabWithDropdown({ tabKey, label, icon, isOn, color, onClick, items, set
                 return React.createElement('button', {
                     key: i,
                     className: 'thd-item',
-                    onClick: function(e){ e.stopPropagation(); item.action ? item.action() : go(item.tab || tabKey); setPos(null); }
+                    onClick: function(e){ e.stopPropagation(); item.action ? item.action() : go(item.tab || tabKey); setPos(null); },
+                    onTouchEnd: function(e){ e.preventDefault(); e.stopPropagation(); item.action ? item.action() : go(item.tab || tabKey); setPos(null); }
                 },
                     item.label
                 );
@@ -4819,7 +4848,8 @@ function TabWithDropdown({ tabKey, label, icon, isOn, color, onClick, items, set
         React.createElement('div', { ref: wrapRef, style:{display:'inline-flex',flexShrink:0,position:'relative'}, onMouseEnter: showDrop, onMouseLeave: hideDrop },
             React.createElement('button', {
                 className: 'tab-btn' + (isOn ? ' on' : ''),
-                onClick: onClick
+                onClick: onClick,
+                onTouchEnd: function(e){ e.preventDefault(); onClick(); if(pos) { setPos(null); } else { showDrop(); setTimeout(function(){ hideDrop(); }, 2000); } }
             },
                 React.createElement('span', { style:{ width:18, height:18, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: isOn ? 'rgba(255,255,255,.22)' : color+'1A', color: isOn ? '#fff' : color, marginRight:1 } }, icon),
                 label
@@ -4963,18 +4993,18 @@ function WeatherWidget() {
     function fetchWeather(c) {
         setLoading(true); setError(null); setWeather(null);
         var url = 'https://api.open-meteo.com/v1/forecast?latitude='+c.lat+'&longitude='+c.lon
-            +'&current=temperature_2m,relative_humidity_2m,weathercode'
-            +'&daily=weathercode,temperature_2m_max,temperature_2m_min'
-            +'&forecast_days=4&timezone=Asia%2FJerusalem';
+            +'&current=temperature_2m,relative_humidity_2m,weathercode,wind_speed_10m,precipitation'
+            +'&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,uv_index_max'
+            +'&forecast_days=7&timezone=Asia%2FJerusalem';
         fetch(url)
             .then(function(r){ return r.json(); })
             .then(function(d){
                 var cur = d.current, daily = d.daily, days = [];
-                for (var i = 1; i <= 3; i++) {
+                for (var i = 0; i < Math.min(7, daily.time.length); i++) {
                     var dt = new Date(daily.time[i]);
-                    days.push({ name: dt.toLocaleDateString('en-US',{weekday:'short'}), icon: wmoIcon(daily.weathercode[i]), hi: Math.round(daily.temperature_2m_max[i]), lo: Math.round(daily.temperature_2m_min[i]) });
+                    days.push({ name: dt.toLocaleDateString('en-US',{weekday:'short'}), icon: wmoIcon(daily.weathercode[i]), hi: Math.round(daily.temperature_2m_max[i]), lo: Math.round(daily.temperature_2m_min[i]), rain: daily.precipitation_sum ? Math.round(daily.precipitation_sum[i]*10)/10 : 0, wind: daily.wind_speed_10m_max ? Math.round(daily.wind_speed_10m_max[i]) : 0, uv: daily.uv_index_max ? Math.round(daily.uv_index_max[i]) : 0 });
                 }
-                setWeather({ temp: Math.round(cur.temperature_2m), humidity: cur.relative_humidity_2m, icon: wmoIcon(cur.weathercode), forecast: days });
+                setWeather({ temp: Math.round(cur.temperature_2m), humidity: cur.relative_humidity_2m, wind: cur.wind_speed_10m ? Math.round(cur.wind_speed_10m) : null, rain: cur.precipitation || 0, icon: wmoIcon(cur.weathercode), forecast: days });
                 setLoading(false);
             })
             .catch(function(){ setError('Unable to load weather'); setLoading(false); });
@@ -4995,7 +5025,7 @@ function WeatherWidget() {
                 onClick: function(){ setShowPicker(function(x){return !x;}); },
                 style:{fontSize:10,fontWeight:600,color:'var(--lf)',background:'var(--ll)',border:'1px solid var(--ld)',borderRadius:5,padding:'1px 6px',cursor:'pointer',fontFamily:'Inter,sans-serif',flexShrink:0}
             }, city.name + ' ▾'),
-            weather && React.createElement('span', { style:{fontSize:9,color:'var(--i4)',marginLeft:'auto',fontFamily:'Inter,sans-serif'} }, '💧 '+weather.humidity+'%')
+            weather && React.createElement('span', { style:{fontSize:9,color:'var(--i4)',marginLeft:'auto',fontFamily:'Inter,sans-serif'} }, weather.icon+' '+weather.temp+'°C')
         ),
         // City picker dropdown
         showPicker && React.createElement('div', {
@@ -5021,16 +5051,24 @@ function WeatherWidget() {
                     React.createElement('div', {className:'weather-temp'}, weather.temp+'°C'),
                     React.createElement('div', {className:'weather-detail'},
                         weather.forecast[0] && React.createElement('span', null, '↑'+weather.forecast[0].hi+'° ↓'+weather.forecast[0].lo+'°')
+                    ),
+                    React.createElement('div', {style:{display:'flex',gap:6,marginTop:2,flexWrap:'wrap'}},
+                        React.createElement('span', {style:{fontSize:9,color:'var(--i4)'}}, '💧 '+weather.humidity+'%'),
+                        weather.wind != null && React.createElement('span', {style:{fontSize:9,color:'var(--i4)'}}, '💨 '+weather.wind+' km/h'),
+                        weather.rain > 0 && React.createElement('span', {style:{fontSize:9,color:'#3b82f6'}}, '🌧 '+weather.rain+'mm')
                     )
                 )
             ),
-            React.createElement('div', {className:'weather-forecast'},
+            React.createElement('div', {className:'weather-forecast', style:{overflowX:'auto',paddingBottom:2}},  
                 weather.forecast.map(function(day,i){
                     return React.createElement('div', {key:i, className:'weather-day'},
                         React.createElement('div', {className:'weather-day-name'}, day.name),
                         React.createElement('div', {className:'weather-day-icon'}, day.icon),
                         React.createElement('div', {className:'weather-day-hi'}, day.hi+'°'),
-                        React.createElement('div', {className:'weather-day-lo'}, day.lo+'°')
+                        React.createElement('div', {className:'weather-day-lo'}, day.lo+'°'),
+                        day.rain > 0 && React.createElement('div', {style:{fontSize:7,color:'#3b82f6',fontWeight:600}}, day.rain+'mm'),
+                        day.wind && React.createElement('div', {style:{fontSize:7,color:'var(--i4)'}}, day.wind+'km/h'),
+                        day.uv > 0 && React.createElement('div', {style:{fontSize:7,color:'#f59e0b',fontWeight:600}}, 'UV'+day.uv)
                     );
                 })
             )
@@ -7656,6 +7694,32 @@ useEffect(() => {
         notify('Layout locked');
         return;
     } setShowUL(true); };
+    // ── Local snapshot: keeps last 3 timestamped JSON snapshots in localStorage ──
+    function saveLocalSnapshot(d) {
+        try {
+            var key = 'gl_snap_' + (activeLab && activeLab.id ? activeLab.id : 'main');
+            var existing = [];
+            try { existing = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
+            existing.unshift({ ts: new Date().toISOString(), data: d });
+            existing = existing.slice(0, 3); // keep last 3
+            localStorage.setItem(key, JSON.stringify(existing));
+        } catch(e) { /* localStorage quota exceeded — skip */ }
+    }
+    function restoreFromSnapshot() {
+        try {
+            var key = 'gl_snap_' + (activeLab && activeLab.id ? activeLab.id : 'main');
+            var snaps = JSON.parse(localStorage.getItem(key) || '[]');
+            if (!snaps.length) { notify('No snapshots found for this lab.'); return; }
+            var opts = snaps.map(function(s,i){ return i+': '+s.ts.replace('T',' ').slice(0,19); }).join('\n');
+            var choice = window.prompt('Choose snapshot to restore (enter number):\n'+opts);
+            if (choice === null) return;
+            var idx = parseInt(choice);
+            if (isNaN(idx) || !snaps[idx]) { notify('Invalid choice.'); return; }
+            if (!window.confirm('Restore snapshot from '+snaps[idx].ts.slice(0,19)+'? Current data will be overwritten.')) return;
+            setData(snaps[idx].data);
+            notify('✅ Snapshot restored from '+snaps[idx].ts.slice(0,19));
+        } catch(e) { notify('❌ Restore failed: '+e.message); }
+    }
     // ── Backup / export all lab data as JSON ──────────────────────────────
     function doBackup() {
         try {
@@ -7677,7 +7741,7 @@ useEffect(() => {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            notify('✅ Backup downloaded — keep this file safe!');
+            notify('✅ Backup downloaded — keep this file safe!'); saveLocalSnapshot(dataRef.current);
         } catch(err) {
             notify('❌ Backup failed: ' + err.message);
         }
@@ -7720,9 +7784,15 @@ useEffect(() => {
             React.createElement("div", { className: `sb${menuOpen ? " open" : ""}` },
                 React.createElement("div", { className: "sb-logo" },
                     React.createElement("div", { className: "sb-logo-ic" },
-                        React.createElement("svg", { width: "36", height: "36", viewBox: "0 0 36 36" },
-                            React.createElement("circle", { cx: "18", cy: "18", r: "18", fill: "#78C043" }),
-                            React.createElement("text", { x: "18", y: "23", textAnchor: "middle", fontSize: "18", fill: "white" }, "🌿")
+                        React.createElement("svg", { width: "40", height: "40", viewBox: "0 0 40 40", fill: "none" },
+                            React.createElement("path", { d: "M7 22V33h26V22", stroke: "#2d8a4e", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }),
+                            React.createElement("path", { d: "M20 8L4 21h32L20 8z", stroke: "#2d8a4e", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }),
+                            React.createElement("line", { x1: "20", y1: "8", x2: "20", y2: "21", stroke: "#78C043", strokeWidth: "1.5" }),
+                            React.createElement("line", { x1: "12", y1: "21", x2: "12", y2: "33", stroke: "#2d8a4e", strokeWidth: "1.5" }),
+                            React.createElement("line", { x1: "28", y1: "21", x2: "28", y2: "33", stroke: "#2d8a4e", strokeWidth: "1.5" }),
+                            React.createElement("path", { d: "M16 33v-5a2 2 0 0 1 4 0v5", stroke: "#2d8a4e", strokeWidth: "1.5", strokeLinecap: "round" }),
+                            React.createElement("path", { d: "M5 27q2-2 3-1t3 1", stroke: "#78C043", strokeWidth: "1.5", strokeLinecap: "round", fill: "none" }),
+                            React.createElement("path", { d: "M29 27q2-2 3-1t3 1", stroke: "#78C043", strokeWidth: "1.5", strokeLinecap: "round", fill: "none" })
                         )
                     ),
                     React.createElement("div", null,
@@ -7941,7 +8011,14 @@ useEffect(() => {
             React.createElement("div", { className: "main" },
                 React.createElement("div", { className: "mob-top-bar" },
                     React.createElement("div", { className: "mob-top-logo" },
-                        React.createElement("div", { className: "mob-top-logo-dot" }, "🌿"),
+                        React.createElement("div", { className: "mob-top-logo-dot" },
+                        React.createElement("svg", { width: "20", height: "20", viewBox: "0 0 40 40", fill: "none" },
+                            React.createElement("path", { d: "M7 22V33h26V22", stroke: "#2d8a4e", strokeWidth: "3", strokeLinecap: "round", strokeLinejoin: "round" }),
+                            React.createElement("path", { d: "M20 8L4 21h32L20 8z", stroke: "#2d8a4e", strokeWidth: "3", strokeLinecap: "round", strokeLinejoin: "round" }),
+                            React.createElement("line", { x1: "20", y1: "8", x2: "20", y2: "21", stroke: "#78C043", strokeWidth: "2" }),
+                            React.createElement("path", { d: "M16 33v-4a2 2 0 0 1 4 0v4", stroke: "#2d8a4e", strokeWidth: "2", strokeLinecap: "round" })
+                        )
+                    ),
                         React.createElement("div", { style:{display:'flex',flexDirection:'column',gap:0} },
                             React.createElement("span", { className: "mob-top-labname" }, activeLab.name),
                             React.createElement("span", { style:{fontSize:9,color:'var(--i4)',fontFamily:'Inter,monospace',lineHeight:1.2} },
@@ -8031,7 +8108,7 @@ useEffect(() => {
                         setTab, setMenuOpen, setTblSelMode, setSelTbls }),
                     React.createElement(TabWithDropdown, { key:'measures', tabKey:'measures', label:'Measures', isOn:tab==='measures', color:'#10B981',
                         onClick:()=>{ setTab('measures'); setMenuOpen(false); setTblSelMode(false); setSelTbls(new Set()); },
-                        icon: React.createElement('span', { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18\"/></svg>' } }),
+                        icon: React.createElement('span', { dangerouslySetInnerHTML: { __html: '<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"8\" y=\"2\" width=\"8\" height=\"2\" rx=\"1\"/><path d=\"M9 4h6v10l-3 6-3-6V4z\"/><line x1=\"9\" y1=\"9\" x2=\"15\" y2=\"9\"/></svg>' } }),
                         items:[ { icon:'📊', label:'View sessions', tab:'measures' },
                             { icon:'➕', label:'New session', tab:'measures' },
                             { icon:'📤', label:'Export data', tab:'measures' } ],
@@ -8086,7 +8163,8 @@ useEffect(() => {
                                 React.createElement("div", { className: "online-dot" })
                             ))
                         ),
-                        React.createElement("button", { className: "backup-btn", title: "Download a full backup of all your lab data", onClick: doBackup }, "💾 Backup"),
+                        React.createElement("button", { className: "backup-btn", title: "Download a full backup of all your lab data", onClick: doBackup }, React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' } }), "Backup"),
+                        React.createElement("button", { className: "backup-btn", title: "Restore from a local auto-snapshot", onClick: restoreFromSnapshot, style:{borderColor:'#fcd34d',color:'#92400e',background:'#fffbeb'} }, React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>' } }), "Restore"),
                         React.createElement("span", { className: "hbadge" }, totPlants, " plants"),
                         React.createElement("button", { className: `lkbtn${!locked ? ' edit' : ''}`, onClick: togLock }, locked ? 'Locked' : 'Edit mode')
                     )),
