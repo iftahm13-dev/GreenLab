@@ -335,7 +335,7 @@ body.sunlight .sunlight-btn.on{background:#000;color:#fff;border-color:#000}
 .thinfo{font-size:9px;color:var(--i4)}
 .thedit{font-size:11px;background:#78C043;border:none;color:#fff;border-radius:50px;padding:5px 14px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all .12s;box-shadow:0 1px 4px rgba(120,192,67,.3)}
 .thedit:hover{background:#69ad38;box-shadow:0 2px 8px rgba(120,192,67,.4)}
-.pgrid{flex:1;display:grid;padding:5px;overflow:visible;align-items:center;justify-items:center;background:#F3F4F6;border-radius:0 0 12px 12px}
+.pgrid{flex:1;display:grid;padding:5px;overflow:hidden;align-items:center;justify-items:center;background:#F3F4F6;border-radius:0 0 12px 12px}
 
 /* Pot cells */
 .pcw{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:pointer;position:relative;user-select:none}
@@ -1947,7 +1947,12 @@ function TableBlock({ table, plants, locked, isSel, activePotId, selMode, selPot
     const ref = useRef(), dr = useRef(null);
     const wx = table.x_position * WS, wy = table.y_position * WS, ww = table.width * WS, wh = table.length * WS;
     const GAP = 5, avW = ww - 10, avH = wh - HDR - 10;
-    const ppx = Math.max(MINP, Math.min(Math.floor((avW - GAP * (table.cols - 1)) / table.cols), Math.floor((avH - LBH * table.rows - GAP * (table.rows - 1)) / table.rows), 80));
+    // ppx: fit into whichever axis is tighter, 20px min, 80px cap
+    const ppxByW = Math.floor((avW - GAP * (table.cols - 1)) / table.cols);
+    const ppxByH = Math.floor((avH - LBH * table.rows - GAP * (table.rows - 1)) / table.rows);
+    const ppx = Math.max(20, Math.min(ppxByW, ppxByH, 80));
+    // rendered height fits all rows exactly
+    const rendH = HDR + 10 + table.rows * (ppx + LBH) + (table.rows - 1) * GAP;
     const te = editTblId === table.id;
     const startDrag = useCallback((clientX, clientY, isMulti) => {
         if (locked) return;
@@ -1992,7 +1997,7 @@ function TableBlock({ table, plants, locked, isSel, activePotId, selMode, selPot
         window.addEventListener('touchmove', mv, { passive: false });
         window.addEventListener('touchend', up);
     }, [locked, startDrag, moveDrag, endDrag]);
-    return (React.createElement("div", { ref: ref, className: `tbl${isSel ? ' sel' : ''}${locked ? ' locked' : ''}${te ? ' tedit' : ''}${syncFailed ? ' sync-failed' : ''}`, style: { position: 'absolute', left: wx, top: wy, width: ww, height: wh }, onMouseDown: hmd, onTouchStart: htd },
+    return (React.createElement("div", { ref: ref, className: `tbl${isSel ? ' sel' : ''}${locked ? ' locked' : ''}${te ? ' tedit' : ''}${syncFailed ? ' sync-failed' : ''}`, style: { position: 'absolute', left: wx, top: wy, width: ww, height: rendH }, onMouseDown: hmd, onTouchStart: htd },
         syncFailed && React.createElement('div', { className: 'tbl-sync-banner', onClick: function(e){ e.stopPropagation(); if(onSyncRetry) onSyncRetry(); } }, '⚠ Sync Failed — Click to Retry'),
         React.createElement("div", { className: "thd" },
             React.createElement("span", { className: "thnm" }, table.name),
@@ -7745,42 +7750,113 @@ useEffect(() => {
         } catch(e) { /* localStorage quota exceeded — skip */ }
     }
     function restoreFromSnapshot() {
-        try {
-            var key = 'gl_snap_' + (activeLab && activeLab.id ? activeLab.id : 'main');
-            var snaps = JSON.parse(localStorage.getItem(key) || '[]');
-            if (!snaps.length) { notify('No snapshots found for this lab.'); return; }
-            var opts = snaps.map(function(s,i){ return i+': '+s.ts.replace('T',' ').slice(0,19); }).join('\n');
-            var choice = window.prompt('Choose snapshot to restore (enter number):\n'+opts);
-            if (choice === null) return;
-            var idx = parseInt(choice);
-            if (isNaN(idx) || !snaps[idx]) { notify('Invalid choice.'); return; }
-            if (!window.confirm('Restore snapshot from '+snaps[idx].ts.slice(0,19)+'? Current data will be overwritten.')) return;
-            setData(snaps[idx].data);
-            notify('✅ Snapshot restored from '+snaps[idx].ts.slice(0,19));
-        } catch(e) { notify('❌ Restore failed: '+e.message); }
+        // Open a file picker — works on desktop and iOS Safari
+        var input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json,application/json';
+        input.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+        input.onchange = function(e) {
+            var file = e.target.files && e.target.files[0];
+            if (!file) { document.body.removeChild(input); return; }
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+                document.body.removeChild(input);
+                try {
+                    var parsed = JSON.parse(ev.target.result);
+                    // Validate it's a GreenLab backup
+                    if (!parsed.greenhouses || !parsed.plants || !parsed.tables) {
+                        notify('❌ Not a valid GreenLab backup file'); return;
+                    }
+                    var ghCount    = (parsed.greenhouses || []).length;
+                    var tblCount   = (parsed.tables      || []).length;
+                    var filledCount= (parsed.plants      || []).filter(function(p){ return p.genotype; }).length;
+                    var genoCount  = (parsed.genotypes   || []).length;
+                    var dateStr    = parsed._backup_date ? parsed._backup_date.replace('T',' ').slice(0,19) : 'unknown date';
+                    if (!window.confirm(
+                        'Restore from backup?\n\n' +
+                        'File: ' + file.name + '\n' +
+                        'Saved: ' + dateStr + '\n' +
+                        'Contains: ' + ghCount + ' greenhouses, ' + tblCount + ' tables, ' +
+                        filledCount + ' filled pots, ' + genoCount + ' genotypes\n\n' +
+                        '⚠️ This will OVERWRITE your current data. Continue?'
+                    )) return;
+                    // Clean up backup-only metadata fields before loading
+                    var restored = Object.assign({}, parsed);
+                    delete restored._backup_date;
+                    delete restored._backup_version;
+                    delete restored._lab_id;
+                    delete restored._lab_name;
+                    delete restored._app_version;
+                    // Stamp as newest so LWW merge keeps it
+                    restored._lww_ts = Date.now();
+                    restored._appVersion = APP_VERSION;
+                    setData(restored);
+                    // Persist to IDB + localStorage immediately so it survives a reload
+                    if (activeLab && activeLab.id) {
+                        idbSave(activeLab.id, restored).catch(function(){});
+                        try { saveLabData(activeLab.id, restored); } catch(e2){}
+                    }
+                    notify('✅ Restored: ' + ghCount + ' greenhouses, ' + tblCount + ' tables, ' + filledCount + ' filled pots, ' + genoCount + ' genotypes');
+                } catch(err) {
+                    notify('❌ Restore failed: ' + err.message);
+                }
+            };
+            reader.onerror = function() {
+                document.body.removeChild(input);
+                notify('❌ Could not read file');
+            };
+            reader.readAsText(file);
+        };
+        document.body.appendChild(input);
+        input.click();
     }
     // ── Backup / export all lab data as JSON ──────────────────────────────
     function doBackup() {
         try {
-            var exportData = Object.assign({}, data, {
-                _backup_date: new Date().toISOString(),
-                _lab_id: activeLab ? activeLab.id : 'unknown',
-                _lab_name: activeLab ? activeLab.name : 'unknown',
+            // Always use dataRef.current — it has the absolute latest state,
+            // even if React hasn't re-rendered yet after the last change.
+            var src = dataRef.current || data;
+            var now = new Date();
+            var dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+            var timeStr = String(now.getHours()).padStart(2,'0') + '-' + String(now.getMinutes()).padStart(2,'0');
+            // Explicitly copy every top-level field so nothing is accidentally omitted
+            var exportData = {
+                greenhouses:  (src.greenhouses  || []).map(function(g){ return Object.assign({}, g); }),
+                tables:       (src.tables       || []).map(function(t){ return Object.assign({}, t); }),
+                plants:       (src.plants       || []).map(function(p){ return Object.assign({}, p); }),
+                users:        (src.users        || []).map(function(u){ return Object.assign({}, u); }),
+                genotypes:    (src.genotypes    || []).map(function(g){ return Object.assign({}, g); }),
+                experiments:  (src.experiments  || []).map(function(e){ return Object.assign({}, e); }),
+                schedules:    (src.schedules    || []).map(function(s){ return Object.assign({}, s); }),
+                tasks:        (src.tasks        || []).map(function(t){ return Object.assign({}, t); }),
+                stock:        (src.stock        || []).map(function(s){ return Object.assign({}, s); }),
+                orders:       (src.orders       || []).map(function(o){ return Object.assign({}, o); }),
+                messages:     (src.messages     || []).map(function(m){ return Object.assign({}, m); }),
+                notes:        (src.notes        || []).map(function(n){ return Object.assign({}, n); }),
+                measures:     (src.measures     || []).map(function(m){ return Object.assign({}, m); }),
+                structs:      (src.structs      || []).map(function(s){ return Object.assign({}, s); }),
+                locked:       src.locked,
+                _lww_ts:      src._lww_ts,
+                _appVersion:  src._appVersion || APP_VERSION,
+                _backup_date: now.toISOString(),
+                _backup_version: 2,
+                _lab_id:      activeLab ? activeLab.id   : 'unknown',
+                _lab_name:    activeLab ? activeLab.name : 'unknown',
                 _app_version: APP_VERSION
-            });
+            };
             var json = JSON.stringify(exportData, null, 2);
+            var sizeKB = Math.round(json.length / 1024);
             var blob = new Blob([json], { type: 'application/json' });
             var url = URL.createObjectURL(blob);
             var a = document.createElement('a');
-            var d = new Date();
-            var dateStr = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
             a.href = url;
-            a.download = 'greenlab-backup-' + dateStr + '.json';
+            a.download = 'greenlab-backup-' + dateStr + '_' + timeStr + '.json';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            notify('✅ Backup downloaded — keep this file safe!'); saveLocalSnapshot(dataRef.current);
+            notify('✅ Backup downloaded (' + sizeKB + ' KB) — ' + exportData.greenhouses.length + ' greenhouses, ' + exportData.tables.length + ' tables, ' + exportData.plants.filter(function(p){return p.genotype;}).length + ' filled pots, ' + exportData.genotypes.length + ' genotypes');
+            saveLocalSnapshot(src);
         } catch(err) {
             notify('❌ Backup failed: ' + err.message);
         }
@@ -8204,7 +8280,7 @@ useEffect(() => {
                         ))
                     ),
                     React.createElement("button", { className: "backup-btn", title: "Download a full backup of all your lab data", onClick: doBackup }, React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' } }), "Backup"),
-                    React.createElement("button", { className: "backup-btn", title: "Restore from a local auto-snapshot", onClick: restoreFromSnapshot, style:{borderColor:'#fcd34d',color:'#92400e',background:'#fffbeb'} }, React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>' } }), "Restore"),
+                    React.createElement("button", { className: "backup-btn", title: "Restore from a backup JSON file", onClick: restoreFromSnapshot, style:{borderColor:'#fcd34d',color:'#92400e',background:'#fffbeb'} }, React.createElement("span", { dangerouslySetInnerHTML: { __html: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>' } }), "Restore"),
                     React.createElement("span", { className: "hbadge" }, totPlants, " plants"),
                     React.createElement("button", { className: `lkbtn${!locked ? ' edit' : ''}`, onClick: togLock }, locked ? 'Locked' : 'Edit mode')
                 ),
